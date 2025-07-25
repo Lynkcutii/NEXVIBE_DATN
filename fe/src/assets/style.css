@@ -1,0 +1,567 @@
+/* =================================================================
+   NEXVIBE ADMIN - CUSTOM STYLESHEET
+   ================================================================= */
+
+/* --- Cài đặt Chung & Font --- */
+body {
+    font-family: 'Poppins', sans-serif;
+    /* Một màu nền sáng hơn, dịu mắt hơn */
+    background-color: #f8f9fa; 
+    color: #495057;
+}
+
+.wrapper {
+    display: flex;
+    width: 100%;
+    min-height: 100vh;
+}
+
+
+/* --- Sidebar (Thanh Menu Trái) --- */
+#sidebar {
+    width: 280px;
+    min-width: 280px;
+    /* Màu xanh đen chuyên nghiệp, đồng nhất */
+    background-color: #0c2444; 
+    color: #adb5bd; /* Màu chữ hơi xám để dễ đọc hơn */
+    transition: all .3s;
+}
+
+.sidebar-header {
+    padding: 20px;
+    text-align: center;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05); /* Đường kẻ mờ phân tách */
+}
+
+.sidebar-header img {
+    max-width: 240px; /* Giới hạn kích thước logo cho cân đối */
+    height: auto;
+}
+
+
+
+/* Các mục trong Menu */
+.nav-item .nav-link {
+    padding: 14px 25px; /* Tăng padding cho thoáng */
+    font-size: 0.95rem; /* Giảm font size một chút */
+    color: #ced4da; /* Màu chữ mặc định */
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    border-left: 4px solid transparent;
+    transition: all .2s ease-in-out;
+    text-decoration: none;
+}
+
+.nav-item .nav-link i.fa-fw {
+    width: 20px;
+    text-align: center;
+    color: #8f9ca9; /* Màu icon mặc định */
+    transition: color .2s ease-in-out;
+}
+
+/* Hiệu ứng khi rê chuột vào mục menu */
+.nav-item .nav-link:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+    color: #fff;
+    border-left: 4px solid #38bdf8;
+}
+.nav-item .nav-link:hover i.fa-fw {
+    color: #38bdf8;
+}
+
+.link-light:hover{
+    color: #38bdf8 !important;
+}
+
+/* Style cho mục menu đang được chọn (active)
+   Phần này được xử lý bởi class 'router-link-exact-active' trong component Sidebar.vue
+   Nếu bạn muốn ghi đè ở đây, hãy dùng:
+   .nav-link.router-link-exact-active { ... }
+*/
+
+
+/* --- Main Content (Nội dung chính bên phải) --- */
+#content {
+    flex-grow: 1;
+    padding: 2.5rem; /* Tăng padding cho thoáng đãng */
+}
+
+/* Style chung cho Card */
+.card {
+    border: 1px solid #e9ecef; /* Đường viền mờ, sạch sẽ */
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.05); /* Đổ bóng nhẹ nhàng */
+    border-radius: 0.5rem; /* Bo góc nhiều hơn */
+}
+
+.card-header {
+    background-color: #fff;
+    border-bottom: 1px solid #e9ecef;
+    padding: 1rem 1.5rem;
+}
+
+.card-body {
+    padding: 1.5rem;
+}
+
+/* Style cho Bảng dữ liệu */
+.table {
+    --bs-table-bg: transparent;
+    --bs-table-border-color: #e9ecef; /* Đồng bộ màu viền */
+}
+
+.table thead th {
+    font-weight: 600;
+    color: #6c757d;
+    text-transform: uppercase;
+    font-size: 0.75rem;
+    letter-spacing: 0.5px;
+    background-color: #f8f9fa;
+    border-bottom-width: 2px;
+}
+
+.table tbody tr:hover {
+    background-color: #f1f3f5;
+}
+
+.table td, .table th {
+    vertical-align: middle;
+}
+
+.table img.product-thumbnail {
+    width: 60px;
+    height: 60px;
+    object-fit: cover;
+    border-radius: 8px;
+    border: 1px solid #e9ecef;
+}
+
+/* --- Style cho các Badge Trạng thái --- */
+.badge {
+    padding: 0.5em 0.9em;
+    font-weight: 600;
+    font-size: 0.75rem;
+}
+
+.badge.bg-success {
+    background-color: #d1fae5 !important;
+    color: #065f46 !important;
+}
+.badge.bg-warning {
+    background-color: #fef3c7 !important;
+    color: #92400e !important;
+}
+.badge.bg-danger {
+    background-color: #fee2e2 !important;
+    color: #991b1b !important;
+}
+.badge.bg-info {
+    background-color: #dbeafe !important;
+    color: #1e40af !important;
+}
+.badge.bg-primary {
+    background-color: #c7d2fe !important;
+    color: #4338ca !important;
+}
+.badge.bg-secondary {
+    background-color: #e5e7eb !important;
+    color: #374151 !important;
+}
+/* Style cho menu con */
+.sidebar-submenu {
+    background-color: rgba(0, 0, 0, 0.2); /* Nền tối hơn một chút */
+    padding-left: 15px; /* Thụt vào so với menu cha */
+}
+
+.sidebar-submenu .nav-link {
+    font-size: 0.9rem; /* Chữ nhỏ hơn menu cha */
+    padding-left: 2.5rem; /* Căn lề cho chữ */
+}
+
+/* Thêm mũi tên chỉ xuống cho menu cha */
+.nav-link[data-bs-toggle="collapse"]::after {
+    content: '\f078'; /* Icon mũi tên xuống của Font Awesome */
+    font-family: 'Font Awesome 6 Free';
+    font-weight: 900;
+    margin-left: auto; /* Đẩy mũi tên về bên phải */
+    transition: transform 0.3s;
+}
+
+/* Xoay mũi tên khi menu được mở */
+.nav-link[data-bs-toggle="collapse"]:not(.collapsed)::after {
+    transform: rotate(180deg);
+}
+
+/* Style cho submenu item khi được active */
+.sidebar-submenu .nav-link.router-link-exact-active {
+    color: #fff;
+    font-weight: bold;
+}
+
+/* Giữ cho menu cha active khi một trong các con của nó active */
+.nav-item:has(.router-link-exact-active) > .nav-link[data-bs-toggle="collapse"] {
+    background-color: rgba(255, 255, 255, 0.05);
+    color: #fff;
+}
+
+
+.main-header .navbar {
+    padding: 0.5rem 0;
+}
+.main-header .navbar-brand {
+    padding: 0;
+}
+.main-header .nav-link {
+    font-weight: 700;
+    text-transform: uppercase;
+    color: var(--bs-light);
+    padding: 1rem 1.25rem !important;
+    letter-spacing: 0.5px;
+    font-size: 0.9rem;
+}
+
+
+/* Ô tìm kiếm */
+.search-box {
+    position: relative;
+}
+.search-box .form-control {
+    border-radius: 50px;
+    padding-left: 1.25rem;
+    padding-right: 2.5rem; /* Dành chỗ cho icon */
+    background-color: #f3f4f6;
+    border: none;
+    width: 250px;
+}
+.search-box .search-icon {
+    position: absolute;
+    top: 50%;
+    right: 1rem;
+    transform: translateY(-50%);
+    color: #000000;
+}
+
+/* Icon túi hàng và tài khoản */
+.main-header .fa-user, .main-header .fa-shopping-bag {
+    color: var(--bs-light);
+}
+
+.main-header .navbar-toggler {
+    border: none;
+}
+.main-header .navbar-toggler:focus {
+    box-shadow: none;
+}
+.main-header{
+    background-color: #0c2444;
+    
+}
+/*  */
+
+/* --- Banner chính --- */
+/* (Giữ nguyên style .hero-banner đã có) */
+
+/* --- Thanh hiệu ứng chạy chữ (Marquee) --- */
+.marquee-container {
+  overflow: hidden;
+  position: relative;
+  white-space: nowrap;
+}
+
+.marquee-content {
+  display: inline-block;
+  padding-left: 100%;
+  animation: marquee 20s linear infinite;
+}
+
+.marquee-content span {
+  font-weight: 700;
+  font-size: 1.2rem;
+  text-transform: uppercase;
+}
+
+@keyframes marquee {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-100%); }
+}
+.category-item {
+    display: inline-block;
+}
+
+.category-circle {
+  width: 120px;           /* Tăng kích thước cho nổi bật hơn */
+  height: 120px;
+  border-radius: 50%;   /* Bo thành hình tròn */
+  
+  /* Các thuộc tính quan trọng cho ảnh nền */
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  
+  margin: 0 auto 1rem;
+  border: 3px solid #fff; /* Thêm đường viền trắng */
+  box-shadow: 0 4px 15px rgba(0,0,0,0.1); /* Đổ bóng nhẹ */
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.category-item:hover .category-circle {
+  transform: scale(1.05) translateY(-5px);
+  box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+}
+
+.category-name {
+  font-weight: 600;
+  font-size: 1.1rem;
+}
+.auth-page-wrapper {
+  /* Đặt ảnh nền ở đây */
+  background-image: linear-gradient(rgba(0, 0, 0, 0.1), rgba(0, 0, 0, 0.1)), url('/img/banner/dn.png');
+  background-size: cover;
+  background-position: center;
+  
+
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center; 
+  padding: 2rem;
+}
+
+.auth-form-container {
+  width: 100%;
+  max-width: 420px;
+  background-color: #fff; /* Đổi lại nền trắng cho nổi bật */
+  border-radius: 0.5rem;
+  box-shadow: 0 1rem 3rem rgba(0,0,0,0.175);
+   transform: translateX(150px);
+}
+
+.auth-banner {
+  flex: 1;
+  display: none; /* Ẩn trên màn hình nhỏ */
+}
+@media (min-width: 992px) {
+  .auth-banner {
+    display: block; /* Hiện trên màn hình lớn */
+  }
+}
+
+.auth-form-container {
+  width: 100%;
+  max-width: 400px;
+  
+}
+
+.auth-form-container .card {
+  padding: 1rem; /* Giảm padding một chút */
+  box-shadow: none !important;
+  border: none !important;
+  background-color: #fff;
+  border-radius: 0.5rem !important;
+}
+
+/* Style cho các nút social */
+.social-login-divider {
+  display: flex;
+  align-items: center;
+  text-align: center;
+  color: #ccc;
+  margin: 1.5rem 0;
+}
+.social-login-divider::before,
+.social-login-divider::after {
+  content: '';
+  flex: 1;
+  border-bottom: 1px solid #dbdbdb;
+}
+.social-login-divider:not(:empty)::before {
+  margin-right: .25em;
+}
+.social-login-divider:not(:empty)::after {
+  margin-left: .25em;
+}
+.social-login-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    padding: 0.6rem 1rem;
+    border: 1px solid #dbdbdb;
+    background-color: #fff;
+    transition: background-color 0.2s;
+}
+.social-login-btn:hover {
+    background-color: #f5f5f5;
+}
+.social-login-btn .fab {
+    font-size: 1.2rem;
+    margin-right: 0.75rem;
+}
+.social-login-btn .fa-facebook {
+    color: #1877f2;
+}
+/* src/assets/style.css */
+
+/* --- NÂNG CẤP GIAO DIỆN TRANG CHI TIẾT SẢN PHẨM --- */
+
+.product-gallery .main-image {
+    aspect-ratio: 1 / 1;
+    object-fit: cover;
+    border-radius: 1rem;
+    box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.1);
+}
+
+.thumbnail-list {
+    display: flex;
+    gap: 0.75rem;
+    margin-top: 1rem;
+}
+
+.thumbnail-item {
+    width: 80px;
+    height: 80px;
+    object-fit: cover;
+    border-radius: 0.5rem;
+    cursor: pointer;
+    border: 2px solid transparent;
+    transition: all 0.2s ease;
+    opacity: 0.7;
+}
+
+.thumbnail-item:hover {
+    opacity: 1;
+}
+
+.thumbnail-item.active {
+    border-color: var(--bs-primary);
+    opacity: 1;
+    box-shadow: 0 0 10px rgba(13, 110, 253, 0.5);
+}
+
+/* Nút chọn biến thể (màu, size) */
+.variant-selector .variant-label {
+    font-weight: 600;
+    margin-bottom: 0.75rem;
+}
+.variant-selector .btn-group .btn {
+    border-radius: 0.5rem !important;
+    font-weight: 500;
+}
+.variant-selector .color-option {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: 2px solid #e9ecef;
+    transition: all 0.2s;
+    padding: 0;
+}
+.variant-selector .color-option:focus {
+    box-shadow: none;
+}
+.variant-selector .color-option.active {
+    transform: scale(1.15);
+    box-shadow: 0 0 0 3px white, 0 0 0 5px var(--bs-primary);
+}
+
+.checkout-page {
+  background-color: #f0f2f5; /* Nền xám nhạt */
+}
+
+/* Style chung cho các khối card */
+.checkout-card {
+  background-color: #fff;
+  border-radius: 0.75rem;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+/* Style cho form thông tin */
+.checkout-form .form-control {
+  background-color: #f5f5f5;
+  border: 1px solid #f5f5f5;
+  border-radius: 0.5rem;
+  padding: 0.9rem 1rem;
+  transition: all 0.2s ease;
+}
+.checkout-form .form-control:focus {
+  background-color: #fff;
+  border-color: var(--bs-primary);
+  box-shadow: none;
+}
+.checkout-form .form-label {
+  font-weight: 500;
+  margin-bottom: 0.5rem;
+}
+
+/* Style cho giỏ hàng ở giữa */
+.cart-summary-item {
+  display: flex;
+  gap: 1rem;
+  padding: 1rem 0;
+  border-bottom: 1px solid #f0f2f5;
+}
+.cart-summary-img {
+  width: 70px;
+  height: 70px;
+  object-fit: cover;
+  border-radius: 0.5rem;
+}
+.cart-summary-details { flex-grow: 1; }
+.cart-summary-details h6 { font-size: 0.9rem; font-weight: 600; margin-bottom: 0.25rem; }
+.cart-summary-details p { font-size: 0.85rem; color: #6c757d; margin: 0; }
+.cart-summary-price { text-align: right; font-weight: 600; }
+.quantity-input .el-input-number { width: 100px; }
+
+/* Style cho cột thanh toán bên phải */
+.payment-summary .summary-row {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 0.75rem;
+  color: #495057;
+}
+.payment-summary .summary-row.total {
+  font-weight: 700;
+  font-size: 1.2rem;
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid #e9ecef;
+}
+.payment-summary .total .text-danger {
+    color: #dc3545 !important;
+}
+.payment-option {
+  border: 1px solid #e9ecef;
+  border-radius: 0.75rem;
+  padding: 1rem 1.5rem;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+.payment-option:hover {
+  border-color: var(--bs-primary);
+}
+.payment-option.active {
+  border-color: var(--bs-primary);
+  box-shadow: 0 0 0 2px var(--bs-primary);
+}
+.payment-option .form-check-input[type="radio"] {
+  width: 1.25em;
+  height: 1.25em;
+  margin-top: 0.25rem;
+}
+.payment-option .payment-logo {
+  height: 24px;
+}
+
+/* Khối voucher và chi tiết */
+.checkout-summary-box {
+  background-color: #fff;
+  border-radius: 0.75rem;
+  padding: 1.5rem;
+  border: 1px solid #e9ecef;
+}
+.checkout-summary-box .form-control {
+  border-radius: 50px;
+}
+.checkout-summary-box .btn-dark {
+  border-radius: 50px;
+}
