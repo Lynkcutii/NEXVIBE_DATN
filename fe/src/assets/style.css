@@ -565,3 +565,35 @@ body {
 .checkout-summary-box .btn-dark {
   border-radius: 50px;
 }
+/* src/assets/style.css */
+
+/* --- AUTH PAGE LAYOUT --- */
+.auth-page-wrapper {
+  /* ... background ... */
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+}
+
+.auth-form-container {
+  width: 100%;
+  max-width: 480px; /* Tăng chiều rộng một chút */
+  background-color: #fff;
+  border-radius: 0.75rem; /* Bo tròn nhiều hơn */
+  box-shadow: 0 1rem 3rem rgba(0,0,0,0.1);
+}
+
+/* Style cho các trường input */
+.auth-form-container .form-control {
+  padding: 0.9rem 1rem;
+  border-radius: 0.5rem;
+  background-color: #f8f9fa; /* Nền xám nhạt */
+  border: 1px solid #f8f9fa;
+}
+.auth-form-container .form-control:focus {
+  background-color: #fff;
+  border-color: var(--bs-primary);
+  box-shadow: none;
+}
