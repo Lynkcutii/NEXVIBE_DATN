@@ -1,6 +1,6 @@
 <template>
   <div class="row g-4">
-    <!-- Cột trái: Sidebar tài khoản -->
+    <!-- Cột trái: Sidebar tài khoản (Giữ nguyên) -->
     <div class="col-lg-3">
       <div class="account-sidebar card border-0 shadow-sm">
         <div class="card-body p-3">
@@ -13,7 +13,7 @@
           </div>
           <hr>
           <div class="list-group list-group-flush">
-            <router-link to="/profile" class="list-group-item list-group-item-action active"><i class="fas fa-user-edit fa-fw me-2"></i>Thông tin cá nhân</router-link>
+            <router-link to="/profile" class="list-group-item list-group-item-action active"><i class="fas fa-user-edit fa-fw me-2"></i>Thông tin tài khoản</router-link>
             <router-link to="/order-history" class="list-group-item list-group-item-action"><i class="fas fa-receipt fa-fw me-2"></i>Lịch sử đơn hàng</router-link>
             <a href="#" class="list-group-item list-group-item-action text-danger" @click.prevent="handleLogout"><i class="fas fa-sign-out-alt fa-fw me-2"></i>Đăng xuất</a>
           </div>
@@ -21,51 +21,70 @@
       </div>
     </div>
     
-    <!-- Cột phải: Nội dung chính -->
+    <!-- Cột phải: Nội dung chính với bố cục chuyên nghiệp -->
     <div class="col-lg-9">
-      <!-- Card Thông tin cá nhân -->
-      <div class="card border-0 shadow-sm mb-4">
-        <div class="card-header bg-transparent border-0 pt-4 px-4">
-          <h4 class="mb-0">Thông tin cá nhân</h4>
-        </div>
-        <div class="card-body p-4">
-          <form @submit.prevent="updateProfile">
-            <div class="row">
-              <div class="col-md-6 mb-3">
-                <label for="fullName" class="form-label">Họ và tên</label>
-                <input type="text" class="form-control" id="fullName" v-model="profile.name">
-              </div>
-              <div class="col-md-6 mb-3">
-                <label for="email" class="form-label">Email</label>
-                <input type="email" class="form-control" id="email" :value="auth.user?.email" disabled>
-              </div>
-            </div>
-            <button type="submit" class="btn btn-primary">Lưu thay đổi</button>
-          </form>
-        </div>
-      </div>
-
-      <!-- Card Đổi mật khẩu -->
       <div class="card border-0 shadow-sm">
-         <div class="card-header bg-transparent border-0 pt-4 px-4">
-          <h4 class="mb-0">Đổi mật khẩu</h4>
-        </div>
-        <div class="card-body p-4">
-          <form @submit.prevent="changePassword">
-            <div class="mb-3">
-              <label for="currentPassword" class="form-label">Mật khẩu hiện tại</label>
-              <input type="password" class="form-control" id="currentPassword">
+        <div class="card-body p-4 p-md-5">
+
+          <!-- Phần Thông tin tài khoản -->
+          <div class="account-section">
+            <h4 class="section-title">Thông tin tài khoản</h4>
+            <div class="section-content">
+              <div class="info-item">
+                <span class="info-label">Họ và tên</span>
+                <span class="info-value">{{ profile.name }}</span>
+              </div>
+              <div class="info-item">
+                <span class="info-label">Số điện thoại</span>
+                <span class="info-value">{{ profile.phone }}</span>
+              </div>
+              <div class="info-item">
+                <span class="info-label">Giới tính</span>
+                <span class="info-value text-muted fst-italic">{{ profile.gender }}</span>
+              </div>
+              <div class="info-item">
+                <span class="info-label">Ngày sinh</span>
+                <span class="info-value text-muted fst-italic">{{ profile.dob }}</span>
+              </div>
+              <div class="info-item">
+                <span class="info-label">Chiều cao</span>
+                <span class="info-value text-muted fst-italic">{{ profile.height }}</span>
+              </div>
+              <div class="info-item">
+                <span class="info-label">Cân nặng</span>
+                <span class="info-value text-muted fst-italic">{{ profile.weight }}</span>
+              </div>
             </div>
-            <div class="mb-3">
-              <label for="newPassword" class="form-label">Mật khẩu mới</label>
-              <input type="password" class="form-control" id="newPassword">
+            <div class="section-footer">
+              <button class="btn btn-primary update-btn" @click="editProfile">
+                <i class="fas fa-pencil-alt me-2"></i>CẬP NHẬT
+              </button>
             </div>
-            <div class="mb-3">
-              <label for="confirmPassword" class="form-label">Nhập lại mật khẩu mới</label>
-              <input type="password" class="form-control" id="confirmPassword">
+          </div>
+
+          <!-- Dấu phân cách -->
+          <hr class="my-5">
+
+          <!-- Phần Thông tin đăng nhập -->
+          <div class="account-section">
+            <h4 class="section-title">Thông tin đăng nhập</h4>
+            <div class="section-content">
+              <div class="info-item">
+                <span class="info-label">Email</span>
+                <span class="info-value">{{ userEmail }}</span>
+              </div>
+              <div class="info-item">
+                <span class="info-label">Mật khẩu</span>
+                <span class="info-value">••••••••••</span>
+              </div>
             </div>
-            <button type="submit" class="btn btn-dark">Đổi mật khẩu</button>
-          </form>
+            <div class="section-footer">
+               <button class="btn btn-primary update-btn" @click="editLoginInfo">
+                <i class="fas fa-key me-2"></i>THAY ĐỔI
+              </button>
+            </div>
+          </div>
+          
         </div>
       </div>
     </div>
@@ -73,7 +92,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, computed } from 'vue';
 import { useAuthStore } from '@/stores/auth';
 import { useRouter } from 'vue-router';
 import { useToast } from 'vue-toastification';
@@ -82,20 +101,26 @@ const auth = useAuthStore();
 const router = useRouter();
 const toast = useToast();
 
+// Dữ liệu mẫu cho thông tin tài khoản
 const profile = ref({
-    name: ''
+    name: 'Trần Minh Tuấn',
+    phone: '0816169895',
+    gender: 'Chưa cập nhật',
+    dob: 'Hãy cập nhật để nhận quà sinh nhật',
+    height: 'Chưa cập nhật',
+    weight: 'Chưa cập nhật'
 });
 
-const updateProfile = () => {
-    // Logic gọi API để cập nhật profile
-    console.log('Cập nhật profile:', profile.value);
-    toast.success('Cập nhật thông tin thành công!');
+const userEmail = computed(() => auth.user?.email || 'tuan.tm@nexvibe.com');
+
+const editProfile = () => {
+    console.log('Chỉnh sửa thông tin tài khoản...');
+    toast.info('Chức năng đang được phát triển!');
 };
 
-const changePassword = () => {
-    // Logic gọi API để đổi mật khẩu
-    console.log('Đổi mật khẩu...');
-    toast.success('Đổi mật khẩu thành công!');
+const editLoginInfo = () => {
+    console.log('Chỉnh sửa thông tin đăng nhập...');
+    toast.info('Chức năng đang được phát triển!');
 };
 
 const handleLogout = () => {
@@ -105,36 +130,80 @@ const handleLogout = () => {
 };
 
 onMounted(() => {
-    // Lấy thông tin người dùng từ store để điền vào form
-    if (auth.isAuthenticated) {
-        profile.value.name = auth.user.name;
+    if (auth.isAuthenticated && auth.user) {
+        profile.value.name = auth.user.name || 'Trần Minh Tuấn';
     }
 });
 </script>
 
 <style scoped>
-/* Ghi đè style mặc định của list-group để khớp với thiết kế */
+/* CSS cho Sidebar (Giữ nguyên) */
 .account-sidebar .list-group-item {
-  border: none;
-  font-weight: 500;
-  color: #495057;
-  padding: 0.9rem 1.25rem;
-  border-radius: 0.5rem;
-  margin-bottom: 0.25rem; /* Thêm khoảng cách nhỏ giữa các mục */
+  border: none; font-weight: 500; color: #495057;
+  padding: 0.9rem 1.25rem; border-radius: 0.5rem; margin-bottom: 0.25rem;
   transition: background-color 0.2s, color 0.2s;
 }
 .account-sidebar .list-group-item i {
-  margin-right: 12px;
-  width: 20px;
-  text-align: center;
+  margin-right: 12px; width: 20px; text-align: center;
 }
-/* Style cho mục đang active */
 .account-sidebar .list-group-item.router-link-exact-active {
-  color: #fff;
-  background-color: var(--bs-primary);
+  color: #fff; background-color: var(--bs-primary);
 }
-/* Style khi hover */
 .account-sidebar .list-group-item:not(.router-link-exact-active):hover {
   background-color: #f0f2f5;
 }
-</style>
+
+/* --- CSS ĐÃ CẬP NHẬT CHO BỐ CỤC CHUYÊN NGHIỆP --- */
+.section-title {
+  font-weight: 600;
+  font-size: 1.25rem;
+  color: #343a40;
+  margin-bottom: 1.5rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.info-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.1rem 0;
+  border-bottom: 1px solid #f8f9fa; /* Đường kẻ siêu mờ */
+}
+
+/* Loại bỏ đường kẻ cho mục cuối cùng */
+.section-content .info-item:last-child {
+    border-bottom: none;
+}
+
+.info-label {
+  font-size: 0.95rem;
+  color: #6c757d;
+}
+
+.info-value {
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: #212529;
+  text-align: right;
+}
+
+.section-footer {
+    text-align: right;
+    padding-top: 2rem;
+}
+
+.update-btn {
+  border-radius: 50px;
+  padding: 0.6rem 1.75rem;
+  font-weight: 600;
+  font-size: 0.9rem;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.update-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
+}
+</style>```
