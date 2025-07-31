@@ -1,11 +1,17 @@
 package com.example.datnspct.Model;
 
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-
 
 @Entity
 @Table(name = "KhachHang")
@@ -34,10 +40,16 @@ public class KhachHang {
     @Column(name = "DiaChi", length = 255)
     private String diaChi;
 
-    @ManyToOne
-    @JoinColumn(name = "IdTK", referencedColumnName = "IdTK")
-    private TaiKhoan taiKhoan;
+    @Column(name = "IdTK", insertable = false, updatable = false)
+    private Integer idTK; // Read-only mapping for IdTK
+
+    @Column(name = "Email")
+    private String email;
 
     @Column(name = "TrangThai")
     private Boolean trangThai;
+
+    @ManyToOne
+    @JoinColumn(name = "IdTK", referencedColumnName = "IdTK")
+    private TaiKhoan taiKhoan; // Handles insert/update for IdTK
 }

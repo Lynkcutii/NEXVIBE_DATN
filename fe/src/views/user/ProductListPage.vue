@@ -1,42 +1,82 @@
+```vue
 <template>
   <div class="container py-4">
     <div class="row">
-      <!-- 1. Sidebar Lọc (Filter Sidebar) -->
+      <!-- 1. Sidebar Lọc -->
       <div class="col-lg-3">
         <div class="filter-sidebar position-sticky" style="top: 100px;">
           <h4 class="fw-bold mb-3">Bộ lọc</h4>
-          
+
           <!-- Lọc theo Danh mục -->
           <div class="mb-4">
             <h6 class="filter-title">Nhóm sản phẩm</h6>
-            <div class="form-check" v-for="cat in filters.categories" :key="cat.id">
-              <input class="form-check-input" type="checkbox" :id="`cat-${cat.id}`">
-              <label class="form-check-label" :for="`cat-${cat.id}`">{{ cat.name }}</label>
+            <div class="form-check" v-for="cat in categories" :key="cat.idDM">
+              <input class="form-check-input" type="checkbox" :id="`cat-${cat.idDM}`" 
+                     :checked="filters.selectedCategories.some(c => c.idDM === cat.idDM)"
+                     @change="selectCategory(cat)">
+              <label class="form-check-label" :for="`cat-${cat.idDM}`">{{ cat.tenDM }}</label>
             </div>
           </div>
-          
+
+          <!-- Lọc theo Thương hiệu -->
+          <div class="mb-4">
+            <h6 class="filter-title">Thương hiệu</h6>
+            <div class="form-check" v-for="brand in brands" :key="brand.idThuongHieu">
+              <input class="form-check-input" type="checkbox" :id="`brand-${brand.idThuongHieu}`" 
+                     :checked="filters.selectedBrands.some(b => b.idThuongHieu === brand.idThuongHieu)"
+                     @change="selectBrand(brand)">
+              <label class="form-check-label" :for="`brand-${brand.idThuongHieu}`">{{ brand.tenThuongHieu }}</label>
+            </div>
+          </div>
+
+          <!-- Lọc theo Màu sắc -->
+          <div class="mb-4">
+            <h6 class="filter-title">Màu sắc</h6>
+            <div class="form-check" v-for="color in colors" :key="color.idMauSac">
+              <input class="form-check-input" type="checkbox" :id="`color-${color.idMauSac}`" 
+                     :checked="filters.selectedColors.some(c => c.idMauSac === color.idMauSac)"
+                     @change="selectColor(color)">
+              <label class="form-check-label" :for="`color-${color.idMauSac}`">{{ color.tenMauSac }}</label>
+            </div>
+          </div>
+
+          <!-- Lọc theo Chất liệu -->
+          <div class="mb-4">
+            <h6 class="filter-title">Chất liệu</h6>
+            <div class="form-check" v-for="material in materials" :key="material.idChatLieu">
+              <input class="form-check-input" type="checkbox" :id="`material-${material.idChatLieu}`" 
+                     :checked="filters.selectedMaterials.some(m => m.idChatLieu === material.idChatLieu)"
+                     @change="selectMaterial(material)">
+              <label class="form-check-label" :for="`material-${material.idChatLieu}`">{{ material.tenChatLieu }}</label>
+            </div>
+          </div>
+
           <!-- Lọc theo Size -->
           <div class="mb-4">
             <h6 class="filter-title">Kích cỡ</h6>
             <div class="d-flex flex-wrap gap-2">
-                <button v-for="size in filters.sizes" :key="size" class="btn btn-sm btn-outline-dark size-btn">{{ size }}</button>
+              <button v-for="size in sizes" :key="size.idSize" 
+                      class="btn btn-sm btn-outline-dark size-btn"
+                      :class="{ 'active': filters.selectedSizes.includes(size.tenSize) }"
+                      @click="selectSize(size.tenSize)">{{ size.tenSize }}</button>
             </div>
           </div>
 
           <!-- Lọc theo Giá -->
           <div>
             <h6 class="filter-title">Mức giá</h6>
-            <input type="range" class="form-range" min="0" max="2000000" step="100000">
+            <input type="range" class="form-range" min="0" max="2000000" step="100000" 
+                   v-model="filters.priceRange[1]">
             <div class="d-flex justify-content-between small text-muted">
               <span>0đ</span>
-              <span>2.000.000đ</span>
+              <span>{{ filters.priceRange[1].toLocaleString('vi-VN') }}đ</span>
             </div>
           </div>
 
-          <button class="btn btn-dark w-100 mt-4">Áp dụng</button>
+          <button class="btn btn-dark w-100 mt-4" @click="applyFilters">Áp dụng</button>
         </div>
       </div>
-      
+
       <!-- 2 & 3. Khu vực chính: Sắp xếp và Lưới sản phẩm -->
       <div class="col-lg-9">
         <!-- Breadcrumb và Tiêu đề -->
@@ -46,33 +86,47 @@
             <li class="breadcrumb-item active" aria-current="page">Sản phẩm</li>
           </ol>
         </nav>
-     
+        <h1 class="fw-bolder">Đồ Thể Thao</h1>
 
         <!-- Khu vực sắp xếp -->
         <div class="d-flex justify-content-between align-items-center mb-4">
-          <span class="text-muted">{{ products.length }} kết quả</span>
+          <span class="text-muted">{{ pagination.total }} kết quả</span>
           <div class="d-flex align-items-center">
             <label class="form-label me-2 mb-0">Sắp xếp theo</label>
-            <select class="form-select form-select-sm" style="width: 150px;">
-              <option selected>Mới nhất</option>
-              <option value="1">Giá: Tăng dần</option>
-              <option value="2">Giá: Giảm dần</option>
-              <option value="3">Bán chạy nhất</option>
+            <select class="form-select form-select-sm" style="width: 150px;" v-model="filters.sortBy" @change="applyFilters">
+              <option value="newest">Mới nhất</option>
+              <option value="price_asc">Giá: Tăng dần</option>
+              <option value="price_desc">Giá: Giảm dần</option>
+              <option value="bestselling">Bán chạy nhất</option>
             </select>
           </div>
         </div>
 
+        <!-- Loading state -->
+        <div v-if="loading" class="text-center py-5">
+          <div class="spinner-border" role="status">
+            <span class="visually-hidden">Đang tải...</span>
+          </div>
+        </div>
+
+        <!-- Error state -->
+        <div v-else-if="error" class="alert alert-danger" role="alert">
+          {{ error }}
+        </div>
+
         <!-- Lưới sản phẩm -->
-        <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+        <div v-else class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
           <div class="col" v-for="product in products" :key="product.id">
             <ProductCard :product="product" />
           </div>
         </div>
-        
+
         <!-- Nút Xem thêm & Phân trang -->
-        <div class="text-center mt-5">
-            <button class="btn btn-outline-dark btn-lg">XEM THÊM</button>
-            <p class="text-muted mt-2">Hiển thị 12 trên tổng số 258 sản phẩm</p>
+        <div v-if="!loading && !error && products.length > 0" class="text-center mt-5">
+          <button v-if="products.length < pagination.total" 
+                  class="btn btn-outline-dark btn-lg" 
+                  @click="loadMore">XEM THÊM</button>
+          <p class="text-muted mt-2">Hiển thị {{ products.length }} trên tổng số {{ pagination.total }} sản phẩm</p>
         </div>
       </div>
     </div>
@@ -80,50 +134,218 @@
 </template>
 
 <script setup>
-import { ref, reactive } from 'vue';
+import { ref, reactive, onMounted, computed } from 'vue';
+import { useRoute } from 'vue-router';
 import ProductCard from '@/components/user/ProductCard.vue';
+import axios from 'axios';
 
-// Dữ liệu mẫu cho bộ lọc
+// API Base URL
+const API_BASE_URL = 'http://localhost:8080/api';
+
+// State
+const products = ref([]);
+const categories = ref([]);
+const brands = ref([]);
+const colors = ref([]);
+const materials = ref([]);
+const sizes = ref([]);
+const loading = ref(false);
+const error = ref(null);
+
+// Filters
 const filters = reactive({
-  categories: [
-    { id: 1, name: 'Áo Thun' }, { id: 2, name: 'Áo Polo' }, { id: 3, name: 'Quần Short' },
-    { id: 4, name: 'Quần Lót' }, { id: 5, name: 'Áo Khoác' }, { id: 6, name: 'Quần Dài' },
-  ],
-  sizes: ['S', 'M', 'L', 'XL', '2XL', '3XL'],
+  selectedCategories: [],
+  selectedBrands: [],
+  selectedColors: [],
+  selectedMaterials: [],
+  selectedSizes: [],
+  priceRange: [0, 2000000],
+  sortBy: 'newest'
 });
 
-// Dữ liệu mẫu cho sản phẩm
-const products = ref([
-    { id: 1, name: 'Áo Thun Thể Thao Coolmate Basics', price: 99000, slug: 'ao-thun-coolmate-basics', imageUrl: 'https://picsum.photos/400/400?random=10' },
-    { id: 2, name: 'Quần Short 7-inch Đa Năng', price: 169000, slug: 'quan-short-7-inch', imageUrl: 'https://picsum.photos/400/400?random=11' },
-    { id: 3, name: 'Áo Thun Cotton 220GSM Compact', price: 159000, slug: 'ao-thun-220gsm', imageUrl: 'https://picsum.photos/400/400?random=12' },
-    { id: 4, name: 'Combo 3 Quần Lót Nam Trunk Excool', price: 289000, slug: 'combo-3-quan-lot-excool', imageUrl: 'https://picsum.photos/400/400?random=13' },
-    { id: 5, name: 'Quần Short Thể Thao 5" Moving', price: 149000, slug: 'quan-short-5-moving', imageUrl: 'https://picsum.photos/400/400?random=14' },
-    { id: 6, name: 'Áo Thun Thể Thao Melange Exdry', price: 189000, slug: 'ao-thun-melange-exdry', imageUrl: 'https://picsum.photos/400/400?random=15' },
-]);
+// Pagination
+const pagination = reactive({
+  page: 0,
+  size: 12,
+  total: 0
+});
+
+// Computed
+const selectedCategoryIds = computed(() => filters.selectedCategories.map(cat => cat.idDM));
+
+// Methods
+const loadCategories = async () => {
+  try {
+    const response = await axios.get(`${API_BASE_URL}/danhmuc`);
+    categories.value = response.data;
+  } catch (err) {
+    error.value = 'Không thể tải danh mục: ' + (err.response?.data?.message || err.message);
+    console.error('Lỗi khi tải danh mục:', err);
+  }
+};
+
+const loadBrands = async () => {
+  try {
+    const response = await axios.get(`${API_BASE_URL}/thuonghieu`);
+    brands.value = response.data;
+  } catch (err) {
+    error.value = 'Không thể tải thương hiệu: ' + (err.response?.data?.message || err.message);
+    console.error('Lỗi khi tải thương hiệu:', err);
+  }
+};
+
+const loadColors = async () => {
+  try {
+    const response = await axios.get(`${API_BASE_URL}/mausac`);
+    colors.value = response.data;
+  } catch (err) {
+    error.value = 'Không thể tải màu sắc: ' + (err.response?.data?.message || err.message);
+    console.error('Lỗi khi tải màu sắc:', err);
+  }
+};
+
+const loadMaterials = async () => {
+  try {
+    const response = await axios.get(`${API_BASE_URL}/chatlieu`);
+    materials.value = response.data;
+  } catch (err) {
+    error.value = 'Không thể tải chất liệu: ' + (err.response?.data?.message || err.message);
+    console.error('Lỗi khi tải chất liệu:', err);
+  }
+};
+
+const loadSizes = async () => {
+  try {
+    const response = await axios.get(`${API_BASE_URL}/size`);
+    sizes.value = response.data;
+  } catch (err) {
+    error.value = 'Không thể tải kích cỡ: ' + (err.response?.data?.message || err.message);
+    console.error('Lỗi khi tải kích cỡ:', err);
+  }
+};
+
+const loadProducts = async () => {
+  loading.value = true;
+  error.value = null;
+
+  try {
+    const params = {
+      page: pagination.page,
+      size: pagination.size,
+      danhMuc: selectedCategoryIds.value.join(',') || null,
+      thuongHieu: filters.selectedBrands.map(b => b.tenThuongHieu).join(',') || null,
+      mauSac: filters.selectedColors.map(c => c.tenMauSac).join(',') || null,
+      chatLieu: filters.selectedMaterials.map(m => m.tenChatLieu).join(',') || null,
+      tenSize: filters.selectedSizes.join(',') || null,
+      minPrice: filters.priceRange[0],
+      maxPrice: filters.priceRange[1]
+    };
+
+    const response = await axios.get(`${API_BASE_URL}/sanphamchitiet/filter`, { 
+      params,
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem('token') || ''}` // Thêm token nếu cần xác thực
+      }
+    });
+    
+    products.value = pagination.page === 0 
+      ? response.data.content 
+      : [...products.value, ...response.data.content];
+    pagination.total = response.data.totalElements;
+  } catch (err) {
+    error.value = 'Không thể tải danh sách sản phẩm: ' + (err.response?.data?.message || err.message);
+    console.error('Lỗi khi tải sản phẩm:', err);
+  } finally {
+    loading.value = false;
+  }
+};
+
+const applyFilters = () => {
+  pagination.page = 0;
+  loadProducts();
+};
+
+const loadMore = () => {
+  pagination.page++;
+  loadProducts();
+};
+
+const selectCategory = (category) => {
+  const index = filters.selectedCategories.findIndex(cat => cat.idDM === category.idDM);
+  if (index > -1) {
+    filters.selectedCategories.splice(index, 1);
+  } else {
+    filters.selectedCategories.push(category);
+  }
+};
+
+const selectBrand = (brand) => {
+  const index = filters.selectedBrands.findIndex(b => b.idThuongHieu === brand.idThuongHieu);
+  if (index > -1) {
+    filters.selectedBrands.splice(index, 1);
+  } else {
+    filters.selectedBrands.push(brand);
+  }
+};
+
+const selectColor = (color) => {
+  const index = filters.selectedColors.findIndex(c => c.idMauSac === color.idMauSac);
+  if (index > -1) {
+    filters.selectedColors.splice(index, 1);
+  } else {
+    filters.selectedColors.push(color);
+  }
+};
+
+const selectMaterial = (material) => {
+  const index = filters.selectedMaterials.findIndex(m => m.idChatLieu === material.idChatLieu);
+  if (index > -1) {
+    filters.selectedMaterials.splice(index, 1);
+  } else {
+    filters.selectedMaterials.push(material);
+  }
+};
+
+const selectSize = (size) => {
+  const index = filters.selectedSizes.indexOf(size);
+  if (index > -1) {
+    filters.selectedSizes.splice(index, 1);
+  } else {
+    filters.selectedSizes.push(size);
+  }
+};
+
+// Lifecycle
+onMounted(() => {
+  loadCategories();
+  loadBrands();
+  loadColors();
+  loadMaterials();
+  loadSizes();
+  loadProducts();
+});
 </script>
 
 <style scoped>
+.filter-sidebar {
+  background: #f8f9fa;
+  padding: 20px;
+  border-radius: 8px;
+}
+
 .filter-title {
-    font-weight: 600;
-    margin-bottom: 1rem;
-    font-size: 1rem;
+  font-weight: 600;
+  margin-bottom: 10px;
 }
-.form-check-label {
-    cursor: pointer;
+
+.size-btn.active {
+  background-color: #343a40;
+  color: white;
 }
-.size-btn {
-    width: 45px;
-    height: 45px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-.breadcrumb-item a {
-    text-decoration: none;
-    color: var(--bs-primary);
-}
-.breadcrumb-item a:hover {
-    text-decoration: underline;
+
+.btn-outline-dark:hover {
+  background-color: #343a40;
+  color: white;
 }
 </style>
+```

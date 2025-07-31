@@ -1,12 +1,13 @@
 package com.example.datnspct.Service;
 
-import com.example.datnspct.dto.GioHangCTDTO;
-import com.example.datnspct.Model.GioHangCT;
 import com.example.datnspct.Model.GioHang;
+import com.example.datnspct.Model.GioHangCT;
 import com.example.datnspct.Model.SanPhamChiTiet;
 import com.example.datnspct.Repository.GioHangCTRepository;
 import com.example.datnspct.Repository.GioHangRepository;
 import com.example.datnspct.Repository.SanPhamChiTietRepository;
+import com.example.datnspct.Repository.login.TaiKhoanRepository;
+import com.example.datnspct.dto.GioHangCTDTO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -21,13 +22,15 @@ public class GioHangCTService {
     private GioHangRepository gioHangRepository;
     @Autowired
     private SanPhamChiTietRepository sanPhamChiTietRepository;
+    @Autowired
+    private TaiKhoanRepository taiKhoanRepository;
 
     // Entity -> DTO
     private GioHangCTDTO toDTO(GioHangCT entity) {
         GioHangCTDTO dto = new GioHangCTDTO();
         dto.setIdGHCT(entity.getIdGHCT());
         dto.setIdGH(entity.getGioHang() != null ? entity.getGioHang().getIdGH() : null);
-        dto.setIdSPCT(entity.getSanPhamChiTiet() != null ? Integer.valueOf(entity.getSanPhamChiTiet().getMaSPCT()) : null);
+        dto.setIdSPCT(entity.getSanPhamChiTiet() != null ? entity.getSanPhamChiTiet().getId() : null); // Sửa: dùng IdSPCT
         dto.setSoLuong(entity.getSoLuong());
         dto.setDonGia(entity.getDonGia());
         return dto;
@@ -101,4 +104,4 @@ public class GioHangCTService {
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy chi tiết giỏ hàng"));
         gioHangCTRepository.delete(entity);
     }
-} 
+}

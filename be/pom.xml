@@ -39,60 +39,6 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
         </dependency>
-<!--        <dependency>-->
-<!--            <groupId>com.mbamc.common</groupId>-->
-<!--            <artifactId>common-util</artifactId>-->
-<!--            <version>${common.version}</version>-->
-<!--        </dependency>-->
-
-<!--        <dependency>-->
-<!--            <groupId>com.mbamc.common</groupId>-->
-<!--            <artifactId>common-model</artifactId>-->
-<!--            <version>${common.version}</version>-->
-<!--        </dependency>-->
-        <!--        <dependency>-->
-        <!--            <groupId>com.mbamc.common</groupId>-->
-        <!--            <artifactId>common-web</artifactId>-->
-        <!--            <version>${common.version}</version>-->
-        <!--        </dependency>-->
-        <!--        <dependency>-->
-        <!--            <groupId>org.springframework.boot</groupId>-->
-        <!--            <artifactId>spring-boot-starter-security</artifactId>-->
-        <!--        </dependency>-->
-        <!--        <dependency>-->
-        <!--            <groupId>org.springframework.boot</groupId>-->
-        <!--            <artifactId>spring-boot-starter-oauth2-resource-server</artifactId>-->
-        <!--        </dependency>-->
-        <!--        <dependency>-->
-        <!--            <groupId>com.mbamc.common</groupId>-->
-        <!--            <artifactId>common-persistence</artifactId>-->
-        <!--            <version>${common.version}</version>-->
-        <!--        </dependency>-->
-        <!--        <dependency>-->
-        <!--            <groupId>com.mbamc.common</groupId>-->
-        <!--            <artifactId>common-cache</artifactId>-->
-        <!--            <version>${common.version}</version>-->
-        <!--        </dependency>-->
-        <!--        <dependency>-->
-        <!--            <groupId>com.mbamc.common</groupId>-->
-        <!--            <artifactId>common-sms</artifactId>-->
-        <!--            <version>${common.version}</version>-->
-        <!--        </dependency>-->
-        <!--        <dependency>-->
-        <!--            <groupId>com.mbamc.common</groupId>-->
-        <!--            <artifactId>common-consumer</artifactId>-->
-        <!--            <version>${common.version}</version>-->
-        <!--        </dependency>-->
-        <!--        <dependency>-->
-        <!--            <groupId>com.mbamc.common</groupId>-->
-        <!--            <artifactId>common-cmv</artifactId>-->
-        <!--            <version>${common.version}</version>-->
-        <!--        </dependency>-->
-        <!--        <dependency>-->
-        <!--            <groupId>com.mbamc.common</groupId>-->
-        <!--            <artifactId>common-encrypt</artifactId>-->
-        <!--            <version>${common.version}</version>-->
-        <!--        </dependency>-->
         <dependency>
             <groupId>com.microsoft.sqlserver</groupId>
             <artifactId>mssql-jdbc</artifactId>
@@ -127,23 +73,14 @@
             <artifactId>validation-api</artifactId>
             <version>2.0.1.Final</version>
         </dependency>
-
-        <!--&lt;!&ndash;         Hibernate Validator (implement của validation-api) &ndash;&gt;-->
-        <!--        <dependency>-->
-        <!--            <groupId>org.hibernate.validator</groupId>-->
-        <!--            <artifactId>hibernate-validator</artifactId>-->
-        <!--            <version>6.2.5.Final</version>-->
-        <!--        </dependency>-->
-
-        <!--        &lt;!&ndash; JPA API (nếu cần dùng riêng, thường Spring Boot đã có sẵn trong starter-data-jpa) &ndash;&gt;-->
-        <!--        <dependency>-->
-        <!--            <groupId>javax.persistence</groupId>-->
-        <!--            <artifactId>javax.persistence-api</artifactId>-->
-        <!--            <version>2.2</version>-->
-        <!--        </dependency>-->
         <dependency>
             <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-actuator</artifactId>
+            <artifactId>spring-boot-starter-security</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-hateoas</artifactId>
+            <version>3.5.3</version>
         </dependency>
     </dependencies>
 

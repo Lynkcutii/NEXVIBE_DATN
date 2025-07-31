@@ -1,6 +1,11 @@
 package com.example.datnspct.Model;
 
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -20,6 +25,9 @@ public class KhuyenMai {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "IdKM")
     private Integer idKM;
+
+    @Column(name = "MaKM", nullable = false, unique = true)
+    private String maKM;
 
     @Column(name = "MaVoucher", length = 50, unique = true, nullable = false)
     private String maVoucher;

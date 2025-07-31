@@ -1,28 +1,35 @@
 package com.example.datnspct.Model;
 
-import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.Table;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.util.List;
 
 @Entity
 @Table(name = "SanPham")
-@AllArgsConstructor
-@NoArgsConstructor
 @Getter
 @Setter
 public class SanPham {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "IdSP")
-    private Integer idSP;
+    private Integer id;
 
-    @Column(name = "MaSP", length = 50)
+    @Column(name = "MaSP")
     private String maSP;
 
-    @Column(name = "TenSP", length = 100)
+    @Column(name = "TenSP")
     private String tenSP;
 
     @Column(name = "TrangThai")
@@ -32,4 +39,7 @@ public class SanPham {
     @JoinColumn(name = "IdDM")
     private DanhMuc danhMuc;
 
+    @OneToMany(mappedBy = "sanPham", fetch = FetchType.LAZY)
+    @JsonIgnore // Ngăn serialize danh sách SanPhamChiTiet
+    private List<SanPhamChiTiet> sanPhamChiTiets;
 }

@@ -11,4 +11,8 @@ export default defineConfig({
       '@': path.resolve(__dirname, './src'),
     },
   },
+  server: {
+    port: 5175, // Cổng mặc định cho server phát triển
+    open: true, // Mở trình duyệt khi server khởi động
+  },
 })

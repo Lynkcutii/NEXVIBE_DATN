@@ -1,10 +1,10 @@
 package com.example.datnspct.Service;
 
-import com.example.datnspct.dto.ImgDTO;
 import com.example.datnspct.Model.Img;
 import com.example.datnspct.Model.SanPhamChiTiet;
 import com.example.datnspct.Repository.ImgRepository;
 import com.example.datnspct.Repository.SanPhamChiTietRepository;
+import com.example.datnspct.dto.ImgDTO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 

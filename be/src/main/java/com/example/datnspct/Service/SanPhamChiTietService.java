@@ -1,21 +1,15 @@
 package com.example.datnspct.Service;
 
-import com.example.datnspct.Model.ChatLieu;
-import com.example.datnspct.Model.MauSac;
-import com.example.datnspct.Model.Size;
-import com.example.datnspct.Model.ThuongHieu;
-import com.example.datnspct.dto.SanPhamChiTietDTO;
-import com.example.datnspct.Model.SanPham;
 import com.example.datnspct.Model.SanPhamChiTiet;
 import com.example.datnspct.Repository.SanPhamChiTietRepository;
-import com.example.datnspct.Repository.SanPhamRepository;
-import com.example.datnspct.Repository.ChatLieuRepository;
-import com.example.datnspct.Repository.ThuongHieuRepository;
-import com.example.datnspct.Repository.SizeRepository;
-import com.example.datnspct.Repository.MauSacRepository;
+import com.example.datnspct.dto.SanPhamChiTietDTO;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -25,98 +19,78 @@ public class SanPhamChiTietService {
     @Autowired
     private SanPhamChiTietRepository sanPhamChiTietRepository;
 
-    @Autowired
-    private SanPhamRepository sanPhamRepository;
-
-    @Autowired
-    private ChatLieuRepository chatLieuRepository;
-
-    @Autowired
-    private ThuongHieuRepository thuongHieuRepository;
-
-    @Autowired
-    private SizeRepository sizeRepository;
-
-    @Autowired
-    private MauSacRepository mauSacRepository;
-
-    // Ánh xạ thủ công: Từ Entity sang DTO
-    private SanPhamChiTietDTO chuyenSangDTO(SanPhamChiTiet sanPhamChiTiet) {
-        return new SanPhamChiTietDTO(sanPhamChiTiet);
-    }
-
-    // Ánh xạ thủ công: Từ DTO sang Entity
-    private SanPhamChiTiet chuyenSangEntity(SanPhamChiTietDTO dto) {
-        SanPhamChiTiet sanPhamChiTiet = new SanPhamChiTiet();
-        sanPhamChiTiet.setId(dto.getId());
-        sanPhamChiTiet.setMaSPCT(dto.getMaSPCT());
-        // Lấy entity từ repository
-        SanPham sanPham = sanPhamRepository.findById(dto.getIdSP())
-                .orElseThrow(() -> new RuntimeException("Sản phẩm không tồn tại"));
-        sanPhamChiTiet.setSanPham(sanPham);
-        ChatLieu chatLieu = chatLieuRepository.findById(dto.getIdChatLieu())
-                .orElseThrow(() -> new RuntimeException("Chất liệu không tồn tại"));
-        sanPhamChiTiet.setChatLieu(chatLieu);
-        ThuongHieu thuongHieu = thuongHieuRepository.findById(dto.getIdThuongHieu())
-                .orElseThrow(() -> new RuntimeException("Thương hiệu không tồn tại"));
-        sanPhamChiTiet.setThuongHieu(thuongHieu);
-        Size size = sizeRepository.findById(dto.getIdSize())
-                .orElseThrow(() -> new RuntimeException("Size không tồn tại"));
-        sanPhamChiTiet.setSize(size);
-        MauSac mauSac = mauSacRepository.findById(dto.getIdMauSac())
-                .orElseThrow(() -> new RuntimeException("Màu sắc không tồn tại"));
-        sanPhamChiTiet.setMauSac(mauSac);
-        sanPhamChiTiet.setSoLuong(dto.getSoLuong());
-        sanPhamChiTiet.setGia(dto.getGia());
-        sanPhamChiTiet.setMoTa(dto.getMoTa());
-        sanPhamChiTiet.setTrangThai(dto.getTrangThai());
-        return sanPhamChiTiet;
-    }
-
-    // Tạo mới
     public SanPhamChiTietDTO taoSanPhamChiTiet(SanPhamChiTietDTO dto) {
-        // Kiểm tra sản phẩm tồn tại
-        sanPhamRepository.findById(dto.getIdSP())
-                .orElseThrow(() -> new RuntimeException("Sản phẩm không tồn tại"));
-        SanPhamChiTiet sanPhamChiTiet = chuyenSangEntity(dto);
-        SanPhamChiTiet sanPhamChiTietDaLuu = sanPhamChiTietRepository.save(sanPhamChiTiet);
-        return chuyenSangDTO(sanPhamChiTietDaLuu);
+        SanPhamChiTiet spct = new SanPhamChiTiet();
+        // Ánh xạ DTO sang entity
+        spct.setMaSPCT(dto.getMaSPCT());
+        // Thêm logic để tìm và gán SanPham, DanhMuc, ThuongHieu, MauSac, ChatLieu, Size
+        SanPhamChiTiet saved = sanPhamChiTietRepository.save(spct);
+        return convertToDTO(saved);
     }
 
-    // Lấy theo ID
     public SanPhamChiTietDTO laySanPhamChiTietTheoId(Integer id) {
-        SanPhamChiTiet sanPhamChiTiet = sanPhamChiTietRepository.findById(id)
+        SanPhamChiTiet spct = sanPhamChiTietRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Sản phẩm chi tiết không tồn tại"));
-        return chuyenSangDTO(sanPhamChiTiet);
+        return convertToDTO(spct);
     }
 
-    // Lấy tất cả
+    public List<SanPhamChiTietDTO> laySanPhamChiTietTheoSanPham(Integer idSP) {
+        List<SanPhamChiTiet> spctList = sanPhamChiTietRepository.findBySanPhamId(idSP);
+        return spctList.stream().map(this::convertToDTO).collect(Collectors.toList());
+    }
+
     public List<SanPhamChiTietDTO> layTatCaSanPhamChiTiet() {
-        return sanPhamChiTietRepository.findAll().stream()
-                .map(this::chuyenSangDTO)
-                .collect(Collectors.toList());
+        List<SanPhamChiTiet> spctList = sanPhamChiTietRepository.findAll();
+        return spctList.stream().map(this::convertToDTO).collect(Collectors.toList());
     }
 
-    // Cập nhật
     public SanPhamChiTietDTO capNhatSanPhamChiTiet(Integer id, SanPhamChiTietDTO dto) {
-        SanPhamChiTiet sanPhamChiTiet = sanPhamChiTietRepository.findById(id)
+        SanPhamChiTiet spct = sanPhamChiTietRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Sản phẩm chi tiết không tồn tại"));
-        sanPhamChiTiet.setMaSPCT(dto.getMaSPCT());
-        sanPhamChiTiet.setSoLuong(dto.getSoLuong());
-        sanPhamChiTiet.setGia(dto.getGia());
-        sanPhamChiTiet.setMoTa(dto.getMoTa());
-        sanPhamChiTiet.setTrangThai(dto.getTrangThai());
-        // Kiểm tra sản phẩm tồn tại
-        sanPhamRepository.findById(dto.getIdSP())
-                .orElseThrow(() -> new RuntimeException("Sản phẩm không tồn tại"));
-        SanPhamChiTiet sanPhamChiTietDaCapNhat = sanPhamChiTietRepository.save(sanPhamChiTiet);
-        return chuyenSangDTO(sanPhamChiTietDaCapNhat);
+        // Ánh xạ DTO sang entity
+        spct.setMaSPCT(dto.getMaSPCT());
+        spct.setGia(dto.getGia());
+        // Thêm logic để cập nhật các trường khác
+        SanPhamChiTiet updated = sanPhamChiTietRepository.save(spct);
+        return convertToDTO(updated);
     }
 
-    // Xóa
     public void xoaSanPhamChiTiet(Integer id) {
-        SanPhamChiTiet sanPhamChiTiet = sanPhamChiTietRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Sản phẩm chi tiết không tồn tại"));
-        sanPhamChiTietRepository.delete(sanPhamChiTiet);
+        sanPhamChiTietRepository.deleteById(id);
+    }
+
+    public Page<SanPhamChiTietDTO> findWithFilters(String keyword, String danhMuc, String thuongHieu,
+                                                   String mauSac, String chatLieu, String size,
+                                                   BigDecimal minPrice, BigDecimal maxPrice,
+                                                   Pageable pageable) {
+        List<Integer> danhMucIds = danhMuc != null && !danhMuc.isEmpty() ?
+                Arrays.stream(danhMuc.split(","))
+                        .map(Integer::parseInt)
+                        .collect(Collectors.toList()) : null;
+
+        Page<SanPhamChiTiet> page = sanPhamChiTietRepository.findByFilters(
+                keyword, danhMucIds, thuongHieu, mauSac, chatLieu, size,
+                minPrice != null ? minPrice : BigDecimal.ZERO,
+                maxPrice != null ? maxPrice : new BigDecimal("2000000"),
+                pageable);
+        return page.map(this::convertToDTO);
+    }
+
+    private SanPhamChiTietDTO convertToDTO(SanPhamChiTiet spct) {
+        SanPhamChiTietDTO dto = new SanPhamChiTietDTO();
+        dto.setId(spct.getId());
+        dto.setIdSP(spct.getSanPham() != null ? spct.getSanPham().getId() : null);
+        dto.setMaSPCT(spct.getMaSPCT());
+        dto.setTenSP(spct.getSanPham() != null ? spct.getSanPham().getTenSP() : null);
+        dto.setGia(spct.getGia());
+        dto.setSoLuong(spct.getSoLuong());
+        dto.setMoTa(spct.getMoTa());
+        dto.setTrangThai(spct.getTrangThai());
+        dto.setTenDanhMuc(spct.getDanhMuc() != null ? spct.getDanhMuc().getTenDM() : null);
+        dto.setTenThuongHieu(spct.getThuongHieu() != null ? spct.getThuongHieu().getTenThuongHieu() : null);
+        dto.setTenMauSac(spct.getMauSac() != null ? spct.getMauSac().getTenMauSac() : null);
+        dto.setTenChatLieu(spct.getChatLieu() != null ? spct.getChatLieu().getTenChatLieu() : null);
+        dto.setTenSize(spct.getSize() != null ? spct.getSize().getTenSize() : null);
+        return dto;
     }
 }

@@ -1,8 +1,8 @@
 package com.example.datnspct.Service;
 
-import com.example.datnspct.dto.SanPhamDTO;
 import com.example.datnspct.Model.SanPham;
 import com.example.datnspct.Repository.SanPhamRepository;
+import com.example.datnspct.dto.SanPhamDTO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -18,7 +18,7 @@ public class SanPhamService {
     // Ánh xạ thủ công: Từ Entity sang DTO
     private SanPhamDTO chuyenSangDTO(SanPham sanPham) {
         SanPhamDTO dto = new SanPhamDTO();
-        dto.setIdSP(sanPham.getIdSP());
+        dto.setIdSP(sanPham.getId());
         dto.setMaSP(sanPham.getMaSP());
         dto.setTenSP(sanPham.getTenSP());
         dto.setTrangThai(sanPham.getTrangThai());
@@ -28,7 +28,7 @@ public class SanPhamService {
     // Ánh xạ thủ công: Từ DTO sang Entity
     private SanPham chuyenSangEntity(SanPhamDTO dto) {
         SanPham sanPham = new SanPham();
-        sanPham.setIdSP(dto.getIdSP());
+        sanPham.setId(dto.getIdSP());
         sanPham.setMaSP(dto.getMaSP());
         sanPham.setTenSP(dto.getTenSP());
         sanPham.setTrangThai(dto.getTrangThai());

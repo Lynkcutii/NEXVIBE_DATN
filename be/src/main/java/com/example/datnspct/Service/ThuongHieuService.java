@@ -1,8 +1,8 @@
 package com.example.datnspct.Service;
 
-import com.example.datnspct.dto.ThuongHieuDTO;
 import com.example.datnspct.Model.ThuongHieu;
 import com.example.datnspct.Repository.ThuongHieuRepository;
+import com.example.datnspct.dto.ThuongHieuDTO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
