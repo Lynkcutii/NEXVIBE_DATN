@@ -1,8 +1,8 @@
 package com.example.datnspct.Service;
 
-import com.example.datnspct.dto.SizeDTO;
 import com.example.datnspct.Model.Size;
 import com.example.datnspct.Repository.SizeRepository;
+import com.example.datnspct.dto.SizeDTO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 

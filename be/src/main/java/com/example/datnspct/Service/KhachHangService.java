@@ -1,19 +1,14 @@
 package com.example.datnspct.Service;
 
-import com.example.datnspct.dto.KhachHangDTO;
 import com.example.datnspct.Model.KhachHang;
 import com.example.datnspct.Model.TaiKhoan;
 import com.example.datnspct.Repository.KhachHangRepository;
-import com.example.datnspct.Repository.TaiKhoanRepository;
+import com.example.datnspct.Repository.login.TaiKhoanRepository;
+import com.example.datnspct.dto.KhachHangDTO;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-
-
-import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 public class KhachHangService {
@@ -67,22 +62,21 @@ public class KhachHangService {
     public KhachHangDTO layKhachHangTheoId(Integer id) {
         KhachHang khachHang = khachHangRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Khách hàng không tìm thấy"));
-        KhachHangDTO dto = new KhachHangDTO();
-        dto.setIdKH(khachHang.getIdKH());
-        dto.setMaKH(khachHang.getMaKH());
-        dto.setTenKH(khachHang.getTenKH());
-        dto.setGioiTinh(khachHang.getGioiTinh());
-        dto.setSdt(khachHang.getSdt());
-        dto.setDiaChi(khachHang.getDiaChi());
-        dto.setIdTK(khachHang.getTaiKhoan() != null ? khachHang.getTaiKhoan().getIdTK() : null);
-        dto.setTrangThai(khachHang.getTrangThai());
-        return dto;
+        return chuyenSangDTO(khachHang);
+    }
+
+    // Lấy theo IdTK
+    public KhachHangDTO layKhachHangTheoTaiKhoanId(Integer idTK) {
+        KhachHang khachHang = khachHangRepository.findByTaiKhoanIdTK(idTK)
+                .orElseThrow(() -> new RuntimeException("Khách hàng không tìm thấy với idTK=" + idTK));
+        return chuyenSangDTO(khachHang);
     }
 
     // Lấy tất cả
     public Page<KhachHangDTO> layTatCaKhachHang(Pageable pageable) {
         return khachHangRepository.findAll(pageable).map(this::chuyenSangDTO);
     }
+
     public Page<KhachHangDTO> searchKhachHang(String keyword, Pageable pageable) {
         return khachHangRepository.findByTenKHContainingIgnoreCaseOrSdtContaining(keyword, keyword, pageable)
                 .map(this::chuyenSangDTO);

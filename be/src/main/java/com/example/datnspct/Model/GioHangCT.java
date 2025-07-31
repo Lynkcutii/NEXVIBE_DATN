@@ -1,10 +1,19 @@
 package com.example.datnspct.Model;
 
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+
+import java.math.BigDecimal;
 
 @Entity
 @Table(name = "GioHangCT")
@@ -22,6 +31,8 @@ public class GioHangCT {
     @JoinColumn(name = "IdGH", referencedColumnName = "IdGH")
     private GioHang gioHang;
 
+
+
     @ManyToOne
     @JoinColumn(name = "IdSPCT", referencedColumnName = "IdSPCT")
     private SanPhamChiTiet sanPhamChiTiet;
@@ -30,5 +41,5 @@ public class GioHangCT {
     private Integer soLuong;
 
     @Column(name = "DonGia")
-    private Double donGia;
+    private BigDecimal donGia;
 } 

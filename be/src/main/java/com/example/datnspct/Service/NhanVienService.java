@@ -1,10 +1,10 @@
 package com.example.datnspct.Service;
 
-import com.example.datnspct.dto.NhanVienDTO;
 import com.example.datnspct.Model.NhanVien;
 import com.example.datnspct.Model.TaiKhoan;
 import com.example.datnspct.Repository.NhanVienRepository;
-import com.example.datnspct.Repository.TaiKhoanRepository;
+import com.example.datnspct.Repository.login.TaiKhoanRepository;
+import com.example.datnspct.dto.NhanVienDTO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
