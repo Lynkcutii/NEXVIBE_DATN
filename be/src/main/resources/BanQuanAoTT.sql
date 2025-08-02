@@ -8,6 +8,7 @@ GO
 CREATE TABLE DanhMuc (
                          IdDM INT IDENTITY(1,1) PRIMARY KEY,
                          TenDM NVARCHAR(100),
+                         MaDM VARCHAR(50) UNIQUE;
                          TrangThai BIT
 );
 
@@ -48,6 +49,8 @@ CREATE TABLE SanPham (
                          IdSP INT IDENTITY(1,1) PRIMARY KEY,
                          MaSP VARCHAR(50),
                          TenSP NVARCHAR(100),
+                         NgayTao Date,
+                         TongSoLuongSanPham INT,
                          TrangThai BIT,
 );
 
@@ -225,3 +228,38 @@ CREATE TABLE GioHangCT (
                            FOREIGN KEY (IdGH) REFERENCES GioHang(IdGH),
                            FOREIGN KEY (IdSPCT) REFERENCES SanPhamCT(IdSPCT)
 );
+INSERT INTO DanhMuc (TenDM, TrangThai)
+VALUES
+    (N'Áo thun', 1),
+    (N'Quần jeans', 1),
+    (N'Áo khoác', 1);
+INSERT INTO ThuongHieu (MaThuongHieu, TenThuongHieu, TrangThai)
+VALUES
+    ('TH001', N'Nike', 1),
+    ('TH002', N'Adidas', 1),
+    ('TH003', N'Puma', 1);
+INSERT INTO ChatLieu (MaChatLieu, TenChatLieu, TrangThai)
+VALUES
+    ('CL001', N'Cotton', 1),
+    ('CL002', N'Polyester', 1),
+    ('CL003', N'Jean', 1);
+INSERT INTO MauSac (MaMauSac, TenMauSac, TrangThai)
+VALUES
+    ('MS001', N'Đen', 1),
+    ('MS002', N'Trắng', 1),
+    ('MS003', N'Xanh dương', 1);
+INSERT INTO Size (MaSize, TenSize, TrangThai)
+VALUES
+    ('S', 'Small', 1),
+    ('M', 'Medium', 1),
+    ('L', 'Large', 1);
+INSERT INTO SanPham (MaSP, TenSP, NgayTao, TongSoLuongSanPham, TrangThai) VALUES
+                                                                              ('SP001', N'Áo Thun Nam Basic', GETDATE(), 100, 1),
+                                                                              ('SP002', N'Quần Jogger Thể Thao', GETDATE(), 80, 1),
+                                                                              ('SP003', N'Áo Khoác Dù', GETDATE(), 60, 1);
+
+INSERT INTO SanPhamCT (MaSPCT, IdSP, IdChatLieu, IdThuongHieu, IdSize, IdMauSac, IdDM, SoLuong, Gia, MoTa, TrangThai) VALUES
+                                                                                                                          ('SPCT001', 1, 1, 1, 1, 1, 1, 30, 199000, N'Áo thun chất cotton co giãn', 1),
+                                                                                                                          ('SPCT002', 2, 2, 2, 2, 2, 2, 25, 299000, N'Jogger co giãn năng động', 1),
+                                                                                                                          ('SPCT003', 3, 3, 3, 3, 3, 3, 20, 399000, N'Áo khoác chống nước', 1);
+

@@ -29,11 +29,11 @@ public class KhuyenMai {
     @Column(name = "MaKM", nullable = false, unique = true)
     private String maKM;
 
-    @Column(name = "MaVoucher", length = 50, unique = true, nullable = false)
-    private String maVoucher;
+//    @Column(name = "MaVoucher", length = 50, unique = true, nullable = false)
+//    private String maVoucher;
 
-    @Column(name = "TenVoucher", length = 255, nullable = false)
-    private String tenVoucher;
+    @Column(name = "TenKM", length = 255, nullable = false)
+    private String tenKM;
 
     @Column(name = "HinhThucGiam", length = 20, nullable = false)
     private String hinhThucGiam; // 'percentage' hoặc 'fixed'

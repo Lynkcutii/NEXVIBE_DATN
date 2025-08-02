@@ -27,7 +27,7 @@ public class Voucher {
     @Column(name = "IdVoucher")
     private Integer idVoucher;
 
-    @Column(name = "MaVoucher", nullable = false)
+    @Column(name = "MaVoucher")
     private String maVoucher;
 
     @Column(name = "TenVoucher")

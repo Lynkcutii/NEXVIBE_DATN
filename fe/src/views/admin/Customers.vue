@@ -1,3 +1,4 @@
+```vue
 <template>
   <div class="d-flex justify-content-between align-items-center mb-4">
     <h1 class="h3 mb-0 text-gray-800">Quản lý Khách hàng</h1>
@@ -19,12 +20,12 @@
         </thead>
         <tbody>
           <tr v-for="customer in customers" :key="customer.idKH">
-            <th>{{ customer.idKH }}</th>
-            <td>{{ customer.maKH }}</td>
-            <td>{{ customer.tenKH }}</td>
-            <td>{{ customer.sdt }}</td>
-            <td>{{ customer.gioiTinh }}</td>
-            <td>{{ customer.diaChi }}</td>
+            <th>{{ customer.idKH || 'N/A' }}</th>
+            <td>{{ customer.maKH || 'N/A' }}</td>
+            <td>{{ customer.tenKH || 'N/A' }}</td>
+            <td>{{ customer.sdt || 'N/A' }}</td>
+            <td>{{ customer.gioiTinh || 'N/A' }}</td>
+            <td>{{ customer.diaChi || 'N/A' }}</td>
             <td>
               <span
                 class="badge"
@@ -35,6 +36,7 @@
             </td>
             <td>
               <router-link
+                v-if="customer.idKH"
                 :to="{ name: 'admin.customers.edit', params: { id: customer.idKH } }"
                 class="btn btn-link text-primary p-1"
                 title="Sửa"
@@ -42,6 +44,7 @@
                 <i class="fas fa-edit"></i>
               </router-link>
               <button
+                v-if="customer.idKH"
                 class="btn btn-link p-1"
                 :class="customer.trangThai ? 'text-danger' : 'text-success'"
                 :title="customer.trangThai ? 'Khóa' : 'Mở khóa'"
@@ -63,6 +66,7 @@
 <script setup>
 import { ref, onMounted } from 'vue';
 import axios from 'axios';
+import { ElMessage } from 'element-plus';
 
 // Khởi tạo danh sách khách hàng
 const customers = ref([]);
@@ -70,10 +74,11 @@ const customers = ref([]);
 // Hàm gọi API để lấy danh sách khách hàng
 const fetchCustomers = async () => {
   try {
-    const response = await axios.get('http://localhost:8080/admin/api/khachhang');
-    customers.value = response.data;
+    const response = await axios.get('http://localhost:8080/admin/api/khachhang?page=0&size=10');
+    customers.value = response.data.content; // Lấy content từ phản hồi phân trang
   } catch (error) {
     console.error('Lỗi khi lấy danh sách khách hàng:', error);
+    ElMessage.error('Không thể tải danh sách khách hàng.');
   }
 };
 
@@ -85,10 +90,11 @@ const toggleStatus = async (id, trangThai) => {
       trangThai: !trangThai,
     };
     await axios.put(`http://localhost:8080/admin/api/khachhang/${id}`, updatedCustomer);
-    // Cập nhật lại danh sách khách hàng sau khi thay đổi trạng thái
+    ElMessage.success('Cập nhật trạng thái thành công!');
     fetchCustomers();
   } catch (error) {
     console.error('Lỗi khi thay đổi trạng thái:', error);
+    ElMessage.error('Lỗi khi cập nhật trạng thái khách hàng.');
   }
 };
 
@@ -97,3 +103,4 @@ onMounted(() => {
   fetchCustomers();
 });
 </script>
+```

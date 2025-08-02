@@ -54,6 +54,14 @@ public class AuthController {
                 return ResponseEntity.status(409).body(Map.of("message", "Tên đăng nhập đã tồn tại!"));
             }
 
+            // Tự sinh maNV
+            String maNV;
+            long count = nhanVienRepository.count();
+            do {
+                maNV = String.format("NV%03d", count + 1);
+                count++;
+            } while (nhanVienRepository.findByMaNV(maNV).isPresent());
+
             // Tạo tài khoản
             TaiKhoan taiKhoan = new TaiKhoan();
             taiKhoan.setTaiKhoan(registerRequest.getTaiKhoan());
@@ -64,8 +72,8 @@ public class AuthController {
 
             // Tạo nhân viên
             NhanVien nhanVien = new NhanVien();
-            nhanVien.setMaNV(registerRequest.getMaKH()); // Using MaKH as MaNV for consistency
-            nhanVien.setTenNV(registerRequest.getTenKH()); // Using TenKH as TenNV
+            nhanVien.setMaNV(maNV);
+            nhanVien.setTenNV(registerRequest.getTenKH());
             nhanVien.setGioiTinh(registerRequest.getGioiTinh());
             nhanVien.setSdt(registerRequest.getSdt());
             nhanVien.setDiaChi(registerRequest.getDiaChi());

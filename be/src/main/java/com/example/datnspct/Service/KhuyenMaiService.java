@@ -18,8 +18,8 @@ public class KhuyenMaiService {
     private KhuyenMaiDTO toDTO(KhuyenMai entity) {
         KhuyenMaiDTO dto = new KhuyenMaiDTO();
         dto.setIdKM(entity.getIdKM());
-        dto.setMaVoucher(entity.getMaVoucher());
-        dto.setTenVoucher(entity.getTenVoucher());
+        dto.setMaVoucher(entity.getMaKM());
+        dto.setTenVoucher(entity.getTenKM());
         dto.setHinhThucGiam(entity.getHinhThucGiam());
         dto.setMucGiam(entity.getMucGiam());
         dto.setGiaTriDonHangToiThieu(entity.getGiaTriDonHangToiThieu());
@@ -36,8 +36,8 @@ public class KhuyenMaiService {
     private KhuyenMai toEntity(KhuyenMaiDTO dto) {
         KhuyenMai entity = new KhuyenMai();
         entity.setIdKM(dto.getIdKM());
-        entity.setMaVoucher(dto.getMaVoucher());
-        entity.setTenVoucher(dto.getTenVoucher());
+        entity.setMaKM(dto.getMaVoucher());
+        entity.setTenKM(dto.getTenVoucher());
         entity.setHinhThucGiam(dto.getHinhThucGiam());
         entity.setMucGiam(dto.getMucGiam());
         entity.setGiaTriDonHangToiThieu(dto.getGiaTriDonHangToiThieu());
@@ -73,8 +73,8 @@ public class KhuyenMaiService {
     public KhuyenMaiDTO update(Integer id, KhuyenMaiDTO dto) {
         KhuyenMai entity = khuyenMaiRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy khuyến mãi"));
-        entity.setMaVoucher(dto.getMaVoucher());
-        entity.setTenVoucher(dto.getTenVoucher());
+        entity.setMaKM(dto.getMaVoucher());
+        entity.setTenKM(dto.getTenVoucher());
         entity.setHinhThucGiam(dto.getHinhThucGiam());
         entity.setMucGiam(dto.getMucGiam());
         entity.setGiaTriDonHangToiThieu(dto.getGiaTriDonHangToiThieu());
