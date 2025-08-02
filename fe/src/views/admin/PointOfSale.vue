@@ -948,90 +948,92 @@ export default {
     },
     // Cập nhật fetchSanPhamList để hỗ trợ bộ lọc
     async fetchSanPhamList() {
-      this.productLoading = true;
-      try {
-          // Kiểm tra xem có bộ lọc nào được áp dụng không
-          const hasFilters = this.productSearchQuery || this.selectedCategory || this.selectedBrand ||
-                            this.selectedColor || this.selectedMaterial ||
-                            this.priceRange[0] !== 0 || this.priceRange[1] !== 5000000;
-        
-          if (!hasFilters) {
-              // Gọi API lấy toàn bộ sản phẩm khi không có bộ lọc
-              const response = await axios.get('http://localhost:8080/admin/api/sanphamchitiet', {
-                  // headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-              });
-              console.log('API http://localhost:8080/admin/api/sanphamchitiet response:', response.data); // Debug dữ liệu
-              this.listSanPham = {
-                  content: response.data.map(item => ({
-                      id: item.id,
-                      maSPCT: item.maSPCT,
-                      maCtSanPham: item.maSPCT, // Để khớp với template
-                      tenSP: item.tenSP,
-                      tenGiay: item.tenSP, // Để khớp với template
-                      giaBan: item.gia,
-                      soLuongTonKho: item.soLuong,
-                      moTa: item.moTa,
-                      trangThai: item.trangThai,
-                      tenDanhMuc: item.tenDanhMuc,
-                      tenThuongHieu: item.tenThuongHieu,
-                      tenMauSac: item.tenMauSac,
-                      tenChatLieu: item.tenChatLieu,
-                      tenKichThuoc: item.tenKichThuoc,
-                  })),
-                  number: 0,
-                  size: response.data.length,
-                  totalElements: response.data.length
-              };
-           } 
-          else {
-              // Gọi API lọc sản phẩm khi có bộ lọc
-              const params = {
-                  page: this.pageSanPham - 1,
-                  size: this.pageSizeSanPham,
-                  keyword: this.productSearchQuery || '',
-                  danhMuc: this.selectedCategory || '',
-                  thuongHieu: this.selectedBrand || '',
-                  mauSac: this.selectedColor || '',
-                  chatLieu: this.selectedMaterial || '',
-                  minPrice: this.priceRange[0],
-                  maxPrice: this.priceRange[1]
-              };
-              console.log('API http://localhost:8080/admin//api/sanphamchitiet/filter params:', params); // Debug tham số
-              const response = await axios.get('http://localhost:8080/admin/api/sanphamchitiet/filter', {
-                  params,
-                  headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-              });
-              console.log('API http://localhost:8080/admin/api/sanphamchitiet/filter response:', response.data); // Debug dữ liệu
-              this.listSanPham = {
-                  content: response.data.content.map(item => ({
-                      id: item.id,
-                      maSPCT: item.maSPCT,
-                      maCtSanPham: item.maSPCT,
-                      tenSP: item.tenSP,
-                      tenGiay: item.tenSP,
-                      giaBan: item.gia,
-                      soLuongTonKho: item.soLuong,
-                      moTa: item.moTa,
-                      trangThai: item.trangThai,
-                      tenDanhMuc: item.tenDanhMuc,
-                      tenThuongHieu: item.tenThuongHieu,
-                      tenMauSac: item.tenMauSac,
-                      tenChatLieu: item.tenChatLieu,
-                      tenKichThuoc: item.tenKichThuoc,
-                  })),
-                  number: response.data.number,
-                  size: response.data.size,
-                  totalElements: response.data.totalElements
-              };
-          }
-      } catch (error) {
-          console.error('Lỗi khi lấy danh sách sản phẩm:', error);
-          this.listSanPham = { content: [], number: 0, size: 10, totalElements: 0 };
-          ElMessage.error(`Không thể tải danh sách sản phẩm: ${error.message || 'Lỗi mạng'}`);
-      } finally {
-          this.productLoading = false;
-      }
-    },
+    this.productLoading = true;
+    try {
+        const hasFilters = this.productSearchQuery || this.selectedCategory || this.selectedBrand ||
+                          this.selectedColor || this.selectedMaterial ||
+                          this.priceRange[0] !== 0 || this.priceRange[1] !== 5000000;
+
+        if (!hasFilters) {
+            const response = await axios.get('http://localhost:8080/admin/api/sanphamchitiet', {
+                headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+            });
+            console.log('API http://localhost:8080/admin/api/sanphamchitiet response:', response.data);
+            this.listSanPham = {
+                content: response.data.map(item => ({
+                    id: item.id,
+                    maSPCT: item.maSPCT,
+                    maCtSanPham: item.maSPCT,
+                    tenSP: item.tenSP,
+                    tenGiay: item.tenSP,
+                    giaBan: item.gia,
+                    soLuongTonKho: item.soLuong,
+                    moTa: item.moTa,
+                    trangThai: item.trangThai,
+                    tenDanhMuc: item.tenDanhMuc,
+                    tenThuongHieu: item.tenThuongHieu,
+                    tenMauSac: item.tenMauSac,
+                    tenChatLieu: item.tenChatLieu,
+                    tenKichThuoc: item.tenKichThuoc,
+                })),
+                number: 0,
+                size: response.data.length,
+                totalElements: response.data.length
+            };
+            if (this.listSanPham.totalElements === 0) {
+                ElMessage.warning('Không tìm thấy sản phẩm nào.');
+            }
+        } else {
+            const params = {
+                page: this.pageSanPham - 1,
+                size: this.pageSizeSanPham,
+                keyword: this.productSearchQuery || '',
+                danhMuc: this.selectedCategory || '',
+                thuongHieu: this.selectedBrand || '',
+                mauSac: this.selectedColor || '',
+                chatLieu: this.selectedMaterial || '',
+                minPrice: this.priceRange[0],
+                maxPrice: this.priceRange[1]
+            };
+            console.log('API http://localhost:8080/admin/api/sanphamchitiet/filter params:', params);
+            const response = await axios.get('http://localhost:8080/admin/api/sanphamchitiet/filter', {
+                params,
+                headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+            });
+            console.log('API http://localhost:8080/admin/api/sanphamchitiet/filter response:', response.data);
+            this.listSanPham = {
+                content: response.data.content.map(item => ({
+                    id: item.id,
+                    maSPCT: item.maSPCT,
+                    maCtSanPham: item.maSPCT,
+                    tenSP: item.tenSP,
+                    tenGiay: item.tenSP,
+                    giaBan: item.gia,
+                    soLuongTonKho: item.soLuong,
+                    moTa: item.moTa,
+                    trangThai: item.trangThai,
+                    tenDanhMuc: item.tenDanhMuc,
+                    tenThuongHieu: item.tenThuongHieu,
+                    tenMauSac: item.tenMauSac,
+                    tenChatLieu: item.tenChatLieu,
+                    tenKichThuoc: item.tenKichThuoc,
+                })),
+                number: response.data.number,
+                size: response.data.size,
+                totalElements: response.data.totalElements
+            };
+            if (this.listSanPham.totalElements === 0) {
+                ElMessage.warning('Không tìm thấy sản phẩm nào phù hợp với bộ lọc.');
+            }
+        }
+    } catch (error) {
+        console.error('Lỗi khi lấy danh sách sản phẩm:', error);
+        this.listSanPham = { content: [], number: 0, size: 10, totalElements: 0 };
+        ElMessage.error(`Không thể tải danh sách sản phẩm: ${error.response?.data?.message || error.message}`);
+    } finally {
+        this.productLoading = false;
+    }
+},
 
     chonSanPham(sp) {
       const existed = this.hoaDonChon.sanPhams.find(x => x.id === sp.id);
@@ -1071,11 +1073,11 @@ export default {
     // Lấy danh sách danh mục
     async fetchCategories() {
       try {
-        const response = await axios.get('http://localhost:8080/admin/api/danhmuc', {
+        const response = await axios.get('http://localhost:8080/api/danhmuc', {
           headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
         });
         this.categories = response.data.map(item => ({
-          value: item.tenDM,
+          value: item.idDM, // Sử dụng ID danh mục
           label: item.tenDM
         }));
       } catch (error) {
@@ -1086,7 +1088,7 @@ export default {
     // Lấy danh sách thương hiệu
     async fetchBrands() {
       try {
-        const response = await axios.get('http://localhost:8080/admin/api/thuonghieu', {
+        const response = await axios.get('http://localhost:8080/api/thuonghieu', {
           headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
         });
         this.brands = response.data.map(item => ({
@@ -1101,7 +1103,7 @@ export default {
     // Lấy danh sách màu sắc
     async fetchColors() {
       try {
-        const response = await axios.get('http://localhost:8080/admin/api/mausac', {
+        const response = await axios.get('http://localhost:8080/api/mausac', {
           headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
         });
         this.colors = response.data.map(item => ({
@@ -1116,7 +1118,7 @@ export default {
     // Lấy danh sách chất liệu
     async fetchMaterials() {
       try {
-        const response = await axios.get('http://localhost:8080/admin/api/chatlieu', {
+        const response = await axios.get('http://localhost:8080/api/chatlieu', {
           headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
         });
         this.materials = response.data.map(item => ({
@@ -1130,7 +1132,7 @@ export default {
     },
 
     fetchVouchers() {
-      axios.get('/admin/api/khuyenmai').then(res => {
+      axios.get('/api/khuyenmai').then(res => {
         this.vouchers = res.data;
       }).catch(err => {
         console.error('Lỗi khi lấy danh sách voucher:', err);
@@ -1492,9 +1494,6 @@ export default {
       this.taoHoaDon();
       ElMessage.success('Đã tạo hóa đơn mới!');
     },
-    
-    
-    
   },
 };
 </script>

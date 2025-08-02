@@ -23,4 +23,10 @@ public class SanPhamChiTietDTO {
     private String tenChatLieu;
     private String tenSize;
     private String link; // Trường ảnh
+
+    private Integer idDanhMuc;
+    private Integer idThuongHieu;
+    private Integer idMauSac;
+    private Integer idChatLieu;
+    private Integer idSize;
 }

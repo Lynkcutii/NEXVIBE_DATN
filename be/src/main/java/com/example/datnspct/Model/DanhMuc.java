@@ -26,6 +26,9 @@ public class DanhMuc {
     @Column(name = "TenDM", length = 100)
     private String tenDM;
 
+    @Column(name = "MaDM")
+    private String maDM;
+
     @Column(name = "TrangThai")
     private Boolean trangThai;
 

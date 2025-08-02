@@ -41,7 +41,7 @@ public class HoaDonChiTiet {
     private KhuyenMai khuyenMai;
 
     @ManyToOne
-    @JoinColumn(name = "IdPTT", referencedColumnName = "IdPTT")
+    @JoinColumn(name = "IdPT", referencedColumnName = "IdPT")
     private PhuongTT phuongThucThanhToan;
 
     @Column(name = "SoLuong")

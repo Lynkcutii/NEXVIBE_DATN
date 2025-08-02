@@ -14,7 +14,7 @@
               <div class="row g-3">
                 <div class="col-md-6"><input type="text" class="form-control" placeholder="Họ" v-model="shippingInfo.firstName" required></div>
                 <div class="col-md-6"><input type="text" class="form-control" placeholder="Tên" v-model="shippingInfo.lastName" required></div>
-                <div class="col-12"><input type="email" class="form-control" placeholder="Email" v-model="shippingInfo.email" required></div>
+                <div class="col-12"><input type="email" class="form-control" placeholder="Email" v-model="shippingInfo.email"></div>
                 <div class="col-12"><input type="text" class="form-control" placeholder="Số điện thoại" v-model="shippingInfo.phone" required></div>
                 <div class="col-12"><input type="text" class="form-control" placeholder="Địa chỉ" v-model="shippingInfo.address" required></div>
                 <div class="col-12"><textarea class="form-control" rows="2" placeholder="Ghi chú (tùy chọn)" v-model="shippingInfo.notes"></textarea></div>
@@ -167,7 +167,8 @@ const shippingInfo = reactive({
   lastName: '',
   phone: '',
   address: '',
-  notes: ''
+  notes: '',
+  email: ''
 });
 
 const selectedPaymentMethod = ref('COD');
@@ -179,8 +180,8 @@ const selectedItemIds = ref([]);
 const allVouchers = ref([]);
 
 const paymentMethods = ref([
-  { id: 'COD', name: 'Thanh toán khi nhận hàng', description: 'Thanh toán bằng tiền mặt', icon: 'fas fa-truck' },
-  { id: 'VNPAY', name: 'Ví điện tử VNPAY', description: 'Quét QR để thanh toán', logo: '/img/payment/vnpay.png' }
+  { id: 'COD', name: 'Thanh toán khi nhận hàng', description: 'Thanh toán bằng tiền mặt', icon: 'fas fa-truck', value: 1 },
+  { id: 'VNPAY', name: 'Ví điện tử VNPAY', description: 'Quét QR để thanh toán', logo: '/img/payment/vnpay.png', value: 2 }
 ]);
 
 // Hàm định dạng ngày
@@ -248,6 +249,7 @@ const loadCustomerInfo = async () => {
     shippingInfo.phone = customer.sdt || '';
     shippingInfo.address = customer.diaChi || '';
     shippingInfo.notes = '';
+    shippingInfo.email = customer.email || '';
   } catch (err) {
     console.error('loadCustomerInfo: Error', {
       message: err.message,
@@ -422,28 +424,36 @@ const placeOrder = async () => {
     return;
   }
 
+  let orderData = null;
   try {
-    const orderData = {
+    orderData = {
       idTK: auth.user.idTK,
       shippingInfo: {
         firstName: shippingInfo.firstName,
         lastName: shippingInfo.lastName,
         phone: shippingInfo.phone,
         address: shippingInfo.address,
-        notes: shippingInfo.notes || ''
+        notes: shippingInfo.notes || '',
+        email: shippingInfo.email || ''
       },
-      paymentMethod: selectedPaymentMethod.value,
+      paymentMethod: paymentMethods.value.find(method => method.id === selectedPaymentMethod.value).value,
       voucherCode: appliedVoucher.value?.code || null,
-      total: Number(total.value).toFixed(2),
+      total: Number(total.value),
       items: selectedItems.value
         .filter(item => selectedItemIds.value.includes(item.idGHCT))
         .map(item => ({
           idGHCT: item.idGHCT,
           idSPCT: item.idSPCT,
           soLuong: item.soLuong,
-          donGia: Number(item.donGia).toFixed(2)
+          donGia: Number(item.donGia)
         }))
     };
+
+    if (isNaN(orderData.total) || orderData.items.some(item => isNaN(item.donGia))) {
+      console.error('placeOrder: Invalid numeric values', { orderData });
+      toast.error('Giá trị đơn hàng hoặc sản phẩm không hợp lệ!');
+      return;
+    }
 
     console.log('placeOrder: Sending order data to API', {
       url: `${API_BASE_URL}/client/api/hoadon`,
@@ -474,31 +484,26 @@ const placeOrder = async () => {
       } : null,
       requestData: {
         url: `${API_BASE_URL}/client/api/hoadon`,
-        orderData: JSON.stringify(orderData, null, 2)
+        orderData: orderData ? JSON.stringify(orderData, null, 2) : 'Not defined'
       }
     });
 
     let errorMessage = 'Lỗi khi đặt hàng';
     if (err.response) {
-      errorMessage += `: ${err.response.data?.message || err.response.statusText} (Status: ${err.response.status})`;
+      errorMessage = err.response.data?.message || err.response.statusText;
       if (err.response.status === 400) {
-        errorMessage += '. Vui lòng kiểm tra thông tin đơn hàng!';
+        errorMessage = `Dữ liệu không hợp lệ: ${err.response.data?.message || 'Vui lòng kiểm tra thông tin đơn hàng!'}`;
+      } else if (err.response.status === 401 || err.response.status === 403) {
+        errorMessage = 'Bạn cần đăng nhập lại để tiếp tục!';
+        auth.logout();
+        router.push('/login');
       }
     } else if (err.request) {
-      errorMessage += ': Không nhận được phản hồi từ server';
+      errorMessage = 'Không thể kết nối đến server. Vui lòng kiểm tra kết nối mạng!';
     } else {
-      errorMessage += `: ${err.message}`;
+      errorMessage = err.message;
     }
     toast.error(errorMessage);
-
-    if (err.response?.status === 401 || err.response?.status === 403) {
-      console.log('placeOrder: Unauthorized access detected, logging out', {
-        status: err.response?.status,
-        user: auth.user
-      });
-      auth.logout();
-      router.push('/login');
-    }
   }
 };
 

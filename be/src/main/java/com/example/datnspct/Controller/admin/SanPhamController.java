@@ -11,12 +11,16 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 
 import java.util.List;
 
 @RestController
-@RequestMapping("/admin/api/sanpham")
+@RequestMapping("/admin/api/san-pham")
 public class SanPhamController {
 
     @Autowired
@@ -29,18 +33,23 @@ public class SanPhamController {
         return ResponseEntity.ok(sanPhamDaTao);
     }
 
+    // Lấy tất cả với phân trang và bộ lọc
+    @GetMapping
+    public ResponseEntity<Page<SanPhamDTO>> getAllSanPham(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(required = false) String tenSP,
+            @RequestParam(required = false) Boolean status) {
+        Pageable pageable = PageRequest.of(page, size);
+        Page<SanPhamDTO> sanPhamPage = sanPhamService.findAll(tenSP, status, pageable);
+        return ResponseEntity.ok(sanPhamPage);
+    }
+
     // Lấy theo ID
     @GetMapping("/{id}")
     public ResponseEntity<SanPhamDTO> laySanPhamTheoId(@PathVariable Integer id) {
         SanPhamDTO sanPhamDTO = sanPhamService.laySanPhamTheoId(id);
         return ResponseEntity.ok(sanPhamDTO);
-    }
-
-    // Lấy tất cả
-    @GetMapping
-    public ResponseEntity<List<SanPhamDTO>> layTatCaSanPham() {
-        List<SanPhamDTO> sanPhamDTOs = sanPhamService.layTatCaSanPham();
-        return ResponseEntity.ok(sanPhamDTOs);
     }
 
     // Cập nhật

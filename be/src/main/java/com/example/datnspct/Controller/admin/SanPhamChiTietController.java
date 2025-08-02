@@ -3,6 +3,8 @@ package com.example.datnspct.Controller.admin;
 import com.example.datnspct.Service.SanPhamChiTietService;
 import com.example.datnspct.dto.SanPhamChiTietDTO;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -11,8 +13,10 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 @RestController
@@ -62,22 +66,23 @@ public class SanPhamChiTietController {
         sanPhamChiTietService.xoaSanPhamChiTiet(id);
         return ResponseEntity.noContent().build();
     }
-
-    // Lấy với bộ lọc và phân trang
-//    @GetMapping("/filter")
-//    public ResponseEntity<Page<SanPhamChiTietDTO>> getSanPhamChiTiet(
-//            @RequestParam(required = false) Integer page,
-//            @RequestParam(required = false) Integer size,
-//            @RequestParam(required = false) String keyword,
-//            @RequestParam(required = false) String danhMuc,
-//            @RequestParam(required = false) String thuongHieu,
-//            @RequestParam(required = false) String mauSac,
-//            @RequestParam(required = false) String chatLieu,
-//            @RequestParam(required = false) BigDecimal minPrice,
-//            @RequestParam(required = false) BigDecimal maxPrice) {
-//        Pageable pageable = PageRequest.of(page != null ? page : 0, size != null ? size : 10);
-//        Page<SanPhamChiTietDTO> result = sanPhamChiTietService.findWithFilters(
-//                keyword, danhMuc, thuongHieu, mauSac, chatLieu, minPrice, maxPrice, pageable);
-//        return ResponseEntity.ok(result);
-//    }
+    @GetMapping("/filter")
+    public ResponseEntity<Page<SanPhamChiTietDTO>> findWithFilters(
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) String danhMuc,
+            @RequestParam(required = false) String thuongHieu,
+            @RequestParam(required = false) String mauSac,
+            @RequestParam(required = false) String chatLieu,
+            @RequestParam(required = false) String size,
+            @RequestParam(required = false) BigDecimal minPrice,
+            @RequestParam(required = false) BigDecimal maxPrice,
+            Pageable pageable) {
+        try {
+            Page<SanPhamChiTietDTO> result = sanPhamChiTietService.findWithFilters(
+                    keyword, danhMuc, thuongHieu, mauSac, chatLieu, size, minPrice, maxPrice, pageable);
+            return ResponseEntity.ok(result);
+        } catch (NumberFormatException e) {
+            return ResponseEntity.badRequest().body(null);
+        }
+    }
 }

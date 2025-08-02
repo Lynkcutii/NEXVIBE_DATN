@@ -4,6 +4,8 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.Date;
+
 
 @Data
 @NoArgsConstructor
@@ -12,5 +14,7 @@ public class SanPhamDTO {
     private Integer idSP; // ID Sản Phẩm
     private String maSP; // Mã Sản Phẩm
     private String tenSP; // Tên Sản Phẩm
+    private Date ngayTao; // Ngày Tạo
+    private Integer tongSoLuongSanPham; // Tổng Số Lượng Sản Phẩm
     private Boolean trangThai; // Trạng Thái
 }
