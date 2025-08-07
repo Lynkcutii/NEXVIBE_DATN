@@ -12,15 +12,16 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 public class KhuyenMaiDTO {
     private Integer idKM;
-    private String maVoucher;
-    private String tenVoucher;
-    private String hinhThucGiam;
+    private String maKM;
+    private String tenKM;
+    private String hinhThucGiam; // 'PERCENTAGE' hoặc 'FIXED'
     private BigDecimal mucGiam;
     private BigDecimal giaTriDonHangToiThieu;
+    private BigDecimal giamToiDa;
     private Integer soLuong;
     private Integer daSuDung;
     private LocalDateTime ngayBatDau;
     private LocalDateTime ngayKetThuc;
     private Boolean trangThai;
-    private Integer idNV;
+    private Integer idKH;
 }

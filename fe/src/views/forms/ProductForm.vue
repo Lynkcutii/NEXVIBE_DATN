@@ -372,7 +372,7 @@ const fetchSanPhamChiTiet = async () => {
 const fetchDanhMuc = async () => {
   loadingDanhMuc.value = true;
   try {
-    const response = await axios.get('http://localhost:8080/admin/api/danhmuc');
+    const response = await axios.get('http://localhost:8080/api/danhmuc');
     danhMucList.value = Array.isArray(response.data) ? response.data : [];
     if (danhMucList.value.length === 0) {
       ElMessage.warning('Danh sách danh mục trống.');
@@ -390,7 +390,7 @@ const fetchDanhMuc = async () => {
 const fetchThuongHieu = async () => {
   loadingThuongHieu.value = true;
   try {
-    const response = await axios.get('http://localhost:8080/admin/api/thuonghieu');
+    const response = await axios.get('http://localhost:8080/api/thuonghieu');
     thuongHieuList.value = Array.isArray(response.data) ? response.data : [];
     if (thuongHieuList.value.length === 0) {
       ElMessage.warning('Danh sách thương hiệu trống.');
@@ -408,7 +408,7 @@ const fetchThuongHieu = async () => {
 const fetchMauSac = async () => {
   loadingMauSac.value = true;
   try {
-    const response = await axios.get('http://localhost:8080/admin/api/mausac');
+    const response = await axios.get('http://localhost:8080/api/mausac');
     mauSacList.value = Array.isArray(response.data) ? response.data : [];
     if (mauSacList.value.length === 0) {
       ElMessage.warning('Danh sách màu sắc trống.');
@@ -426,7 +426,7 @@ const fetchMauSac = async () => {
 const fetchChatLieu = async () => {
   loadingChatLieu.value = true;
   try {
-    const response = await axios.get('http://localhost:8080/admin/api/chatlieu');
+    const response = await axios.get('http://localhost:8080/api/chatlieu');
     chatLieuList.value = Array.isArray(response.data) ? response.data : [];
     if (chatLieuList.value.length === 0) {
       ElMessage.warning('Danh sách chất liệu trống.');
@@ -444,7 +444,7 @@ const fetchChatLieu = async () => {
 const fetchSize = async () => {
   loadingSize.value = true;
   try {
-    const response = await axios.get('http://localhost:8080/admin/api/size');
+    const response = await axios.get('http://localhost:8080/api/size');
     sizeList.value = Array.isArray(response.data) ? response.data : [];
     if (sizeList.value.length === 0) {
       ElMessage.warning('Danh sách kích thước trống.');

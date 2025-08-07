@@ -36,6 +36,9 @@ public class HoaDon {
     @Column(name = "IdNV")
     private Integer idNhanVien;
 
+    @Column(name = "IdKM")  // <-- Thêm dòng này
+    private Integer idKM;
+
     @Column(name = "NgayTao")
     private LocalDateTime ngayTao;
 
@@ -46,7 +49,11 @@ public class HoaDon {
     private BigDecimal tongTien;
 
     @Column(name = "TrangThai")
-    private Boolean trangThai;
+    private String trangThai;
+
+    @ManyToOne
+    @JoinColumn(name = "IdKM", referencedColumnName = "IdKM", insertable = false, updatable = false)
+    private KhuyenMai khuyenMai;
 
     @ManyToOne
     @JoinColumn(name = "IdKH", referencedColumnName = "IdKH", insertable = false, updatable = false)

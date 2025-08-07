@@ -143,7 +143,7 @@ const confirmDelete = () => {
 
 const fetchVouchers = async () => {
   try {
-    const res = await axios.get('http://localhost:8080/admin/api/khuyenmai');
+    const res = await axios.get('http://localhost:8080/api/khuyenmai');
     // Map dữ liệu từ backend sang frontend
     vouchers.value = res.data.map(v => ({
       id: v.idKM,

@@ -29,16 +29,12 @@ public class HoaDonChiTiet {
     private Integer idHDCT;
 
     @ManyToOne
-    @JoinColumn(name = "IdSP", referencedColumnName = "IdSPCT")
+    @JoinColumn(name = "IdSPCT", referencedColumnName = "IdSPCT")
     private SanPhamChiTiet sanPhamct;
 
     @ManyToOne
     @JoinColumn(name = "IdHD", referencedColumnName = "IdHD")
     private HoaDon hoaDon;
-
-    @ManyToOne
-    @JoinColumn(name = "IdKM", referencedColumnName = "IdKM")
-    private KhuyenMai khuyenMai;
 
     @ManyToOne
     @JoinColumn(name = "IdPT", referencedColumnName = "IdPT")
@@ -50,17 +46,12 @@ public class HoaDonChiTiet {
     @Column(name = "DonGia", precision = 18, scale = 2)
     private BigDecimal donGia;
 
-    @Column(name = "ThanhTien", precision = 18, scale = 2)
-    private BigDecimal thanhTien;
-
-    @Column(name = "TrangThai")
-    private Boolean trangThai;
-
     @Column(name = "NgayTao")
     private LocalDateTime ngayTao;
 
     @Column(name = "NgaySua")
     private LocalDateTime ngaySua;
 
-
+    @Column(name = "ThanhTien", nullable = false)
+    private BigDecimal thanhTien;
 }

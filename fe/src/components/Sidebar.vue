@@ -1,8 +1,10 @@
 <template>
   <nav id="sidebar">
     <div class="sidebar-header">
-      <!-- Thay đổi đường dẫn này về dạng tương đối từ assets để Vite xử lý -->
       <img src="/img/logo/logo.jpeg" alt="Nexvibe Logo">
+      <div class="user-info" v-if="auth.isAuthenticated">
+        <span class="user-name">Xin chào, {{ auth.user?.tenNV || auth.user?.taiKhoan }}</span>
+      </div>
     </div>
 
     <ul class="nav flex-column">
@@ -31,7 +33,6 @@
       <!-- Nhóm các chức năng hệ thống -->
       <li class="nav-item-header">HỆ THỐNG</li>
       <li class="nav-item">
-        <!-- Menu xổ xuống cho Tài khoản -->
         <a class="nav-link collapsed" data-bs-toggle="collapse" href="#accountsSubmenu" role="button">
           <i class="fas fa-fw fa-users-cog"></i> Quản lý Tài khoản
         </a>
@@ -52,11 +53,103 @@
       <li class="nav-item">
         <router-link to="/admin/reviews" class="nav-link"><i class="fas fa-fw fa-star"></i> Quản lý Đánh giá</router-link>
       </li>
+      <li class="nav-item">
+        <a class="nav-link" @click="logout"><i class="fas fa-fw fa-sign-out-alt"></i> Đăng xuất</a>
+      </li>
     </ul>
   </nav>
 </template>
 
+<script>
+import { useAuthStore } from '@/stores/auth';
+import { useRouter } from 'vue-router';
+
+export default {
+  setup() {
+    const auth = useAuthStore();
+    const router = useRouter();
+
+    const logout = async () => {
+      await auth.logout();
+      router.push('/login');
+    };
+
+    return { auth, logout };
+  }
+};
+</script>
+
 <style scoped>
+/* Style hiện tại giữ nguyên, thêm style cho thông tin người dùng */
+.user-info {
+  text-align: center;
+  padding: 10px;
+  color: #fff;
+  font-size: 0.9rem;
+}
+.user-name {
+  font-weight: bold;
+}
+.nav-link:hover {
+  background-color: rgba(56, 189, 248, 0.1);
+  color: #38bdf8;
+}
+.nav-link.router-link-exact-active {
+  background-color: rgba(56, 189, 248, 0.1);
+  color: #fff;
+  font-weight: 500;
+  border-left: 4px solid #38bdf8;
+}
+.nav-link.router-link-exact-active i.fa-fw {
+  color: #38bdf8;
+}
+.nav-item-header {
+  padding: 10px 25px;
+  font-size: 0.75rem;
+  font-weight: bold;
+  color: #8f9ca9;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-top: 1rem;
+}
+.sidebar-submenu {
+  background-color: rgba(0, 0, 0, 0.2);
+  padding-left: 15px;
+}
+.sidebar-submenu .nav-link {
+  font-size: 0.9rem;
+  padding-left: 2.5rem;
+}
+.sidebar-submenu .nav-link:hover {
+  background-color: transparent;
+  color: #38bdf8;
+}
+.sidebar-submenu .nav-link.router-link-exact-active {
+  background-color: transparent;
+  color: #fff;
+  font-weight: bold;
+}
+.nav-link[data-bs-toggle="collapse"]::after {
+  content: '\f078';
+  font-family: 'Font Awesome 6 Free';
+  font-weight: 900;
+  margin-left: auto;
+  transition: transform 0.3s;
+}
+.nav-link[data-bs-toggle="collapse"]:not(.collapsed)::after {
+  transform: rotate(180deg);
+}
+.nav-item > .router-link-active {
+  background-color: rgba(56, 189, 248, 0.1);
+  color: #fff;
+}
+
+/* Style hiện tại giữ nguyên, thêm style cho nút đăng xuất nếu cần */
+.nav-link:hover {
+  background-color: rgba(56, 189, 248, 0.1);
+  color: #38bdf8;
+}
+
 /* Style cho mục menu đang được chọn (active) */
 .nav-link.router-link-exact-active {
   background-color: rgba(56, 189, 248, 0.1); /* Màu nền highlight nhẹ nhàng */
