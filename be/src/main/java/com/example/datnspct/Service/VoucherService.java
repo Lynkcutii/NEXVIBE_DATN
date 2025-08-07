@@ -1,13 +1,14 @@
 package com.example.datnspct.Service;
 
 import com.example.datnspct.Model.Voucher;
-import com.example.datnspct.Repository.VoucherRepository;
+import com.example.datnspct.Model.VoucherSP;
 import com.example.datnspct.dto.VoucherDTO;
+import com.example.datnspct.Repository.VoucherRepository;
+import com.example.datnspct.Repository.VoucherSPRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -18,33 +19,58 @@ public class VoucherService {
     @Autowired
     private VoucherRepository voucherRepository;
 
-    // Chuyển từ Entity sang DTO
-    private VoucherDTO toDTO(Voucher voucher) {
-        VoucherDTO dto = new VoucherDTO();
-        dto.setId(voucher.getIdVoucher());
-        dto.setCode(voucher.getMaVoucher());
-        dto.setName(voucher.getTenVoucher());
-        dto.setDescription("Giảm " + (voucher.getMucGiam() != null ? voucher.getMucGiam() + "%" : voucher.getGiaGiam() + "đ"));
-        dto.setType(voucher.getMucGiam() != null ? "percentage" : "fixed");
-        dto.setValue(voucher.getMucGiam() != null ? voucher.getMucGiam() : voucher.getGiaGiam());
-        dto.setMinOrder(BigDecimal.ZERO); // Có thể thêm logic để lấy giá trị đơn hàng tối thiểu từ bảng khác
-        dto.setEndDate(voucher.getNgayKetThuc());
-        return dto;
+    @Autowired
+    private VoucherSPRepository voucherSPRepository;
+
+    public List<VoucherDTO> getApplicableVouchersForProducts(List<Integer> idSPCTs) {
+        Date now = new Date();
+        List<Voucher> vouchers = voucherRepository.findAllByTrangThaiAndSoLuongGreaterThan((byte) 1, 0);
+
+        return vouchers.stream()
+                .filter(v -> now.after(v.getNgayBatDau()) && now.before(v.getNgayKetThuc()))
+                .filter(v -> {
+                    List<VoucherSP> voucherSPs = voucherSPRepository.findByVoucherIdVoucherAndTrangThai(v.getIdVoucher(), (byte) 1);
+                    return voucherSPs.stream().anyMatch(vsp -> idSPCTs.contains(vsp.getSanPhamCT().getId()));
+                })
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
     }
 
-    // Lấy danh sách voucher áp dụng được cho danh sách IdSPCT
-    public List<VoucherDTO> getApplicableVouchersForProducts(List<Integer> idSPCTs) {
-        List<VoucherDTO> result = new ArrayList<>();
-        Date currentDate = new Date();
-
-        for (Integer idSPCT : idSPCTs) {
-            List<Voucher> vouchers = voucherRepository.findApplicableVouchersBySanPhamChiTietId(idSPCT, currentDate);
-            result.addAll(vouchers.stream().map(this::toDTO).collect(Collectors.toList()));
-        }
-
-        // Loại bỏ voucher trùng lặp
-        return result.stream()
-                .distinct()
+    public List<VoucherDTO> getAllVouchers() {
+        return voucherRepository.findAllByTrangThai((byte) 1)
+                .stream()
+                .map(this::convertToDTO)
                 .collect(Collectors.toList());
+    }
+
+    public void updateVoucherQuantity(Integer id, Integer soLuong) {
+        Voucher voucher = voucherRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Voucher không tồn tại"));
+        voucher.setSoLuong(soLuong);
+        voucherRepository.save(voucher);
+    }
+
+    private VoucherDTO convertToDTO(Voucher voucher) {
+        VoucherDTO dto = new VoucherDTO();
+        dto.setId(voucher.getIdVoucher());
+        dto.setMaVoucher(voucher.getMaVoucher());
+        dto.setTenVoucher(voucher.getTenVoucher());
+        dto.setHinhThucGiam(voucher.getHinhThucGiam());
+        dto.setMucGiam(voucher.getMucGiam());
+        dto.setGiamToiDa(voucher.getGiamToiDa());
+        dto.setDonGiaKhiGiam(voucher.getDonGiaKhiGiam());
+        dto.setGiaGiam(voucher.getGiaGiam());
+        // Giả định giaTriDonHangToiThieu là 0 nếu không có yêu cầu cụ thể
+        dto.setGiaTriDonHangToiThieu(BigDecimal.ZERO);
+        dto.setSoLuong(voucher.getSoLuong());
+        dto.setNgayBatDau(voucher.getNgayBatDau());
+        dto.setNgayKetThuc(voucher.getNgayKetThuc());
+        dto.setTrangThai(voucher.getTrangThai() == 1);
+        List<Integer> applicableProductIds = voucherSPRepository.findByVoucherIdVoucherAndTrangThai(voucher.getIdVoucher(), (byte) 1)
+                .stream()
+                .map(vsp -> vsp.getSanPhamCT().getId())
+                .collect(Collectors.toList());
+        dto.setApplicableProductIds(applicableProductIds);
+        return dto;
     }
 }

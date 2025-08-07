@@ -2,9 +2,11 @@ package com.example.datnspct.Service;
 
 import com.example.datnspct.Model.HoaDon;
 import com.example.datnspct.Model.HoaDonChiTiet;
+import com.example.datnspct.Model.PhuongTT;
 import com.example.datnspct.Model.SanPhamChiTiet;
 import com.example.datnspct.Repository.HoaDonChiTietRepository;
 import com.example.datnspct.Repository.HoaDonRepository;
+import com.example.datnspct.Repository.PhuongThucThanhToanRepository;
 import com.example.datnspct.Repository.SanPhamChiTietRepository;
 import com.example.datnspct.dto.HoaDonChiTietDTO;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,17 +28,21 @@ public class HoaDonChiTietService {
     @Autowired
     private SanPhamChiTietRepository sanPhamChiTietRepository;
 
+    @Autowired
+    private PhuongThucThanhToanRepository phuongThanhToanRepository;
+
     private HoaDonChiTietDTO convertToDTO(HoaDonChiTiet entity) {
         HoaDonChiTietDTO dto = new HoaDonChiTietDTO();
         dto.setIdHDCT(entity.getIdHDCT());
-        dto.setIdSP(entity.getSanPhamct().getId()); // Hoặc getIdSpct() nếu dùng camelCase
+        dto.setIdSP(entity.getSanPhamct().getId());
         dto.setIdHD(entity.getHoaDon().getIdHD());
         dto.setDonGia(entity.getDonGia());
         dto.setSoLuong(entity.getSoLuong());
         dto.setThanhTien(entity.getThanhTien());
-        // Thêm logic để lấy tenSanPham nếu cần
         String tenSanPham = entity.getSanPhamct().getSanPham() != null ? entity.getSanPhamct().getSanPham().getTenSP() : "N/A";
         dto.setTenSanPham(tenSanPham);
+        // Ánh xạ IdPT từ phuongThucThanhToan trong HoaDonChiTiet
+        dto.setIdPT(entity.getPhuongThucThanhToan() != null ? entity.getPhuongThucThanhToan().getIdPTT() : null);
         return dto;
     }
 
@@ -44,9 +50,9 @@ public class HoaDonChiTietService {
         HoaDonChiTiet entity = new HoaDonChiTiet();
         entity.setIdHDCT(dto.getIdHDCT());
         HoaDon hoaDon = hoaDonRepository.findById(dto.getIdHD())
-                .orElseThrow(() -> new RuntimeException("Hóa đơn không tồn tại"));
+                .orElseThrow(() -> new IllegalArgumentException("Hóa đơn không tồn tại: " + dto.getIdHD()));
         SanPhamChiTiet sanPham = sanPhamChiTietRepository.findById(dto.getIdSP())
-                .orElseThrow(() -> new RuntimeException("Sản phẩm không tồn tại"));
+                .orElseThrow(() -> new IllegalArgumentException("Sản phẩm không tồn tại: " + dto.getIdSP()));
         entity.setHoaDon(hoaDon);
         entity.setSanPhamct(sanPham);
         entity.setDonGia(dto.getDonGia());
@@ -54,10 +60,30 @@ public class HoaDonChiTietService {
         entity.setThanhTien(dto.getDonGia().multiply(BigDecimal.valueOf(dto.getSoLuong())));
         entity.setNgayTao(LocalDateTime.now());
         entity.setNgaySua(LocalDateTime.now());
+        // Xử lý IdPT từ DTO
+        if (dto.getIdPT() != null) {
+            PhuongTT phuongTT = phuongThanhToanRepository.findById(dto.getIdPT())
+                    .orElseThrow(() -> new IllegalArgumentException("Phương thức thanh toán không tồn tại: " + dto.getIdPT()));
+            entity.setPhuongThucThanhToan(phuongTT);
+        } else {
+            throw new IllegalArgumentException("IdPT là bắt buộc trong HoaDonChiTietDTO");
+        }
         return entity;
     }
 
     public HoaDonChiTietDTO createHoaDonChiTiet(HoaDonChiTietDTO dto) {
+        // Kiểm tra số lượng tồn kho
+        SanPhamChiTiet sanPham = sanPhamChiTietRepository.findById(dto.getIdSP())
+                .orElseThrow(() -> new IllegalArgumentException("Sản phẩm không tồn tại: " + dto.getIdSP()));
+        if (sanPham.getSoLuong() < dto.getSoLuong()) {
+            throw new IllegalArgumentException("Số lượng tồn kho không đủ cho sản phẩm idSP: " + dto.getIdSP() +
+                    ". Tồn kho hiện tại: " + sanPham.getSoLuong());
+        }
+
+        // Trừ số lượng tồn kho
+        sanPham.setSoLuong(sanPham.getSoLuong() - dto.getSoLuong());
+        sanPhamChiTietRepository.save(sanPham);
+
         HoaDonChiTiet entity = convertToEntity(dto);
         HoaDonChiTiet saved = hoaDonChiTietRepository.save(entity);
         return convertToDTO(saved);
@@ -65,7 +91,7 @@ public class HoaDonChiTietService {
 
     public HoaDonChiTietDTO layHoaDonChiTietTheoId(Integer id) {
         HoaDonChiTiet entity = hoaDonChiTietRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy hóa đơn chi tiết"));
+                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy hóa đơn chi tiết: " + id));
         return convertToDTO(entity);
     }
 
@@ -76,20 +102,49 @@ public class HoaDonChiTietService {
 
     public HoaDonChiTietDTO capNhatHoaDonChiTiet(Integer id, HoaDonChiTietDTO dto) {
         HoaDonChiTiet entity = hoaDonChiTietRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy hóa đơn chi tiết"));
+                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy hóa đơn chi tiết: " + id));
+
+        // Kiểm tra số lượng tồn kho khi cập nhật
+        SanPhamChiTiet sanPham = sanPhamChiTietRepository.findById(dto.getIdSP())
+                .orElseThrow(() -> new IllegalArgumentException("Sản phẩm không tồn tại: " + dto.getIdSP()));
+        int soLuongCu = entity.getSoLuong();
+        int soLuongMoi = dto.getSoLuong();
+        int soLuongTonKho = sanPham.getSoLuong();
+        int delta = soLuongMoi - soLuongCu;
+        if (delta > 0 && delta > soLuongTonKho) {
+            throw new IllegalArgumentException("Số lượng tồn kho không đủ cho sản phẩm idSP: " + dto.getIdSP() +
+                    ". Tồn kho hiện tại: " + soLuongTonKho);
+        }
+
+        // Cập nhật số lượng tồn kho
+        sanPham.setSoLuong(soLuongTonKho - delta);
+        sanPhamChiTietRepository.save(sanPham);
+
         entity.setHoaDon(hoaDonRepository.findById(dto.getIdHD())
-                .orElseThrow(() -> new RuntimeException("Hóa đơn không tồn tại")));
-        entity.setSanPhamct(sanPhamChiTietRepository.findById(dto.getIdSP())
-                .orElseThrow(() -> new RuntimeException("Sản phẩm không tồn tại")));
+                .orElseThrow(() -> new IllegalArgumentException("Hóa đơn không tồn tại: " + dto.getIdHD())));
+        entity.setSanPhamct(sanPham);
         entity.setDonGia(dto.getDonGia());
         entity.setSoLuong(dto.getSoLuong());
         entity.setThanhTien(dto.getDonGia().multiply(BigDecimal.valueOf(dto.getSoLuong())));
         entity.setNgaySua(LocalDateTime.now());
+        if (dto.getIdPT() != null) {
+            PhuongTT phuongTT = phuongThanhToanRepository.findById(dto.getIdPT())
+                    .orElseThrow(() -> new IllegalArgumentException("Phương thức thanh toán không tồn tại: " + dto.getIdPT()));
+            entity.setPhuongThucThanhToan(phuongTT);
+        } else {
+            throw new IllegalArgumentException("IdPT là bắt buộc trong HoaDonChiTietDTO");
+        }
         HoaDonChiTiet saved = hoaDonChiTietRepository.save(entity);
         return convertToDTO(saved);
     }
 
     public void xoaHoaDonChiTiet(Integer id) {
+        HoaDonChiTiet entity = hoaDonChiTietRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy hóa đơn chi tiết: " + id));
+        // Hoàn lại số lượng tồn kho khi xóa
+        SanPhamChiTiet sanPham = entity.getSanPhamct();
+        sanPham.setSoLuong(sanPham.getSoLuong() + entity.getSoLuong());
+        sanPhamChiTietRepository.save(sanPham);
         hoaDonChiTietRepository.deleteById(id);
     }
 }
