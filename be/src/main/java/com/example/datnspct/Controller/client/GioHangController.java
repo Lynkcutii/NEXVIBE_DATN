@@ -16,9 +16,13 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
+import java.util.ArrayList;
+import java.util.Map;
+import java.util.HashMap;
 
 @RestController
 @RequestMapping("/client/api/giohang")
@@ -136,6 +140,88 @@ public class GioHangController {
             return ResponseEntity.noContent().build();
         } catch (RuntimeException e) {
             System.out.println("Error in deleteGioHangCT: " + e.getMessage());
+            return ResponseEntity.status(400).build();
+        }
+    }
+
+    // Xóa nhiều chi tiết giỏ hàng cùng lúc
+    @DeleteMapping("/giohangct/batch")
+    public ResponseEntity<String> deleteMultipleGioHangCT(
+            @RequestBody List<Integer> idGHCTs,
+            Authentication authentication) {
+        if (authentication == null || authentication.getName() == null || authentication.getName().isEmpty()) {
+            System.out.println("deleteMultipleGioHangCT: Authentication is null or empty");
+            return ResponseEntity.status(401).body("Chưa đăng nhập");
+        }
+        try {
+            System.out.println("deleteMultipleGioHangCT: idGHCTs=" + idGHCTs);
+            
+            if (idGHCTs == null || idGHCTs.isEmpty()) {
+                return ResponseEntity.badRequest().body("Danh sách ID không được rỗng");
+            }
+
+            int deletedCount = 0;
+            List<String> errors = new ArrayList<>();
+
+            for (Integer idGHCT : idGHCTs) {
+                try {
+                    if (gioHangCTRepository.existsById(idGHCT)) {
+                        gioHangCTRepository.deleteById(idGHCT);
+                        deletedCount++;
+                        System.out.println("deleteMultipleGioHangCT: Successfully deleted idGHCT=" + idGHCT);
+                    } else {
+                        System.out.println("deleteMultipleGioHangCT: idGHCT=" + idGHCT + " not found");
+                        errors.add("Không tìm thấy chi tiết giỏ hàng với ID: " + idGHCT);
+                    }
+                } catch (Exception e) {
+                    System.err.println("deleteMultipleGioHangCT: Error deleting idGHCT=" + idGHCT + " - " + e.getMessage());
+                    errors.add("Lỗi khi xóa chi tiết giỏ hàng ID: " + idGHCT);
+                }
+            }
+
+            String message = "Đã xóa thành công " + deletedCount + "/" + idGHCTs.size() + " sản phẩm";
+            if (!errors.isEmpty()) {
+                message += ". Lỗi: " + String.join(", ", errors);
+            }
+
+            System.out.println("deleteMultipleGioHangCT: Completed - " + message);
+            return ResponseEntity.ok(message);
+        } catch (RuntimeException e) {
+            System.out.println("Error in deleteMultipleGioHangCT: " + e.getMessage());
+            return ResponseEntity.status(400).body("Lỗi: " + e.getMessage());
+        }
+    }
+
+    // Kiểm tra trạng thái giỏ hàng sau khi thanh toán
+    @GetMapping("/status/after-order")
+    public ResponseEntity<Map<String, Object>> getCartStatusAfterOrder(
+            @RequestParam List<Integer> idGHCTs,
+            Authentication authentication) {
+        if (authentication == null || authentication.getName() == null || authentication.getName().isEmpty()) {
+            System.out.println("getCartStatusAfterOrder: Authentication is null or empty");
+            return ResponseEntity.status(401).build();
+        }
+        try {
+            System.out.println("getCartStatusAfterOrder: Checking status for idGHCTs=" + idGHCTs);
+            
+            Map<String, Object> status = new HashMap<>();
+            List<Map<String, Object>> itemStatus = new ArrayList<>();
+            
+            for (Integer idGHCT : idGHCTs) {
+                Map<String, Object> item = new HashMap<>();
+                item.put("idGHCT", idGHCT);
+                item.put("exists", gioHangCTRepository.existsById(idGHCT));
+                itemStatus.add(item);
+            }
+            
+            status.put("items", itemStatus);
+            status.put("totalChecked", idGHCTs.size());
+            status.put("stillExists", itemStatus.stream().filter(item -> (Boolean) item.get("exists")).count());
+            
+            System.out.println("getCartStatusAfterOrder: Status - " + status);
+            return ResponseEntity.ok(status);
+        } catch (RuntimeException e) {
+            System.out.println("Error in getCartStatusAfterOrder: " + e.getMessage());
             return ResponseEntity.status(400).build();
         }
     }

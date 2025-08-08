@@ -14,12 +14,12 @@ import java.util.List;
 @RequestMapping("/api/danhmuc")
 public class DanhMucClientController {
 
-    @Autowired
-    private DanhMucRepository danhMucRepository;
-
-    @GetMapping
-    public ResponseEntity<List<DanhMuc>> getAllCategories() {
-        List<DanhMuc> danhMucList = danhMucRepository.findAll();
-        return ResponseEntity.ok(danhMucList);
-    }
+//    @Autowired
+//    private DanhMucRepository danhMucRepository;
+//
+//    @GetMapping
+//    public ResponseEntity<List<DanhMuc>> getAllCategories() {
+//        List<DanhMuc> danhMucList = danhMucRepository.findAll();
+//        return ResponseEntity.ok(danhMucList);
+//    }
 }

@@ -38,9 +38,10 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         // Cho phép truy cập công khai
                         .requestMatchers("/api/auth/**", "/css/**", "/js/**", "/api/**","/api/sanphamchitiet/bySanPham/**").permitAll()
-                        // Phân quyền dựa trên ChucVu
-                        .requestMatchers("/admin/**").hasAnyRole("ADMIN")
-                        .requestMatchers("/client/api/**","/client/api/giohang/addToCart").hasAnyRole( "KHACH_HANG")
+                        // Phân quyền rõ ràng cho endpoint chi tiết hóa đơn
+                        .requestMatchers("/admin/api/hoadonchitiet/**").hasRole("ADMIN")
+                        .requestMatchers("/admin/**","/api/**").hasAnyRole("ADMIN")
+                        .requestMatchers("/client/api/**","/api/**").hasAnyRole( "KHACH_HANG")
                         // Tất cả các request khác cần xác thực
                         .anyRequest().authenticated()
                 )

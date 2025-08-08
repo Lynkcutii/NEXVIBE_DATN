@@ -11,8 +11,15 @@ import java.util.stream.Collectors;
 
 @Service
 public class SizeService {
+
     @Autowired
     private SizeRepository repository;
+
+    // Sinh mã kích thước tự động
+    private String generateMaSize() {
+        long count = repository.count();
+        return String.format("SZ%03d", count + 1); // Ví dụ: SZ001, SZ002
+    }
 
     // Entity -> DTO
     private SizeDTO toDTO(Size entity) {
@@ -28,7 +35,6 @@ public class SizeService {
     private Size toEntity(SizeDTO dto) {
         Size entity = new Size();
         entity.setIdSize(dto.getIdSize());
-        entity.setMaSize(dto.getMaSize());
         entity.setTenSize(dto.getTenSize());
         entity.setTrangThai(dto.getTrangThai());
         return entity;
@@ -37,6 +43,8 @@ public class SizeService {
     // Tạo mới
     public SizeDTO create(SizeDTO dto) {
         Size entity = toEntity(dto);
+        entity.setMaSize(generateMaSize()); // Tự động sinh mã
+        entity.setTrangThai(true);
         Size saved = repository.save(entity);
         return toDTO(saved);
     }
@@ -57,8 +65,7 @@ public class SizeService {
     public SizeDTO update(Integer id, SizeDTO dto) {
         Size entity = repository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy size"));
-        entity.setMaSize(dto.getMaSize());
-        entity.setTenSize(dto.getTenSize());
+        entity.setTenSize(dto.getTenSize()); // Chỉ cập nhật tên
         entity.setTrangThai(dto.getTrangThai());
         Size updated = repository.save(entity);
         return toDTO(updated);
@@ -70,4 +77,4 @@ public class SizeService {
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy size"));
         repository.delete(entity);
     }
-} 
+}

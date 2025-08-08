@@ -13,93 +13,111 @@ import java.util.stream.Collectors;
 
 @Service
 public class NhanVienService {
+
     @Autowired
     private NhanVienRepository nhanVienRepository;
+
     @Autowired
     private TaiKhoanRepository taiKhoanRepository;
 
-    // Entity -> DTO
-    private NhanVienDTO toDTO(NhanVien entity) {
+    // Ánh xạ từ Entity sang DTO
+    private NhanVienDTO convertToDTO(NhanVien nhanVien) {
         NhanVienDTO dto = new NhanVienDTO();
-        dto.setIdNV(entity.getIdNV());
-        dto.setMaNV(entity.getMaNV());
-        dto.setTenNV(entity.getTenNV());
-        dto.setGioiTinh(entity.getGioiTinh());
-        dto.setNgaySinh(entity.getNgaySinh());
-        dto.setSdt(entity.getSdt());
-        dto.setEmail(entity.getEmail());
-        dto.setDiaChi(entity.getDiaChi());
-        dto.setIdTK(entity.getTaiKhoan() != null ? entity.getTaiKhoan().getIdTK() : null);
-        dto.setTrangThai(entity.getTrangThai());
+        dto.setIdNV(nhanVien.getIdNV());
+        dto.setMaNV(nhanVien.getMaNV());
+        dto.setTenNV(nhanVien.getTenNV());
+        dto.setGioiTinh(nhanVien.getGioiTinh());
+        dto.setNgaySinh(nhanVien.getNgaySinh());
+        dto.setSdt(nhanVien.getSdt());
+        dto.setDiaChi(nhanVien.getDiaChi());
+        dto.setEmail(nhanVien.getEmail());
+        dto.setTrangThai(nhanVien.getTrangThai());
+        if (nhanVien.getTaiKhoan() != null) {
+            dto.setTaiKhoan(nhanVien.getTaiKhoan());
+        } else {
+            TaiKhoan taiKhoan = new TaiKhoan();
+            taiKhoan.setChucVu("UNKNOWN");
+            dto.setTaiKhoan(taiKhoan);
+        }
         return dto;
     }
 
-    // DTO -> Entity
-    private NhanVien toEntity(NhanVienDTO dto) {
-        NhanVien entity = new NhanVien();
-        entity.setIdNV(dto.getIdNV());
-        entity.setMaNV(dto.getMaNV());
-        entity.setTenNV(dto.getTenNV());
-        entity.setGioiTinh(dto.getGioiTinh());
-        entity.setNgaySinh(dto.getNgaySinh());
-        entity.setSdt(dto.getSdt());
-        entity.setEmail(dto.getEmail());
-        entity.setDiaChi(dto.getDiaChi());
-        if (dto.getIdTK() != null) {
-            TaiKhoan tk = taiKhoanRepository.findById(dto.getIdTK())
-                    .orElseThrow(() -> new RuntimeException("Tài khoản không tồn tại"));
-            entity.setTaiKhoan(tk);
-        }
-        entity.setTrangThai(dto.getTrangThai());
-        return entity;
+    // Ánh xạ từ DTO sang Entity
+    private NhanVien convertToEntity(NhanVienDTO dto) {
+        NhanVien nhanVien = new NhanVien();
+        nhanVien.setIdNV(dto.getIdNV());
+        nhanVien.setMaNV(dto.getMaNV());
+        nhanVien.setTenNV(dto.getTenNV());
+        nhanVien.setGioiTinh(dto.getGioiTinh());
+        nhanVien.setSdt(dto.getSdt());
+        nhanVien.setDiaChi(dto.getDiaChi());
+        nhanVien.setEmail(dto.getEmail());
+        nhanVien.setTrangThai(dto.getTrangThai() != null ? dto.getTrangThai() : true); // Mặc định trangThai là true
+        nhanVien.setTaiKhoan(dto.getTaiKhoan());
+        return nhanVien;
     }
 
     // Tạo mới
     public NhanVienDTO create(NhanVienDTO dto) {
-        NhanVien entity = toEntity(dto);
-        NhanVien saved = nhanVienRepository.save(entity);
-        return toDTO(saved);
+        // Tự sinh maNV
+        long count = nhanVienRepository.count();
+        String maNV = String.format("NV%03d", count + 1); // Ví dụ: NV001, NV002, ...
+        dto.setMaNV(maNV);
+        // Đặt trạng thái mặc định là true nếu không được cung cấp
+        if (dto.getTrangThai() == null) {
+            dto.setTrangThai(true);
+        }
+
+        // Tạo TaiKhoan nếu cần
+        TaiKhoan taiKhoan = new TaiKhoan();
+        taiKhoan.setChucVu(dto.getTaiKhoan().getChucVu());
+        taiKhoan = taiKhoanRepository.save(taiKhoan);
+
+        NhanVien nhanVien = convertToEntity(dto);
+        nhanVien.setTaiKhoan(taiKhoan);
+        NhanVien saved = nhanVienRepository.save(nhanVien);
+        return convertToDTO(saved);
     }
 
     // Lấy theo ID
     public NhanVienDTO getById(Integer id) {
-        NhanVien entity = nhanVienRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy nhân viên"));
-        return toDTO(entity);
+        NhanVien nhanVien = nhanVienRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Nhân viên không tồn tại"));
+        return convertToDTO(nhanVien);
     }
 
     // Lấy tất cả
-    public List<NhanVienDTO> getAll() {
-        return nhanVienRepository.findAll().stream().map(this::toDTO).collect(Collectors.toList());
+    public List<NhanVienDTO> getAll(Boolean trangThai, String keyword) {
+        List<NhanVien> nhanViens = nhanVienRepository.findByTrangThaiAndTenNVOrSdt(
+                trangThai,
+                keyword == null || keyword.isEmpty() ? null : keyword
+        );
+        return nhanViens.stream().map(this::convertToDTO).collect(Collectors.toList());
     }
 
     // Cập nhật
     public NhanVienDTO update(Integer id, NhanVienDTO dto) {
-        NhanVien entity = nhanVienRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy nhân viên"));
-        entity.setMaNV(dto.getMaNV());
-        entity.setTenNV(dto.getTenNV());
-        entity.setGioiTinh(dto.getGioiTinh());
-        entity.setNgaySinh(dto.getNgaySinh());
-        entity.setSdt(dto.getSdt());
-        entity.setEmail(dto.getEmail());
-        entity.setDiaChi(dto.getDiaChi());
-        if (dto.getIdTK() != null) {
-            TaiKhoan tk = taiKhoanRepository.findById(dto.getIdTK())
-                    .orElseThrow(() -> new RuntimeException("Tài khoản không tồn tại"));
-            entity.setTaiKhoan(tk);
-        } else {
-            entity.setTaiKhoan(null);
-        }
-        entity.setTrangThai(dto.getTrangThai());
-        NhanVien updated = nhanVienRepository.save(entity);
-        return toDTO(updated);
+        NhanVien nhanVien = nhanVienRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Nhân viên không tồn tại"));
+        nhanVien.setMaNV(dto.getMaNV());
+        nhanVien.setTenNV(dto.getTenNV());
+        nhanVien.setGioiTinh(dto.getGioiTinh());
+        nhanVien.setNgaySinh(dto.getNgaySinh());
+        nhanVien.setSdt(dto.getSdt());
+        nhanVien.setDiaChi(dto.getDiaChi());
+        nhanVien.setEmail(dto.getEmail());
+        nhanVien.setTrangThai(dto.getTrangThai() != null ? dto.getTrangThai() : true);
+        nhanVien.setTaiKhoan(dto.getTaiKhoan());
+        NhanVien updated = nhanVienRepository.save(nhanVien);
+        return convertToDTO(updated);
     }
 
-    // Xóa
-    public void delete(Integer id) {
-        NhanVien entity = nhanVienRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy nhân viên"));
-        nhanVienRepository.delete(entity);
+    // Chuyển đổi trạng thái
+    public NhanVienDTO toggleStatus(Integer id) {
+        NhanVien nhanVien = nhanVienRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Nhân viên không tồn tại"));
+        nhanVien.setTrangThai(!nhanVien.getTrangThai());
+        NhanVien updated = nhanVienRepository.save(nhanVien);
+        return convertToDTO(updated);
     }
-} 
+}

@@ -155,7 +155,7 @@ public class GioHangService {
                     newKhachHang.setMaKH("KH-" + taiKhoan + "-" + System.currentTimeMillis());
                     newKhachHang.setTenKH("Khách Hàng " + taiKhoan);
                     newKhachHang.setSdt("0123456789");
-                    newKhachHang.setDiaChi("Địa chỉ mặc định");
+//                    newKhachHang.setDiaChi("Địa chỉ mặc định");
                     newKhachHang.setTaiKhoan(tk);
                     newKhachHang.setTrangThai(true);
                     KhachHang saved = khachHangRepository.save(newKhachHang);
@@ -206,7 +206,7 @@ public class GioHangService {
                     newKhachHang.setMaKH("KH-" + taiKhoan + "-" + System.currentTimeMillis());
                     newKhachHang.setTenKH("Khách Hàng " + taiKhoan);
                     newKhachHang.setSdt("0123456789");
-                    newKhachHang.setDiaChi("Địa chỉ mặc định");
+//                    newKhachHang.setDiaChi("Địa chỉ mặc định");
                     newKhachHang.setTaiKhoan(tk);
                     newKhachHang.setTrangThai(true);
                     KhachHang saved = khachHangRepository.save(newKhachHang);

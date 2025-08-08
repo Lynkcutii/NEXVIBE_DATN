@@ -14,6 +14,7 @@ import jakarta.persistence.Table;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.util.Date;
 import java.util.List;
 
 @Entity
@@ -32,12 +33,14 @@ public class SanPham {
     @Column(name = "TenSP")
     private String tenSP;
 
+    @Column(name = "NgayTao")
+    private Date ngayTao;
+
+    @Column(name = "TongSoLuongSanPham")
+    private Integer tongSoLuongSanPham;
+
     @Column(name = "TrangThai")
     private Boolean trangThai;
-
-    @ManyToOne
-    @JoinColumn(name = "IdDM")
-    private DanhMuc danhMuc;
 
     @OneToMany(mappedBy = "sanPham", fetch = FetchType.LAZY)
     @JsonIgnore // Ngăn serialize danh sách SanPhamChiTiet

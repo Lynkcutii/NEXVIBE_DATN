@@ -11,8 +11,15 @@ import java.util.stream.Collectors;
 
 @Service
 public class MauSacService {
+
     @Autowired
     private MauSacRepository repository;
+
+    // Sinh mã màu sắc tự động
+    private String generateMaMauSac() {
+        long count = repository.count();
+        return String.format("MS%03d", count + 1); // Ví dụ: MS001, MS002
+    }
 
     // Entity -> DTO
     private MauSacDTO toDTO(MauSac entity) {
@@ -28,7 +35,6 @@ public class MauSacService {
     private MauSac toEntity(MauSacDTO dto) {
         MauSac entity = new MauSac();
         entity.setIdMauSac(dto.getIdMauSac());
-        entity.setMaMauSac(dto.getMaMauSac());
         entity.setTenMauSac(dto.getTenMauSac());
         entity.setTrangThai(dto.getTrangThai());
         return entity;
@@ -37,6 +43,8 @@ public class MauSacService {
     // Tạo mới
     public MauSacDTO create(MauSacDTO dto) {
         MauSac entity = toEntity(dto);
+        entity.setMaMauSac(generateMaMauSac()); // Tự động sinh mã
+        entity.setTrangThai(true);
         MauSac saved = repository.save(entity);
         return toDTO(saved);
     }
@@ -57,8 +65,7 @@ public class MauSacService {
     public MauSacDTO update(Integer id, MauSacDTO dto) {
         MauSac entity = repository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy màu sắc"));
-        entity.setMaMauSac(dto.getMaMauSac());
-        entity.setTenMauSac(dto.getTenMauSac());
+        entity.setTenMauSac(dto.getTenMauSac()); // Chỉ cập nhật tên
         entity.setTrangThai(dto.getTrangThai());
         MauSac updated = repository.save(entity);
         return toDTO(updated);
@@ -70,4 +77,4 @@ public class MauSacService {
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy màu sắc"));
         repository.delete(entity);
     }
-} 
+}

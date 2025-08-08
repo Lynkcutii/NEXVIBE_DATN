@@ -8,20 +8,12 @@ import java.util.List;
 @Data
 public class OrderRequestDTO {
     private Integer idTK;
-    private ShippingInfoDTO shippingInfo;
+    private ShippingInfo shippingInfo;
     private Integer paymentMethod;
-    private String voucherCode;
     private BigDecimal total;
+    private Integer idKM;
     private List<OrderItemDTO> items;
-
-    @Data
-    public static class ShippingInfoDTO {
-        private String firstName;
-        private String lastName;
-        private String phone;
-        private String address;
-        private String notes;
-    }
+    private String loaiHoaDon;
 
     @Data
     public static class OrderItemDTO {
@@ -29,5 +21,15 @@ public class OrderRequestDTO {
         private Integer idSPCT;
         private Integer soLuong;
         private BigDecimal donGia;
+        private Integer idVoucher; // Thêm dòng này để truyền id voucher
+    }
+    @Data
+    public static class ShippingInfo {
+        private String firstName;
+        private String lastName;
+        private String phone;
+        private String address;
+        private String notes;
+        private String email;
     }
 }

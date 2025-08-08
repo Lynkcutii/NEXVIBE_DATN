@@ -1,11 +1,6 @@
 package com.example.datnspct.Model;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -21,19 +16,17 @@ import java.time.LocalDateTime;
 @Getter
 @Setter
 public class KhuyenMai {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "IdKM")
     private Integer idKM;
 
-    @Column(name = "MaKM", nullable = false, unique = true)
+    @Column(name = "MaKM", length = 50, nullable = false, unique = true)
     private String maKM;
 
-    @Column(name = "MaVoucher", length = 50, unique = true, nullable = false)
-    private String maVoucher;
-
-    @Column(name = "TenVoucher", length = 255, nullable = false)
-    private String tenVoucher;
+    @Column(name = "TenKM", length = 255, nullable = false)
+    private String tenKM;
 
     @Column(name = "HinhThucGiam", length = 20, nullable = false)
     private String hinhThucGiam; // 'percentage' hoặc 'fixed'
@@ -41,13 +34,16 @@ public class KhuyenMai {
     @Column(name = "MucGiam", precision = 18, scale = 2, nullable = false)
     private BigDecimal mucGiam;
 
-    @Column(name = "GiaTriDonHangToiThieu", precision = 18, scale = 2)
+    @Column(name = "GiamToiDa", precision = 15, scale = 2, nullable = true)
+    private BigDecimal giamToiDa;
+
+    @Column(name = "GiaTriDonHangToiThieu", precision = 18, scale = 2, nullable = false)
     private BigDecimal giaTriDonHangToiThieu = BigDecimal.ZERO;
 
     @Column(name = "SoLuong", nullable = false)
     private Integer soLuong;
 
-    @Column(name = "DaSuDung")
+    @Column(name = "DaSuDung", nullable = false)
     private Integer daSuDung = 0;
 
     @Column(name = "NgayBatDau", nullable = false)
@@ -56,9 +52,10 @@ public class KhuyenMai {
     @Column(name = "NgayKetThuc", nullable = false)
     private LocalDateTime ngayKetThuc;
 
-    @Column(name = "TrangThai")
+    @Column(name = "TrangThai", nullable = false)
     private Boolean trangThai = true;
 
-    @Column(name = "IdNV")
-    private Integer idNV; // Có thể chuyển sang @ManyToOne nếu cần ánh xạ sang entity NhanVien
+    @ManyToOne
+    @JoinColumn(name = "IdKH", referencedColumnName = "IdKH")
+    private KhachHang khachHang;
 }

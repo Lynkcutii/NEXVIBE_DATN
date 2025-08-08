@@ -95,10 +95,6 @@
                 <span>Tạm tính</span>
                 <span>{{ selectedSubTotal.toLocaleString('vi-VN') }}đ</span>
               </li>
-              <li class="list-group-item d-flex justify-content-between px-0">
-                <span>Phí vận chuyển</span>
-                <span>Miễn phí</span>
-              </li>
               <li class="list-group-item d-flex justify-content-between fw-bold h5 px-0 mt-2">
                 <span>Tổng cộng</span>
                 <span>{{ selectedSubTotal.toLocaleString('vi-VN') }}đ</span>
@@ -192,14 +188,15 @@ const removeSelectedItems = async () => {
   }
 
   try {
-    const deletePromises = selectedItems.value.map(idGHCT => 
-      axios.delete(`${API_BASE_URL}/client/api/giohangct/${idGHCT}`, {
-        withCredentials: true
-      })
-    );
+    // Sử dụng endpoint batch delete mới
+    const response = await axios.delete(`${API_BASE_URL}/client/api/giohang/giohangct/batch`, {
+      data: selectedItems.value,
+      withCredentials: true
+    });
 
-    await Promise.all(deletePromises);
+    console.log('removeSelectedItems: Batch delete response:', response.data);
 
+    // Cập nhật UI
     items.value = items.value.filter(item => !selectedItems.value.includes(item.idGHCT));
     selectedItems.value = [];
 
@@ -210,7 +207,7 @@ const removeSelectedItems = async () => {
       auth.logout();
       router.push('/login');
     } else {
-      toast.error('Lỗi khi xóa sản phẩm!');
+      toast.error('Lỗi khi xóa sản phẩm: ' + (err.response?.data || err.message));
     }
   }
 };

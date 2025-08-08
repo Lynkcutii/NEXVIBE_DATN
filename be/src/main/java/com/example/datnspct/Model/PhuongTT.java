@@ -12,7 +12,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
-@Table(name = "PhuongTT")
+@Table(name = "PhuongThucThanhToan")
 @AllArgsConstructor
 @NoArgsConstructor
 @Getter
@@ -20,7 +20,7 @@ import lombok.Setter;
 public class PhuongTT {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "IdPTT")
+    @Column(name = "IdPT")
     private Integer idPTT;
 
     @Column(name = "Ten", length = 50)

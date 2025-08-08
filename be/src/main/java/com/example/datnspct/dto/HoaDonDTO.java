@@ -17,5 +17,7 @@ public class HoaDonDTO {
     private LocalDateTime ngayTao;
     private LocalDateTime ngaySua;
     private BigDecimal tongTien;
-    private Boolean trangThai;
+    private String trangThai;
+    private String loaiHoaDon;
+    private int totalProducts;
 }

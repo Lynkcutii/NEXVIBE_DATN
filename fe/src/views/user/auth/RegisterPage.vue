@@ -47,6 +47,15 @@
 
               <div class="row">
                 <div class="col-md-6 mb-3">
+                  <label class="form-label">Ngày sinh *</label>
+                  <input
+                    v-model="customerForm.ngaySinh"
+                    type="date"
+                    class="form-control"
+                    required
+                  />
+                </div>
+                <div class="col-md-6 mb-3">
                   <label class="form-label">Số điện thoại *</label>
                   <input
                     v-model="customerForm.sdt"
@@ -57,6 +66,9 @@
                     required
                   />
                 </div>
+              </div>
+
+              <div class="row">
                 <div class="col-md-6 mb-3">
                   <label class="form-label">Email *</label>
                   <input
@@ -67,17 +79,49 @@
                     required
                   />
                 </div>
+                <div class="col-md-6 mb-3">
+                  <label class="form-label">Địa chỉ cụ thể *</label>
+                  <input
+                    v-model="customerForm.diaChiCuThe"
+                    type="text"
+                    class="form-control"
+                    placeholder="Nhập số nhà, đường"
+                    required
+                  />
+                </div>
+              </div>
+
+              <div class="row">
+                <div class="col-md-6 mb-3">
+                  <label class="form-label">Tỉnh/Thành phố *</label>
+                  <input
+                    v-model="customerForm.tinhThanh"
+                    type="text"
+                    class="form-control"
+                    placeholder="Nhập tỉnh/thành phố"
+                    required
+                  />
+                </div>
+                <div class="col-md-6 mb-3">
+                  <label class="form-label">Phường/Xã *</label>
+                  <input
+                    v-model="customerForm.phuongXa"
+                    type="text"
+                    class="form-control"
+                    placeholder="Nhập phường/xã"
+                    required
+                  />
+                </div>
               </div>
 
               <div class="mb-3">
-                <label class="form-label">Địa chỉ *</label>
-                <textarea
-                  v-model="customerForm.diaChi"
+                <label class="form-label">Ghi chú</label>
+                <input
+                  v-model="customerForm.ghiChu"
+                  type="text"
                   class="form-control"
-                  rows="3"
-                  placeholder="Nhập địa chỉ chi tiết"
-                  required
-                ></textarea>
+                  placeholder="Nhập ghi chú (nếu có)"
+                />
               </div>
 
               <div v-if="errorMessage" class="alert alert-danger">
@@ -150,7 +194,6 @@
                 </div>
               </div>
 
-              <!-- Terms and Conditions -->
               <div class="mb-3">
                 <div class="form-check">
                   <input
@@ -190,7 +233,6 @@
             </form>
           </div>
 
-          <!-- Login Link -->
           <div class="text-center mt-4">
             <span class="text-muted small">Bạn đã có tài khoản? </span>
             <router-link to="/login" class="small fw-bold text-decoration-none">Đăng nhập</router-link>
@@ -210,21 +252,23 @@ import axios from 'axios';
 const router = useRouter();
 const toast = useToast();
 
-// Current step tracking
 const currentStep = ref(1);
 const isLoading = ref(false);
 const errorMessage = ref('');
 
-// Customer form data
 const customerForm = ref({
   tenKH: '',
   gioiTinh: '',
+  ngaySinh: '',
   sdt: '',
   email: '',
-  diaChi: ''
+  diaChiCuThe: '',
+  tinhThanh: '',
+  phuongXa: '',
+  soDienThoai: '',
+  ghiChu: ''
 });
 
-// Account form data
 const accountForm = ref({
   taiKhoan: '',
   matKhau: '',
@@ -232,17 +276,14 @@ const accountForm = ref({
   dongYDieuKhoan: false
 });
 
-// Password visibility toggles
 const showPassword = ref(false);
 const showConfirmPassword = ref(false);
 
-// Kiểm tra tên đăng nhập không chứa ký tự đặc biệt hoặc dấu cách
 const isUsernameValid = computed(() => {
   const regex = /^[a-zA-Z0-9_]+$/;
   return regex.test(accountForm.value.taiKhoan);
 });
 
-// Computed property for account form validation
 const isAccountFormValid = computed(() => {
   return accountForm.value.taiKhoan.length >= 6 &&
          isUsernameValid.value &&
@@ -251,20 +292,28 @@ const isAccountFormValid = computed(() => {
          accountForm.value.dongYDieuKhoan;
 });
 
-// Generate customer code
-const generateCustomerCode = () => {
-  const timestamp = Date.now().toString().slice(-6);
-  return `KH${timestamp}`;
-};
-
-// Handle customer and account submission (combined)
 const handleCustomerSubmit = async () => {
-  currentStep.value = 2; // Chuyển sang bước 2
+  if (!customerForm.value.tenKH || !customerForm.value.gioiTinh || !customerForm.value.ngaySinh ||
+      !customerForm.value.sdt || !customerForm.value.email || 
+      !customerForm.value.diaChiCuThe || !customerForm.value.tinhThanh || !customerForm.value.phuongXa) {
+    errorMessage.value = 'Vui lòng nhập đầy đủ các thông tin bắt buộc!';
+    toast.error(errorMessage.value);
+    return;
+  }
+
+  // Kiểm tra định dạng ngày sinh
+  const today = new Date();
+  const selectedDate = new Date(customerForm.value.ngaySinh);
+  if (selectedDate >= today) {
+    errorMessage.value = 'Ngày sinh không hợp lệ! Vui lòng chọn ngày sinh trong quá khứ.';
+    toast.error(errorMessage.value);
+    return;
+  }
+
+  currentStep.value = 2;
 };
 
-// Handle account creation submission (Step 2)
 const handleAccountSubmit = async () => {
-  console.log('handleAccountSubmit: Starting registration');
   isLoading.value = true;
   errorMessage.value = '';
   
@@ -272,12 +321,16 @@ const handleAccountSubmit = async () => {
     const registerData = {
       taiKhoan: accountForm.value.taiKhoan,
       matKhau: accountForm.value.matKhau,
-      maKH: generateCustomerCode(),
       tenKH: customerForm.value.tenKH,
       gioiTinh: customerForm.value.gioiTinh,
+      ngaySinh: customerForm.value.ngaySinh,
       sdt: customerForm.value.sdt,
       email: customerForm.value.email,
-      diaChi: customerForm.value.diaChi
+      diaChiCuThe: customerForm.value.diaChiCuThe,
+      tinhThanh: customerForm.value.tinhThanh,
+      phuongXa: customerForm.value.phuongXa,
+      soDienThoai: customerForm.value.soDienThoai,
+      ghiChu: customerForm.value.ghiChu
     };
 
     const response = await axios.post('http://localhost:8080/api/auth/register', registerData, {
@@ -285,13 +338,10 @@ const handleAccountSubmit = async () => {
       withCredentials: true
     });
 
-    console.log('handleAccountSubmit: Registration successful', response.data);
-    
     toast.success('Đăng ký thành công! Vui lòng đăng nhập để tiếp tục.');
     router.push('/login');
     
   } catch (error) {
-    console.error('handleAccountSubmit: Error during registration', error);
     if (error.response) {
       if (error.response.status === 409) {
         errorMessage.value = 'Tên đăng nhập đã tồn tại, vui lòng chọn tên khác!';
@@ -309,7 +359,6 @@ const handleAccountSubmit = async () => {
   }
 };
 
-// Go back to previous step
 const goBack = () => {
   currentStep.value = 1;
   errorMessage.value = '';

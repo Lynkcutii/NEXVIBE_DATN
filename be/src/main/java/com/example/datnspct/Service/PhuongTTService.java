@@ -1,7 +1,7 @@
 package com.example.datnspct.Service;
 
 import com.example.datnspct.Model.PhuongTT;
-import com.example.datnspct.Repository.PhuongTTRepository;
+import com.example.datnspct.Repository.PhuongThucThanhToanRepository;
 import com.example.datnspct.dto.PhuongTTDTO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -12,7 +12,7 @@ import java.util.stream.Collectors;
 @Service
 public class PhuongTTService {
     @Autowired
-    private PhuongTTRepository repository;
+    private PhuongThucThanhToanRepository repository;
 
     // Entity -> DTO
     private PhuongTTDTO toDTO(PhuongTT entity) {

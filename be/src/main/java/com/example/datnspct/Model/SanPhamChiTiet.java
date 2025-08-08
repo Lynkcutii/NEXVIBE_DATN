@@ -61,4 +61,5 @@ public class SanPhamChiTiet {
     @ManyToOne
     @JoinColumn(name = "IdSize")
     private Size size;
+
 }
