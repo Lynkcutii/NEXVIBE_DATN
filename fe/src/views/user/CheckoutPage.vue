@@ -623,6 +623,7 @@ const placeOrder = async () => {
   try {
     orderData = {
       idTK: auth.user.idTK,
+      loaiHoaDon: 'Trực tuyến',
       shippingInfo: {
         firstName: shippingInfo.firstName,
         lastName: shippingInfo.lastName,

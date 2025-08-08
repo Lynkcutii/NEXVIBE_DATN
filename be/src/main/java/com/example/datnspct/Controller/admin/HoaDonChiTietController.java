@@ -63,6 +63,13 @@ public class HoaDonChiTietController {
         return ResponseEntity.ok(hoaDonChiTietDTOs);
     }
 
+    // Lấy tất cả chi tiết theo id hóa đơn
+    @GetMapping("/hoadonct/{idHD}")
+    public ResponseEntity<List<HoaDonChiTietDTO>> getByHoaDonId(@PathVariable Integer idHD) {
+        List<HoaDonChiTietDTO> list = hoaDonChiTietService.getByHoaDonId(idHD);
+        return ResponseEntity.ok(list);
+    }
+
     // Cập nhật
     @PutMapping("/{id}")
     public ResponseEntity<?> capNhatHoaDonChiTiet(@PathVariable Integer id, @Valid @RequestBody HoaDonChiTietDTO hoaDonChiTietDTO, BindingResult result) {

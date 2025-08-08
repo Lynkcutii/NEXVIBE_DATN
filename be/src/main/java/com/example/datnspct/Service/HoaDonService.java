@@ -28,6 +28,11 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.PageImpl;
+import java.time.format.DateTimeFormatter;
+import java.util.stream.Stream;
 
 @Service
 public class HoaDonService {
@@ -95,6 +100,10 @@ public class HoaDonService {
         dto.setNgaySua(hoaDon.getNgaySua());
         dto.setTongTien(hoaDon.getTongTien());
         dto.setTrangThai(hoaDon.getTrangThai());
+        dto.setLoaiHoaDon(hoaDon.getLoaiHoaDon());
+        // Lấy tổng số sản phẩm từ repository
+        int totalProducts = hoaDonChiTietRepository.getTotalProductsByHoaDonId(hoaDon.getIdHD());
+        dto.setTotalProducts(totalProducts);
         return dto;
     }
 
@@ -103,11 +112,15 @@ public class HoaDonService {
     public HoaDon createHoaDon(OrderRequestDTO request) {
         List<String> errors = new ArrayList<>();
         System.out.println("createHoaDon: Starting with request: " + request);
+        System.out.println("[DEBUG] Dữ liệu nhận được khi tạo hóa đơn: " + request);
 
-        // Kiểm tra khách hàng
-        Optional<KhachHang> khachHangOpt = khachHangRepository.findByIdTK(request.getIdTK());
-        if (!khachHangOpt.isPresent()) {
-            errors.add("Không tìm thấy khách hàng với idTK: " + request.getIdTK());
+        // Kiểm tra khách hàng (chỉ bắt buộc nếu có idTK)
+        Optional<KhachHang> khachHangOpt = Optional.empty();
+        if (request.getIdTK() != null) {
+            khachHangOpt = khachHangRepository.findByIdTK(request.getIdTK());
+            if (!khachHangOpt.isPresent()) {
+                errors.add("Không tìm thấy khách hàng với idTK: " + request.getIdTK());
+            }
         }
 
         // Kiểm tra phương thức thanh toán
@@ -181,19 +194,30 @@ public class HoaDonService {
             throw new RuntimeException("Lỗi khi tạo hóa đơn: " + String.join("; ", errors));
         }
 
-        // Lấy thông tin khách hàng và phương thức thanh toán
-        KhachHang khachHang = khachHangOpt.get();
+        // Lấy thông tin phương thức thanh toán
         PhuongTT phuongTT = phuongTTOpt.get();
 
         // Tạo hóa đơn
         HoaDon hoaDon = new HoaDon();
         hoaDon.setMaHD("HD" + UUID.randomUUID().toString().substring(0, 8));
-        hoaDon.setIdKhachHang(khachHang.getIdKH());
+        hoaDon.setIdKhachHang(khachHangOpt.map(KhachHang::getIdKH).orElse(null));
         hoaDon.setIdNhanVien(null);
         hoaDon.setNgayTao(LocalDateTime.now());
         hoaDon.setNgaySua(LocalDateTime.now());
-        hoaDon.setTongTien(calculatedTotal);
-        hoaDon.setTrangThai("CHO_XAC_NHAN");
+        hoaDon.setTongTien(request.getTotal());
+        hoaDon.setTrangThai("Chờ xác nhận");
+        // Phân biệt loại hóa đơn dựa trên nguồn thanh toán
+        if (request.getIdTK() == null) {
+            // Không có idTK => Bán tại quầy
+            hoaDon.setLoaiHoaDon("Tại quầy");
+        } else {
+            // Có idTK => Thanh toán online
+            String loaiHoaDon = request.getLoaiHoaDon();
+            if (loaiHoaDon == null || loaiHoaDon.trim().isEmpty()) {
+                loaiHoaDon = "Trực tuyến"; // Mặc định cho thanh toán online
+            }
+            hoaDon.setLoaiHoaDon(loaiHoaDon);
+        }
         if (request.getIdKM() != null) {
             hoaDon.setIdKM(request.getIdKM());
         }
@@ -281,6 +305,40 @@ public class HoaDonService {
                 .collect(Collectors.toList());
     }
 
+    public Page<HoaDonDTO> filterHoaDon(String keyword, String status, String type, String dateFrom, String dateTo, Pageable pageable) {
+        List<HoaDon> all = hoaDonRepository.findAll();
+        Stream<HoaDon> stream = all.stream();
+        if (keyword != null && !keyword.isEmpty()) {
+            String kw = keyword.toLowerCase();
+            stream = stream.filter(hd ->
+                (hd.getMaHD() != null && hd.getMaHD().toLowerCase().contains(kw)) ||
+                (hd.getKhachHang() != null && hd.getKhachHang().getTenKH() != null && hd.getKhachHang().getTenKH().toLowerCase().contains(kw))
+            );
+        }
+        if (status != null && !status.isEmpty()) {
+            stream = stream.filter(hd -> status.equalsIgnoreCase(hd.getTrangThai()));
+        }
+        if (type != null && !type.isEmpty()) {
+            stream = stream.filter(hd ->
+                hd.getLoaiHoaDon() != null && type.trim().equalsIgnoreCase(hd.getLoaiHoaDon().trim())
+            );
+        }
+        DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+        if (dateFrom != null && !dateFrom.isEmpty()) {
+            LocalDateTime from = LocalDateTime.parse(dateFrom, dtf);
+            stream = stream.filter(hd -> hd.getNgayTao() != null && !hd.getNgayTao().isBefore(from));
+        }
+        if (dateTo != null && !dateTo.isEmpty()) {
+            LocalDateTime to = LocalDateTime.parse(dateTo, dtf);
+            stream = stream.filter(hd -> hd.getNgayTao() != null && !hd.getNgayTao().isAfter(to));
+        }
+        List<HoaDonDTO> filtered = stream.map(this::convertToDTO).collect(Collectors.toList());
+        int start = (int) pageable.getOffset();
+        int end = Math.min((start + pageable.getPageSize()), filtered.size());
+        List<HoaDonDTO> pageContent = start > end ? new ArrayList<>() : filtered.subList(start, end);
+        return new PageImpl<>(pageContent, pageable, filtered.size());
+    }
+
     public HoaDonDTO updateHoaDon(Integer id, HoaDonDTO dto) {
         HoaDon hoaDon = hoaDonRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Hóa đơn không tồn tại"));
@@ -318,6 +376,21 @@ public class HoaDonService {
         hoaDon.setNgaySua(dto.getNgaySua());
         hoaDon.setTongTien(dto.getTongTien());
         hoaDon.setTrangThai(dto.getTrangThai());
+        hoaDon.setLoaiHoaDon(dto.getLoaiHoaDon());
         return hoaDon;
+    }
+
+    // Method to update order status
+    public void updateOrderStatus(Integer idHD, String newStatus, String ghiChu) {
+        // Tìm hóa đơn theo ID
+        HoaDon hoaDon = hoaDonRepository.findById(idHD)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy hóa đơn với ID: " + idHD));
+        
+        // Cập nhật trạng thái
+        hoaDon.setTrangThai(newStatus);
+        hoaDon.setNgaySua(java.time.LocalDateTime.now());
+        
+        // Lưu vào database
+        hoaDonRepository.save(hoaDon);
     }
 }

@@ -147,4 +147,24 @@ public class HoaDonChiTietService {
         sanPhamChiTietRepository.save(sanPham);
         hoaDonChiTietRepository.deleteById(id);
     }
+
+    public List<HoaDonChiTietDTO> getByHoaDonId(Integer idHD) {
+        List<HoaDonChiTiet> list = hoaDonChiTietRepository.findByHoaDonId(idHD);
+        return list.stream().map(entity -> {
+            HoaDonChiTietDTO dto = convertToDTO(entity);
+            // Bổ sung tên sản phẩm, size, màu nếu có
+            if (entity.getSanPhamct() != null) {
+                if (entity.getSanPhamct().getSanPham() != null) {
+                    dto.setTenSanPham(entity.getSanPhamct().getSanPham().getTenSP());
+                }
+                if (entity.getSanPhamct().getSize() != null) {
+                    dto.setTenSize(entity.getSanPhamct().getSize().getTenSize());
+                }
+                if (entity.getSanPhamct().getMauSac() != null) {
+                    dto.setTenMauSac(entity.getSanPhamct().getMauSac().getTenMauSac());
+                }
+            }
+            return dto;
+        }).collect(Collectors.toList());
+    }
 }

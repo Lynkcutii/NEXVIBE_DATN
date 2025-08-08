@@ -23,4 +23,6 @@ public class HoaDonChiTietDTO {
     private LocalDateTime ngayTao;
     private LocalDateTime ngaySua;
     private String tenSanPham; // Lấy từ SanPhamCT
+    private String tenSize;
+    private String tenMauSac;
 }

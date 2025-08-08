@@ -13,6 +13,7 @@ public class OrderRequestDTO {
     private BigDecimal total;
     private Integer idKM;
     private List<OrderItemDTO> items;
+    private String loaiHoaDon;
 
     @Data
     public static class OrderItemDTO {

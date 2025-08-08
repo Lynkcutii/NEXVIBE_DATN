@@ -39,6 +39,9 @@ public class HoaDon {
     @Column(name = "IdKM")  // <-- Thêm dòng này
     private Integer idKM;
 
+    @Column(name = "LoaiHoaDon")
+    private String loaiHoaDon;
+
     @Column(name = "NgayTao")
     private LocalDateTime ngayTao;
 

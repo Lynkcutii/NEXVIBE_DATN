@@ -18,4 +18,6 @@ public class HoaDonDTO {
     private LocalDateTime ngaySua;
     private BigDecimal tongTien;
     private String trangThai;
+    private String loaiHoaDon;
+    private int totalProducts;
 }
