@@ -14,6 +14,7 @@ import OrderSuccessPage from '../views/user/OrderSuccessPage.vue';
 import AboutPage from '../views/user/AboutPage.vue';
 import BlogPage from '../views/user/BlogPage.vue';
 import ContactPage from '../views/user/ContactPage.vue';
+import MoMoReturn from '../views/user/MoMoReturn.vue';
 import Dashboard from '../views/admin/Dashboard.vue';
 import PointOfSale from '../views/admin/PointOfSale.vue';
 import Products from '../views/admin/Products.vue';
@@ -32,6 +33,7 @@ import VoucherForm from '../views/forms/VoucherForm.vue';
 import OrderDetailPage from '../views/user/account/OrderDetailPage.vue';
 import { useAuthStore } from '@/stores/auth';
 import { useToast } from 'vue-toastification';
+
 
 const routes = [
   // --- NHÁNH ROUTE CHO TRANG NGƯỜI DÙNG (USER) ---
@@ -55,6 +57,9 @@ const routes = [
       { path: 'contact', name: 'contact', component: ContactPage },
     ]
   },
+
+  // Trang trung gian nhận redirect từ MoMo (đặt ngoài layout để tránh guard/layout ảnh hưởng)
+  { path: '/momo-return', name: 'momo-return', component: MoMoReturn },
 
   // --- NHÁNH ROUTE CHO TRANG QUẢN TRỊ (ADMIN) ---
   {

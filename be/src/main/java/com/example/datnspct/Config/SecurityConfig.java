@@ -38,8 +38,12 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         // Cho phép truy cập công khai
                         .requestMatchers("/api/auth/**", "/css/**", "/js/**", "/api/**","/api/sanphamchitiet/bySanPham/**").permitAll()
+                        // Phân quyền rõ ràng cho MoMo API
+                        .requestMatchers("/admin/api/momo/**").hasRole("ADMIN")
                         // Phân quyền rõ ràng cho endpoint chi tiết hóa đơn
                         .requestMatchers("/admin/api/hoadonchitiet/**").hasRole("ADMIN")
+                        // Phân quyền rõ ràng cho API thống kê
+                        .requestMatchers("/admin/api/thongke/**").hasRole("ADMIN")
                         .requestMatchers("/admin/**","/api/**").hasAnyRole("ADMIN")
                         .requestMatchers("/client/api/**","/api/**").hasAnyRole( "KHACH_HANG")
                         // Tất cả các request khác cần xác thực

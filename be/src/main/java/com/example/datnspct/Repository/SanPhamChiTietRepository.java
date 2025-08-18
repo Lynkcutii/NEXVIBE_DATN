@@ -49,4 +49,9 @@ public interface SanPhamChiTietRepository extends JpaRepository<SanPhamChiTiet, 
             @Param("minPrice") BigDecimal minPrice,
             @Param("maxPrice") BigDecimal maxPrice,
             Pageable pageable);
+    
+    // Đếm sản phẩm theo số lượng tồn kho
+    long countBySoLuongGreaterThan(int soLuong);
+    long countBySoLuong(int soLuong);
+    long countBySoLuongBetween(int minSoLuong, int maxSoLuong);
 }
