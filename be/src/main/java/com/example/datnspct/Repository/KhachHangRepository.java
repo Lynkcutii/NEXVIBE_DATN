@@ -25,6 +25,10 @@ public interface KhachHangRepository extends JpaRepository<KhachHang, Integer> {
     @Query("SELECT COUNT(DISTINCT kh.idKH) FROM KhachHang kh WHERE EXISTS (SELECT 1 FROM HoaDon hd WHERE hd.khachHang.idKH = kh.idKH)")
     long countKhachHangCoHoaDon();
     
+    // Đếm khách hàng có hóa đơn trong khoảng thời gian
+    @Query("SELECT COUNT(DISTINCT kh.idKH) FROM KhachHang kh WHERE EXISTS (SELECT 1 FROM HoaDon hd WHERE hd.khachHang.idKH = kh.idKH AND hd.ngayTao BETWEEN :startDate AND :endDate)")
+    long countKhachHangCoHoaDonTrongKhoang(@Param("startDate") LocalDateTime startDate, @Param("endDate") LocalDateTime endDate);
+    
     // Khách hàng mới (dựa trên tài khoản được tạo gần đây)
     @Query("SELECT kh.idKH, kh.tenKH, kh.email, kh.idKH " +
            "FROM KhachHang kh " +

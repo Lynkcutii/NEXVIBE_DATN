@@ -60,13 +60,6 @@
                         </button>
                         <button
                           type="button"
-                          class="btn btn-info btn-sm"
-                          @click="showChonSanPham(hd, true)"
-                        >
-                          <i class="bi bi-qr-code"></i> Quét QR sản phẩm
-                        </button>
-                        <button
-                          type="button"
                           class="btn btn-danger btn-sm"
                           @click="xoaHoaDon(hd.maHoaDon)"
                         >
@@ -178,115 +171,7 @@
                           </button>
                         </div>
                       </div>
-                      <!-- Delivery toggle -->
-                      <div class="d-flex justify-content-between align-items-center p-3 bg-light rounded mb-3">
-                        <div class="d-flex align-items-center">
-                          <i class="bi bi-truck me-3 text-info"></i>
-                          <label class="form-label mb-0 fw-semibold">Giao hàng</label>
-                        </div>
-                        <div class="form-check form-switch">
-                          <input
-                            class="form-check-input"
-                            type="checkbox"
-                            v-model="hd.giaoHang"
-                            @change="toggleDeliveryInfo(hd)"
-                          />
-                        </div>
-                      </div>
-                      <!-- Delivery info -->
-                      <div v-if="hd.giaoHang" class="p-3 border border-info rounded bg-info bg-opacity-10 mb-3">
-                        <h6 class="text-info fw-semibold mb-3">
-                          <i class="bi bi-geo-alt-fill me-2"></i>
-                          Thông tin giao hàng
-                        </h6>
-                        <div v-if="hd.customerInfo">
-                          <div class="mb-3">
-                            <label class="form-label text-info fw-semibold">Họ tên</label>
-                            <input
-                              v-model="hd.customerInfo.hoTen"
-                              type="text"
-                              class="form-control"
-                              placeholder="Nhập họ tên"
-                              :disabled="!hd.customerInfo"
-                            />
-                          </div>
-                          <div class="mb-3">
-                            <label class="form-label text-info fw-semibold">Số điện thoại</label>
-                            <input
-                              v-model="hd.customerInfo.sdt"
-                              type="text"
-                              class="form-control"
-                              placeholder="Nhập số điện thoại"
-                              :disabled="!hd.customerInfo"
-                            />
-                          </div>
-                          <div class="mb-3">
-                            <label class="form-label text-info fw-semibold">
-                              <i class="bi bi-pin-map me-1"></i>
-                              Địa chỉ giao hàng
-                            </label>
-                            <select
-                              v-model="hd.customerInfo.selectedDiaChi"
-                              class="form-select"
-                              @change="updateDiaChi(hd)"
-                              :disabled="!hd.customerInfo || diaChiList.length === 0"
-                            >
-                              <option :value="null" disabled>Chọn địa chỉ</option>
-                              <option v-for="diaChi in diaChiList" :key="diaChi.id" :value="diaChi">
-                                {{ diaChi.tenDiaChi }} ({{ diaChi.maDiaChi }})
-                              </option>
-                              <option :value="{ id: null, tenDiaChi: '' }">Nhập địa chỉ mới</option>
-                            </select>
-                          </div>
-                          <div class="mb-3" v-if="hd.customerInfo.selectedDiaChi && !hd.customerInfo.selectedDiaChi.id">
-                            <label class="form-label text-info fw-semibold">
-                              <i class="bi bi-pin-map me-1"></i>
-                              Nhập địa chỉ mới
-                            </label>
-                            <textarea
-                              v-model="hd.customerInfo.diaChiKhachHangs"
-                              class="form-control"
-                              rows="2"
-                              placeholder="Nhập địa chỉ giao hàng"
-                            ></textarea>
-                          </div>
-                          <div class="mb-3" v-else-if="hd.customerInfo.selectedDiaChi">
-                            <label class="form-label text-info fw-semibold">
-                              <i class="bi bi-pin-map me-1"></i>
-                              Địa chỉ đã chọn
-                            </label>
-                            <input
-                              v-model="hd.customerInfo.diaChiKhachHangs"
-                              class="form-control"
-                              readonly
-                            />
-                          </div>
-                          <div class="mb-3">
-                            <label class="form-label text-info fw-semibold">
-                              <i class="bi bi-chat-text me-1"></i>
-                              Ghi chú giao hàng
-                            </label>
-                            <textarea
-                              v-model="hd.ghiChuGiaoHang"
-                              class="form-control"
-                              rows="2"
-                              placeholder="Ghi chú đặc biệt cho shipper..."
-                            ></textarea>
-                          </div>
-                        </div>
-                        <div v-else class="text-center py-3">
-                          <i class="bi bi-exclamation-triangle text-warning fs-1"></i>
-                          <p class="text-muted mt-2 mb-0">Vui lòng chọn khách hàng để hiển thị thông tin giao hàng</p>
-                          <button
-                            type="button"
-                            class="btn btn-outline-primary btn-sm mt-2"
-                            @click="showCustomerModal(hd)"
-                          >
-                            <i class="bi bi-person-plus me-1"></i> Chọn khách hàng
-                          </button>
-                        </div>
-                      </div>
-                      <hr>
+                    
 
                       <!-- Payment summary -->
                       <h5 class="card-title">Tổng kết thanh toán</h5>
@@ -327,7 +212,7 @@
                           </button>
                           <span v-if="hd.thanhToan" class="text-primary">
                             {{ hd.thanhToan.soTien.toLocaleString() }} VND
-                            <i :class="hd.thanhToan.phuongThuc === 'CHUYỂN KHOẢN' ? 'bi bi-bank' : 'bi bi-cash'" class="ms-2"></i>
+                            <i :class="hd.thanhToan.phuongThuc === 'MOMO' ? 'bi bi-qr-code' : 'bi bi-cash'" class="ms-2"></i>
                             <span v-if="hd.thanhToan.maGiaoDich" class="text-muted ms-1">({{ hd.thanhToan.maGiaoDich }})</span>
                           </span>
                           <span v-else>0 VND</span>
@@ -601,12 +486,12 @@
     </div>
 
     <!-- Modal Thanh Toán -->
-    <div v-if="modalThanhToan" class="modal fade show d-block" tabindex="-1" style="background: rgba(0,0,0,0.6);">
-      <div class="modal-dialog">
-        <div class="modal-content">
+    <div v-if="modalThanhToan" class="modal fade show d-block" tabindex="-1" style="background: rgba(0,0,0,0.6); z-index: 3000; pointer-events: auto;">
+      <div class="modal-dialog" style="z-index: 3001; pointer-events: auto;">
+        <div class="modal-content" style="position: relative; z-index: 3002; pointer-events: auto;">
           <div class="modal-header bg-warning text-white">
             <h5 class="modal-title">THANH TOÁN</h5>
-            <button type="button" class="btn-close btn-close-white" @click="modalThanhToan = false"></button>
+            <button type="button" class="btn-close btn-close-white" @click="closeThanhToanModal"></button>
           </div>
           <div class="modal-body text-center">
             <div class="mb-3">
@@ -630,60 +515,25 @@
                 :class="{ active: thanhToanPhuongThuc === 'MOMO' }"
                 @click="thanhToanPhuongThuc = 'MOMO'"
               >
-                <i class="bi bi-qr-code"></i> MoMo QR
+                <i class="bi bi-qr-code"></i> MOMO
               </button>
             </div>
-            <div class="mb-3">
-              <div class="row">
-                <div class="col-6">
-                  <div class="form-floating">
-                    <input
-                      v-model.number="thanhToanTienKhachDua"
-                      type="number"
-                      class="form-control"
-                      id="floatingCash"
-                      placeholder="Tiền khách đưa"
-                      :min="0"
-                      @input="validateTienKhachDua"
-                    />
-                    <label for="floatingCash">Tiền khách đưa</label>
-                  </div>
-                </div>
-                <div class="col-6" v-if="thanhToanPhuongThuc === 'CHUYỂN KHOẢN'">
-                  <div class="form-floating">
-                    <input
-                      v-model="thanhToanMaGiaoDich"
-                      type="text"
-                      class="form-control"
-                      id="floatingTransaction"
-                      placeholder="Mã giao dịch"
-                    />
-                    <label for="floatingTransaction">Mã giao dịch</label>
-                  </div>
-                </div>
+                        <!-- Input fields - Ẩn khi chọn MoMo -->
+            <div class="mb-3" v-if="thanhToanPhuongThuc !== 'MOMO'">
+              <div class="form-floating">
+                <input
+                  v-model.number="thanhToanTienKhachDua"
+                  type="number"
+                  class="form-control"
+                  id="floatingCash"
+                  placeholder="Tiền khách đưa"
+                  :min="0"
+                  @input="validateTienKhachDua"
+                />
+                <label for="floatingCash">Tiền khách đưa</label>
               </div>
               
-              <!-- MoMo QR Payment Section -->
-              <div v-if="thanhToanPhuongThuc === 'MOMO'" class="mt-3">
-                <div class="text-center">
-                  <div v-if="momoLoading">
-                    <div class="spinner-border text-success" role="status">
-                      <span class="visually-hidden">Đang tạo thanh toán...</span>
-                    </div>
-                    <p class="mt-2">Đang tạo thanh toán MoMo...</p>
-                  </div>
-                  <div v-else>
-                    <button 
-                      type="button" 
-                      class="btn btn-success btn-lg"
-                      @click="taoMoMoQR"
-                    >
-                      <i class="bi bi-qr-code"></i> Thanh toán bằng MoMo
-                    </button>
-                    <p class="text-muted mt-2">Sẽ chuyển đến trang thanh toán MoMo</p>
-                  </div>
-                </div>
-              </div>
+              <!-- Thông tin tiền thừa/thiếu - Chỉ hiển thị khi không phải MoMo -->
               <div class="text-end mt-2" v-if="thanhToanTienKhachDua">
                 <p class="mb-0" v-if="thanhToanTienKhachDua < tinhTongTien(thanhToanHoaDon)">
                   <span class="text-danger">Tiền thiếu: {{ (tinhTongTien(thanhToanHoaDon) - thanhToanTienKhachDua).toLocaleString() }} VND</span>
@@ -694,6 +544,37 @@
                 <p class="mb-0" v-else>
                   <span class="text-success">Đủ tiền thanh toán</span>
                 </p>
+              </div>
+            </div>
+              
+              <!-- MoMo QR Payment Section -->
+              <div v-if="thanhToanPhuongThuc === 'MOMO'" class="mt-4 mb-4">
+                <div class="text-center">
+                  <div class="bg-light p-4 rounded mb-3">
+                    <h6 class="text-muted mb-2">
+                      <i class="bi bi-qr-code me-2"></i>Thanh toán bằng MoMo
+                    </h6>
+                    <p class="mb-0 small text-muted">
+                      Nhấn nút dưới đây để chuyển đến trang thanh toán MoMo
+                    </p>
+                  </div>
+                  
+                  <div v-if="momoLoading">
+                    <div class="spinner-border text-success" role="status">
+                      <span class="visually-hidden">Đang tạo thanh toán...</span>
+                    </div>
+                    <p class="mt-2 text-muted">Đang tạo thanh toán MoMo...</p>
+                  </div>
+                  <div v-else>
+                    <button 
+                      type="button" 
+                      class="btn btn-success btn-lg px-5"
+                      @click="taoMoMoQR"
+                    >
+                      <i class="bi bi-qr-code me-2"></i>Thanh toán bằng MoMo
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
             <table class="table table-striped" v-if="thanhToanLichSu.length > 0">
@@ -725,12 +606,13 @@
               </tbody>
             </table>
           </div>
-          <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" @click="modalThanhToan = false">Đóng</button>
+          <div class="modal-footer" style="position: relative; z-index: 3003; pointer-events: auto;">
+            <button type="button" class="btn btn-secondary" @click="closeThanhToanModal">
+              Hủy
+            </button>
             <button
               type="button"
               class="btn btn-success"
-              :disabled="thanhToanPhuongThuc !== 'MOMO' && thanhToanTienKhachDua < tinhTongTien(thanhToanHoaDon)"
               @click="xacNhanThanhToan"
             >
               Xác nhận
@@ -830,7 +712,6 @@
         </div>
       </div>
     </div>
-  </div>
 </template>
 
 ```vue
@@ -863,7 +744,7 @@ export default {
       modalThanhToan: false,
       thanhToanHoaDon: null,
       thanhToanTongTien: 0,
-      thanhToanPhuongThuc: 'CHUYỂN KHOẢN',
+      thanhToanPhuongThuc: 'TIỀN MẶT',
       thanhToanTienKhachDua: 0,
       thanhToanMaGiaoDich: '',
       thanhToanLichSu: [],
@@ -994,7 +875,7 @@ export default {
           withCredentials: true,
         });
         this.phuongThucThanhToans = response.data.filter(ptt => 
-          ptt.ten === 'CHUYỂN KHOẢN' || ptt.ten === 'TIỀN MẶT'
+          ptt.ten === 'TIỀN MẶT'
         );
         
         console.log('[fetchPhuongThucThanhToan] Danh sách phương thức thanh toán từ API:', response.data);
@@ -1003,23 +884,14 @@ export default {
         if (this.phuongThucThanhToans.length === 0) {
           console.warn('Không tìm thấy phương thức thanh toán, sử dụng mặc định');
           this.phuongThucThanhToans = [
-            { idPTT: 1, ten: 'TIỀN MẶT' },
-            { idPTT: 2, ten: 'CHUYỂN KHOẢN' }
+            { idPTT: 1, ten: 'TIỀN MẶT' }
           ];
-        }
-        
-        // Đảm bảo luôn có phương thức chuyển khoản cho MoMo
-        const hasChuyenKhoan = this.phuongThucThanhToans.some(ptt => ptt.ten === 'CHUYỂN KHOẢN');
-        if (!hasChuyenKhoan) {
-          this.phuongThucThanhToans.push({ idPTT: 2, ten: 'CHUYỂN KHOẢN' });
-          console.log('[fetchPhuongThucThanhToan] Đã thêm phương thức CHUYỂN KHOẢN cho MoMo');
         }
         
       } catch (error) {
         console.error('Lỗi khi lấy phương thức thanh toán:', error.response?.data || error.message);
         this.phuongThucThanhToans = [
-          { idPTT: 1, ten: 'TIỀN MẶT' },
-          { idPTT: 2, ten: 'CHUYỂN KHOẢN' }
+          { idPTT: 1, ten: 'TIỀN MẶT' }
         ];
         ElMessage.error('Không thể tải danh sách phương thức thanh toán');
       }
@@ -1097,11 +969,11 @@ export default {
 
     let selectedPTT;
     if (hd.thanhToan.phuongThuc === 'MOMO') {
-      // Sử dụng phương thức chuyển khoản cho MoMo
-      selectedPTT = this.phuongThucThanhToans.find(ptt => ptt.ten === 'CHUYỂN KHOẢN');
+      // Sử dụng phương thức tiền mặt cho MoMo (vì đã bỏ chuyển khoản)
+      selectedPTT = this.phuongThucThanhToans.find(ptt => ptt.ten === 'TIỀN MẶT');
       if (!selectedPTT) {
-        // Fallback với ID mặc định cho chuyển khoản
-        selectedPTT = { idPTT: 2, ten: 'CHUYỂN KHOẢN' };
+        // Fallback với ID mặc định cho tiền mặt
+        selectedPTT = { idPTT: 1, ten: 'TIỀN MẶT' };
       }
     } else {
       selectedPTT = this.phuongThucThanhToans.find(ptt => ptt.ten === hd.thanhToan.phuongThuc);
@@ -1684,19 +1556,16 @@ export default {
         ElMessage.error('Số tiền khách đưa không đủ hoặc không hợp lệ!');
         return;
       }
-      if (this.thanhToanPhuongThuc === 'CHUYỂN KHOẢN' && !this.thanhToanMaGiaoDich) {
-        ElMessage.error('Vui lòng nhập mã giao dịch cho phương thức chuyển khoản!');
-        return;
-      }
       const thanhToan = {
         phuongThuc: this.thanhToanPhuongThuc,
         soTien: Number(this.thanhToanTienKhachDua),
-        maGiaoDich: this.thanhToanPhuongThuc === 'CHUYỂN KHOẢN' ? this.thanhToanMaGiaoDich : null
+        maGiaoDich: null
       };
       this.thanhToanLichSu.push(thanhToan);
       this.thanhToanHoaDon.thanhToan = { ...thanhToan };
       this.modalThanhToan = false;
-      ElMessage.success('Xác nhận thanh toán thành công!');
+      // Chỉ lưu số tiền và đóng modal; đặt hàng sẽ thực hiện bằng nút bên ngoài
+      ElMessage.success('Đã xác nhận số tiền. Vui lòng bấm "Xác nhận đặt hàng & In hóa đơn".');
     },
     xoaThanhToan(index) {
       this.thanhToanLichSu.splice(index, 1);
@@ -1710,6 +1579,18 @@ export default {
     taoHoaDonMoiNgay() {
       this.modalHoaDon = false;
       this.taoHoaDon();
+    },
+    
+    // Đóng modal thanh toán và reset phương thức
+    closeThanhToanModal() {
+      this.modalThanhToan = false;
+      // Reset về phương thức mặc định khi đóng modal
+      if (this.phuongThucThanhToans.length > 0) {
+        this.thanhToanPhuongThuc = this.phuongThucThanhToans[0].ten;
+      }
+      // Reset các giá trị input
+      this.thanhToanTienKhachDua = 0;
+      this.thanhToanMaGiaoDich = '';
     },
     
     // MoMo Payment Methods
@@ -1737,7 +1618,7 @@ export default {
         // Gán thông tin thanh toán ngay lập tức để UI hiển thị
         this.thanhToanHoaDon.thanhToan = { ...tempPaymentInfo };
         
-        // Đóng modal thanh toán
+        // Đóng modal thanh toán (không reset phương thức vì đang xử lý MoMo)
         this.modalThanhToan = false;
         
         // Lưu hóa đơn vào localStorage trước khi chuyển trang
@@ -2128,9 +2009,9 @@ export default {
 
         let selectedPTT;
         if (hd.thanhToan.phuongThuc === 'MOMO') {
-          selectedPTT = this.phuongThucThanhToans.find(ptt => ptt.ten === 'CHUYỂN KHOẢN');
+          selectedPTT = this.phuongThucThanhToans.find(ptt => ptt.ten === 'TIỀN MẶT');
           if (!selectedPTT) {
-            selectedPTT = { idPTT: 2, ten: 'CHUYỂN KHOẢN' };
+            selectedPTT = { idPTT: 1, ten: 'TIỀN MẶT' };
           }
         } else {
           selectedPTT = this.phuongThucThanhToans.find(ptt => ptt.ten === hd.thanhToan.phuongThuc);

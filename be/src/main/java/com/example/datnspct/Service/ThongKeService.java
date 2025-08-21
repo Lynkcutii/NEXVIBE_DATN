@@ -22,71 +22,117 @@ public class ThongKeService {
     private final HoaDonChiTietRepository hoaDonChiTietRepository;
 
     // Thống kê tổng quan hóa đơn
-    public Map<String, Object> getTongQuanHoaDon() {
+    public Map<String, Object> getTongQuanHoaDon(LocalDateTime startDate, LocalDateTime endDate) {
         Map<String, Object> result = new HashMap<>();
         
-        // Tổng số hóa đơn
-        long tongHoaDon = hoaDonRepository.count();
-        result.put("tongSo", tongHoaDon);
-        
-        // Hóa đơn hôm nay
-        LocalDateTime startOfDay = LocalDate.now().atStartOfDay();
-        LocalDateTime endOfDay = startOfDay.plusDays(1);
-        
-        long hoaDonHomNay = hoaDonRepository.countByNgayTaoBetween(startOfDay, endOfDay);
-        result.put("homNay", hoaDonHomNay);
-        
-        // Hóa đơn trong tháng
-        LocalDateTime startOfMonth = LocalDate.now().withDayOfMonth(1).atStartOfDay();
-        LocalDateTime endOfMonth = startOfMonth.plusMonths(1);
-        long hoaDonTrongThang = hoaDonRepository.countByNgayTaoBetween(startOfMonth, endOfMonth);
-        result.put("trongThang", hoaDonTrongThang);
+        if (startDate != null && endDate != null) {
+            // Thống kê theo khoảng thời gian được chọn
+            long tongHoaDon = hoaDonRepository.countByNgayTaoBetween(startDate, endDate);
+            result.put("tongSo", tongHoaDon);
+            
+            // Tính hóa đơn trong ngày đầu tiên của khoảng thời gian
+            LocalDateTime startOfFirstDay = startDate.toLocalDate().atStartOfDay();
+            LocalDateTime endOfFirstDay = startOfFirstDay.plusDays(1);
+            long hoaDonNgayDau = hoaDonRepository.countByNgayTaoBetween(startOfFirstDay, endOfFirstDay);
+            result.put("homNay", hoaDonNgayDau);
+            
+            // Tính hóa đơn trong tháng của ngày bắt đầu
+            LocalDateTime startOfMonth = startDate.toLocalDate().withDayOfMonth(1).atStartOfDay();
+            LocalDateTime endOfMonth = startOfMonth.plusMonths(1);
+            long hoaDonTrongThang = hoaDonRepository.countByNgayTaoBetween(startOfMonth, endOfMonth);
+            result.put("trongThang", hoaDonTrongThang);
+        } else {
+            // Thống kê toàn bộ (mặc định)
+            long tongHoaDon = hoaDonRepository.count();
+            result.put("tongSo", tongHoaDon);
+            
+            // Hóa đơn hôm nay
+            LocalDateTime startOfDay = LocalDate.now().atStartOfDay();
+            LocalDateTime endOfDay = startOfDay.plusDays(1);
+            long hoaDonHomNay = hoaDonRepository.countByNgayTaoBetween(startOfDay, endOfDay);
+            result.put("homNay", hoaDonHomNay);
+            
+            // Hóa đơn trong tháng
+            LocalDateTime startOfMonth = LocalDate.now().withDayOfMonth(1).atStartOfDay();
+            LocalDateTime endOfMonth = startOfMonth.plusMonths(1);
+            long hoaDonTrongThang = hoaDonRepository.countByNgayTaoBetween(startOfMonth, endOfMonth);
+            result.put("trongThang", hoaDonTrongThang);
+        }
         
         return result;
     }
 
     // Thống kê tổng quan doanh thu
-    public Map<String, Object> getTongQuanDoanhThu() {
+    public Map<String, Object> getTongQuanDoanhThu(LocalDateTime startDate, LocalDateTime endDate) {
         Map<String, Object> result = new HashMap<>();
         
-        // Tổng doanh thu tất cả
-        BigDecimal tongDoanhThu = hoaDonRepository.sumTongTienByNgayTaoBetween(
-            LocalDateTime.of(2020, 1, 1, 0, 0), // Từ năm 2020
-            LocalDateTime.now()
-        );
-        if (tongDoanhThu == null) tongDoanhThu = BigDecimal.ZERO;
-        result.put("tongTatCa", tongDoanhThu.doubleValue());
-        
-        // Doanh thu hôm nay
-        LocalDateTime startOfDay = LocalDate.now().atStartOfDay();
-        LocalDateTime endOfDay = startOfDay.plusDays(1);
-        
-        BigDecimal doanhThuHomNay = hoaDonRepository.sumTongTienByNgayTaoBetween(startOfDay, endOfDay);
-        if (doanhThuHomNay == null) doanhThuHomNay = BigDecimal.ZERO;
-        result.put("homNay", doanhThuHomNay.doubleValue());
-        
-        // Doanh thu trong tháng
-        LocalDateTime startOfMonth = LocalDate.now().withDayOfMonth(1).atStartOfDay();
-        LocalDateTime endOfMonth = startOfMonth.plusMonths(1);
-        
-        BigDecimal doanhThuTrongThang = hoaDonRepository.sumTongTienByNgayTaoBetween(startOfMonth, endOfMonth);
-        if (doanhThuTrongThang == null) doanhThuTrongThang = BigDecimal.ZERO;
-        result.put("trongThang", doanhThuTrongThang.doubleValue());
+        if (startDate != null && endDate != null) {
+            // Thống kê theo khoảng thời gian được chọn
+            BigDecimal tongDoanhThu = hoaDonRepository.sumTongTienByNgayTaoBetween(startDate, endDate);
+            if (tongDoanhThu == null) tongDoanhThu = BigDecimal.ZERO;
+            result.put("tongTatCa", tongDoanhThu.doubleValue());
+            
+            // Tính doanh thu trong ngày đầu tiên của khoảng thời gian
+            LocalDateTime startOfFirstDay = startDate.toLocalDate().atStartOfDay();
+            LocalDateTime endOfFirstDay = startOfFirstDay.plusDays(1);
+            BigDecimal doanhThuNgayDau = hoaDonRepository.sumTongTienByNgayTaoBetween(startOfFirstDay, endOfFirstDay);
+            if (doanhThuNgayDau == null) doanhThuNgayDau = BigDecimal.ZERO;
+            result.put("homNay", doanhThuNgayDau.doubleValue());
+            
+            // Tính doanh thu trong tháng của ngày bắt đầu
+            LocalDateTime startOfMonth = startDate.toLocalDate().withDayOfMonth(1).atStartOfDay();
+            LocalDateTime endOfMonth = startOfMonth.plusMonths(1);
+            BigDecimal doanhThuTrongThang = hoaDonRepository.sumTongTienByNgayTaoBetween(startOfMonth, endOfMonth);
+            if (doanhThuTrongThang == null) doanhThuTrongThang = BigDecimal.ZERO;
+            result.put("trongThang", doanhThuTrongThang.doubleValue());
+        } else {
+            // Thống kê toàn bộ (mặc định)
+            BigDecimal tongDoanhThu = hoaDonRepository.sumTongTienByNgayTaoBetween(
+                LocalDateTime.of(2020, 1, 1, 0, 0), // Từ năm 2020
+                LocalDateTime.now()
+            );
+            if (tongDoanhThu == null) tongDoanhThu = BigDecimal.ZERO;
+            result.put("tongTatCa", tongDoanhThu.doubleValue());
+            
+            // Doanh thu hôm nay
+            LocalDateTime startOfDay = LocalDate.now().atStartOfDay();
+            LocalDateTime endOfDay = startOfDay.plusDays(1);
+            BigDecimal doanhThuHomNay = hoaDonRepository.sumTongTienByNgayTaoBetween(startOfDay, endOfDay);
+            if (doanhThuHomNay == null) doanhThuHomNay = BigDecimal.ZERO;
+            result.put("homNay", doanhThuHomNay.doubleValue());
+            
+            // Doanh thu trong tháng
+            LocalDateTime startOfMonth = LocalDate.now().withDayOfMonth(1).atStartOfDay();
+            LocalDateTime endOfMonth = startOfMonth.plusMonths(1);
+            BigDecimal doanhThuTrongThang = hoaDonRepository.sumTongTienByNgayTaoBetween(startOfMonth, endOfMonth);
+            if (doanhThuTrongThang == null) doanhThuTrongThang = BigDecimal.ZERO;
+            result.put("trongThang", doanhThuTrongThang.doubleValue());
+        }
         
         return result;
     }
 
     // Thống kê tổng quan khách hàng
-    public Map<String, Object> getTongQuanKhachHang() {
+    public Map<String, Object> getTongQuanKhachHang(LocalDateTime startDate, LocalDateTime endDate) {
         Map<String, Object> result = new HashMap<>();
         
-        long tongKhachHang = khachHangRepository.count();
-        result.put("tongSo", tongKhachHang);
-        
-        // Khách hàng hoạt động (có ít nhất 1 đơn hàng)
-        long khachHangHoatDong = khachHangRepository.countKhachHangCoHoaDon();
-        result.put("hoatDong", khachHangHoatDong);
-        result.put("khongHoatDong", tongKhachHang - khachHangHoatDong);
+        if (startDate != null && endDate != null) {
+            // Thống kê khách hàng theo khoảng thời gian được chọn
+            // (Chỉ đếm khách hàng có hóa đơn trong khoảng thời gian)
+            long khachHangTrongKhoang = khachHangRepository.countKhachHangCoHoaDonTrongKhoang(startDate, endDate);
+            result.put("tongSo", khachHangTrongKhoang);
+            result.put("hoatDong", khachHangTrongKhoang);
+            result.put("khongHoatDong", 0);
+        } else {
+            // Thống kê toàn bộ (mặc định)
+            long tongKhachHang = khachHangRepository.count();
+            result.put("tongSo", tongKhachHang);
+            
+            // Khách hàng hoạt động (có ít nhất 1 đơn hàng)
+            long khachHangHoatDong = khachHangRepository.countKhachHangCoHoaDon();
+            result.put("hoatDong", khachHangHoatDong);
+            result.put("khongHoatDong", tongKhachHang - khachHangHoatDong);
+        }
         
         return result;
     }
@@ -111,25 +157,53 @@ public class ThongKeService {
     }
 
     // Thống kê doanh thu theo tháng (12 tháng gần nhất)
-    public List<Map<String, Object>> getDoanhThuTheoThang() {
+    public List<Map<String, Object>> getDoanhThuTheoThang(LocalDateTime startDate, LocalDateTime endDate) {
         List<Map<String, Object>> result = new ArrayList<>();
         
-        for (int i = 11; i >= 0; i--) {
-            LocalDate thang = LocalDate.now().minusMonths(i);
-            LocalDateTime startOfMonth = thang.withDayOfMonth(1).atStartOfDay();
-            LocalDateTime endOfMonth = startOfMonth.plusMonths(1);
+        if (startDate != null && endDate != null) {
+            // Thống kê theo khoảng thời gian được chọn
+            LocalDate start = startDate.toLocalDate();
+            LocalDate end = endDate.toLocalDate();
             
-            // Tính tổng doanh thu trong tháng
-            BigDecimal doanhThu = hoaDonRepository.sumTongTienByNgayTaoBetween(startOfMonth, endOfMonth);
-            if (doanhThu == null) {
-                doanhThu = BigDecimal.ZERO;
+            // Tạo danh sách các tháng trong khoảng thời gian
+            LocalDate current = start.withDayOfMonth(1);
+            while (!current.isAfter(end)) {
+                LocalDateTime startOfMonth = current.atStartOfDay();
+                LocalDateTime endOfMonth = current.plusMonths(1).atStartOfDay();
+                
+                // Tính tổng doanh thu trong tháng
+                BigDecimal doanhThu = hoaDonRepository.sumTongTienByNgayTaoBetween(startOfMonth, endOfMonth);
+                if (doanhThu == null) {
+                    doanhThu = BigDecimal.ZERO;
+                }
+                
+                Map<String, Object> thangData = new HashMap<>();
+                thangData.put("thang", current.getMonthValue());
+                thangData.put("nam", current.getYear());
+                thangData.put("doanhThu", doanhThu.doubleValue());
+                result.add(thangData);
+                
+                current = current.plusMonths(1);
             }
-            
-            Map<String, Object> thangData = new HashMap<>();
-            thangData.put("thang", thang.getMonthValue());
-            thangData.put("nam", thang.getYear());
-            thangData.put("doanhThu", doanhThu.doubleValue());
-            result.add(thangData);
+        } else {
+            // Thống kê 12 tháng gần nhất (mặc định)
+            for (int i = 11; i >= 0; i--) {
+                LocalDate thang = LocalDate.now().minusMonths(i);
+                LocalDateTime startOfMonth = thang.withDayOfMonth(1).atStartOfDay();
+                LocalDateTime endOfMonth = startOfMonth.plusMonths(1);
+                
+                // Tính tổng doanh thu trong tháng
+                BigDecimal doanhThu = hoaDonRepository.sumTongTienByNgayTaoBetween(startOfMonth, endOfMonth);
+                if (doanhThu == null) {
+                    doanhThu = BigDecimal.ZERO;
+                }
+                
+                Map<String, Object> thangData = new HashMap<>();
+                thangData.put("thang", thang.getMonthValue());
+                thangData.put("nam", thang.getYear());
+                thangData.put("doanhThu", doanhThu.doubleValue());
+                result.add(thangData);
+            }
         }
         
         return result;

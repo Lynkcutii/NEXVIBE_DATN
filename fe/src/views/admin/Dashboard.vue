@@ -475,10 +475,17 @@ const fetchDashboardData = async () => {
     try {
         console.log('[Dashboard] Đang tải dữ liệu thống kê...');
         
-        // Gọi API thống kê dashboard
+        // Gọi API thống kê dashboard với bộ lọc ngày tháng
+        const params = {};
+        if (dateRange.value && dateRange.value.length === 2) {
+            params.startDate = dateRange.value[0];
+            params.endDate = dateRange.value[1];
+        }
+        
         const response = await axios.get('http://localhost:8080/admin/api/thongke/dashboard', {
             withCredentials: true,
-            headers: { 'Content-Type': 'application/json' }
+            headers: { 'Content-Type': 'application/json' },
+            params: params
         });
         
         console.log('[Dashboard] Dữ liệu thống kê:', response.data);
