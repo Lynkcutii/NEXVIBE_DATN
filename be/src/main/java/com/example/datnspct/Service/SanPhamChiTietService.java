@@ -1,28 +1,29 @@
 package com.example.datnspct.Service;
 
+import com.cloudinary.Cloudinary;
+import com.cloudinary.utils.ObjectUtils;
+import com.example.datnspct.Model.Img;
 import com.example.datnspct.Model.SanPhamChiTiet;
 import com.example.datnspct.Model.SanPham;
-import com.example.datnspct.Model.DanhMuc;
-import com.example.datnspct.Model.ThuongHieu;
 import com.example.datnspct.Model.MauSac;
-import com.example.datnspct.Model.ChatLieu;
 import com.example.datnspct.Model.Size;
+import com.example.datnspct.Repository.ImgRepository;
 import com.example.datnspct.Repository.SanPhamChiTietRepository;
 import com.example.datnspct.Repository.SanPhamRepository;
-import com.example.datnspct.Repository.DanhMucRepository;
-import com.example.datnspct.Repository.ThuongHieuRepository;
 import com.example.datnspct.Repository.MauSacRepository;
-import com.example.datnspct.Repository.ChatLieuRepository;
 import com.example.datnspct.Repository.SizeRepository;
 import com.example.datnspct.dto.SanPhamChiTietDTO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.math.BigDecimal;
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -35,200 +36,288 @@ public class SanPhamChiTietService {
     private SanPhamRepository sanPhamRepository;
 
     @Autowired
-    private DanhMucRepository danhMucRepository;
-
-    @Autowired
-    private ThuongHieuRepository thuongHieuRepository;
-
-    @Autowired
     private MauSacRepository mauSacRepository;
-
-    @Autowired
-    private ChatLieuRepository chatLieuRepository;
 
     @Autowired
     private SizeRepository sizeRepository;
 
-    public SanPhamChiTietDTO taoSanPhamChiTiet(SanPhamChiTietDTO dto) {
+    @Autowired
+    private ImgRepository imgRepository;
+
+    @Autowired
+    private Cloudinary cloudinary;
+
+    public SanPhamChiTietDTO taoSanPhamChiTiet(SanPhamChiTietDTO dto, MultipartFile[] imageFiles) throws IOException {
         SanPhamChiTiet spct = new SanPhamChiTiet();
         spct.setMaSPCT(generateMaSPCT());
         spct.setGia(dto.getGia());
         spct.setSoLuong(dto.getSoLuong());
-        spct.setMoTa(dto.getMoTa());
-        spct.setTrangThai(true); // Mặc định true
+        spct.setTrangThai(true);
 
-        if (dto.getIdSP() != null) {
-            SanPham sanPham = sanPhamRepository.findById(dto.getIdSP())
-                    .orElseThrow(() -> new RuntimeException("Sản phẩm không tồn tại"));
-            spct.setSanPham(sanPham);
+        if (dto.getIdSP() == null) {
+            throw new IllegalArgumentException("ID sản phẩm không được để trống");
         }
-        if (dto.getIdDanhMuc() != null) {
-            DanhMuc danhMuc = danhMucRepository.findById(dto.getIdDanhMuc())
-                    .orElseThrow(() -> new RuntimeException("Danh mục không tồn tại"));
-            spct.setDanhMuc(danhMuc);
+        SanPham sanPham = sanPhamRepository.findById(dto.getIdSP())
+                .orElseThrow(() -> new RuntimeException("Sản phẩm không tồn tại"));
+        spct.setSanPham(sanPham);
+
+        if (dto.getIdMauSac() == null) {
+            throw new IllegalArgumentException("Màu sắc không được để trống");
         }
-        if (dto.getIdThuongHieu() != null) {
-            ThuongHieu thuongHieu = thuongHieuRepository.findById(dto.getIdThuongHieu())
-                    .orElseThrow(() -> new RuntimeException("Thương hiệu không tồn tại"));
-            spct.setThuongHieu(thuongHieu);
+        MauSac mauSac = mauSacRepository.findById(dto.getIdMauSac())
+                .orElseThrow(() -> new RuntimeException("Màu sắc không tồn tại"));
+        spct.setMauSac(mauSac);
+
+        if (dto.getIdSize() == null) {
+            throw new IllegalArgumentException("Kích thước không được để trống");
         }
-        if (dto.getIdMauSac() != null) {
-            MauSac mauSac = mauSacRepository.findById(dto.getIdMauSac())
-                    .orElseThrow(() -> new RuntimeException("Màu sắc không tồn tại"));
-            spct.setMauSac(mauSac);
-        }
-        if (dto.getIdChatLieu() != null) {
-            ChatLieu chatLieu = chatLieuRepository.findById(dto.getIdChatLieu())
-                    .orElseThrow(() -> new RuntimeException("Chất liệu không tồn tại"));
-            spct.setChatLieu(chatLieu);
-        }
-        if (dto.getIdSize() != null) {
-            Size size = sizeRepository.findById(dto.getIdSize())
-                    .orElseThrow(() -> new RuntimeException("Kích thước không tồn tại"));
-            spct.setSize(size);
-        }
+        Size size = sizeRepository.findById(dto.getIdSize())
+                .orElseThrow(() -> new RuntimeException("Kích thước không tồn tại"));
+        spct.setSize(size);
 
         SanPhamChiTiet saved = sanPhamChiTietRepository.save(spct);
 
-        // Cập nhật tongSoLuongSanPham trong SanPham
-        if (dto.getIdSP() != null) {
-            SanPham sanPham = sanPhamRepository.findById(dto.getIdSP()).orElse(null);
-            if (sanPham != null) {
-                Integer tongSoLuong = sanPhamChiTietRepository.findBySanPhamId(dto.getIdSP())
-                        .stream()
-                        .mapToInt(SanPhamChiTiet::getSoLuong)
-                        .sum();
-                sanPham.setTongSoLuongSanPham(tongSoLuong);
-                sanPhamRepository.save(sanPham);
+        List<String> imageLinks = new ArrayList<>();
+        if (imageFiles != null && imageFiles.length > 0) {
+            for (MultipartFile imageFile : imageFiles) {
+                if (!imageFile.isEmpty()) {
+                    if (imageFile.getSize() > 5 * 1024 * 1024) {
+                        throw new IllegalArgumentException("Kích thước ảnh phải nhỏ hơn 5MB: " + imageFile.getOriginalFilename());
+                    }
+                    try {
+                        Map uploadResult = cloudinary.uploader().upload(imageFile.getBytes(), ObjectUtils.asMap(
+                                "resource_type", "image",
+                                "folder", "san_pham_chi_tiet",
+                                "public_id", imageFile.getOriginalFilename().replaceAll("[^a-zA-Z0-9.-]", "_")
+                        ));
+                        String imageLink = uploadResult.get("secure_url").toString();
+                        Img img = new Img();
+                        img.setSanPhamChiTiet(saved);
+                        img.setLink(imageLink);
+                        imgRepository.save(img);
+                        imageLinks.add(imageLink);
+                    } catch (IOException e) {
+                        throw new IOException("Không thể upload ảnh: " + imageFile.getOriginalFilename(), e);
+                    }
+                }
             }
         }
 
-        return convertToDTO(saved);
+        updateSanPhamStats(sanPham.getId());
+        SanPhamChiTietDTO result = convertToDTO(saved);
+        result.setImageLinks(imageLinks);
+        return result;
     }
 
-    private String generateMaSPCT() {
-        Long count = sanPhamChiTietRepository.count();
-        return String.format("SPCT%03d", count + 1);
-    }
-
-    public SanPhamChiTietDTO laySanPhamChiTietTheoId(Integer id) {
+    public SanPhamChiTietDTO capNhatSanPhamChiTiet(Integer id, SanPhamChiTietDTO dto, MultipartFile[] imageFiles, List<String> deletedImages) throws IOException {
         SanPhamChiTiet spct = sanPhamChiTietRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Sản phẩm chi tiết không tồn tại"));
-        return convertToDTO(spct);
-    }
-
-    public List<SanPhamChiTietDTO> laySanPhamChiTietTheoSanPham(Integer idSP) {
-        List<SanPhamChiTiet> spctList = sanPhamChiTietRepository.findBySanPhamId(idSP);
-        return spctList.stream().map(this::convertToDTO).collect(Collectors.toList());
-    }
-
-    public List<SanPhamChiTietDTO> layTatCaSanPhamChiTiet() {
-        List<SanPhamChiTiet> spctList = sanPhamChiTietRepository.findAll();
-        return spctList.stream().map(this::convertToDTO).collect(Collectors.toList());
-    }
-
-    public SanPhamChiTietDTO capNhatSanPhamChiTiet(Integer id, SanPhamChiTietDTO dto) {
-        SanPhamChiTiet spct = sanPhamChiTietRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Sản phẩm chi tiết không tồn tại"));
-        spct.setMaSPCT(dto.getMaSPCT());
         spct.setGia(dto.getGia());
         spct.setSoLuong(dto.getSoLuong());
-        spct.setMoTa(dto.getMoTa());
-        spct.setTrangThai(true);
+        spct.setTrangThai(dto.getTrangThai() != null ? dto.getTrangThai() : true);
 
-        if (dto.getIdSP() != null) {
-            SanPham sanPham = sanPhamRepository.findById(dto.getIdSP())
-                    .orElseThrow(() -> new RuntimeException("Sản phẩm không tồn tại"));
-            spct.setSanPham(sanPham);
+        if (dto.getIdSP() == null) {
+            throw new IllegalArgumentException("ID sản phẩm không được để trống");
         }
-        if (dto.getIdDanhMuc() != null) {
-            DanhMuc danhMuc = danhMucRepository.findById(dto.getIdDanhMuc())
-                    .orElseThrow(() -> new RuntimeException("Danh mục không tồn tại"));
-            spct.setDanhMuc(danhMuc);
+        SanPham sanPham = sanPhamRepository.findById(dto.getIdSP())
+                .orElseThrow(() -> new RuntimeException("Sản phẩm không tồn tại"));
+        spct.setSanPham(sanPham);
+
+        if (dto.getIdMauSac() == null) {
+            throw new IllegalArgumentException("Màu sắc không được để trống");
         }
-        if (dto.getIdThuongHieu() != null) {
-            ThuongHieu thuongHieu = thuongHieuRepository.findById(dto.getIdThuongHieu())
-                    .orElseThrow(() -> new RuntimeException("Thương hiệu không tồn tại"));
-            spct.setThuongHieu(thuongHieu);
+        MauSac mauSac = mauSacRepository.findById(dto.getIdMauSac())
+                .orElseThrow(() -> new RuntimeException("Màu sắc không tồn tại"));
+        spct.setMauSac(mauSac);
+
+        if (dto.getIdSize() == null) {
+            throw new IllegalArgumentException("Kích thước không được để trống");
         }
-        if (dto.getIdMauSac() != null) {
-            MauSac mauSac = mauSacRepository.findById(dto.getIdMauSac())
-                    .orElseThrow(() -> new RuntimeException("Màu sắc không tồn tại"));
-            spct.setMauSac(mauSac);
-        }
-        if (dto.getIdChatLieu() != null) {
-            ChatLieu chatLieu = chatLieuRepository.findById(dto.getIdChatLieu())
-                    .orElseThrow(() -> new RuntimeException("Chất liệu không tồn tại"));
-            spct.setChatLieu(chatLieu);
-        }
-        if (dto.getIdSize() != null) {
-            Size size = sizeRepository.findById(dto.getIdSize())
-                    .orElseThrow(() -> new RuntimeException("Kích thước không tồn tại"));
-            spct.setSize(size);
+        Size size = sizeRepository.findById(dto.getIdSize())
+                .orElseThrow(() -> new RuntimeException("Kích thước không tồn tại"));
+        spct.setSize(size);
+
+        // Lấy danh sách ảnh hiện tại
+        List<Img> existingImages = imgRepository.findBySanPhamChiTietId(id);
+        List<String> currentImageLinks = existingImages.stream()
+                .map(Img::getLink)
+                .collect(Collectors.toList());
+
+        // Xử lý ảnh đã xóa
+        if (deletedImages != null && !deletedImages.isEmpty()) {
+            System.out.println("Deleted images received: " + deletedImages);
+            List<Img> imagesToDelete = existingImages.stream()
+                    .filter(img -> deletedImages.contains(img.getLink()))
+                    .collect(Collectors.toList());
+            for (Img img : imagesToDelete) {
+                String publicId = extractPublicId(img.getLink());
+                try {
+                    Map result = cloudinary.uploader().destroy(publicId, ObjectUtils.emptyMap());
+                    System.out.println("Cloudinary delete result: " + result);
+                    imgRepository.delete(img);
+                } catch (IOException e) {
+                    System.err.println("Lỗi khi xóa ảnh từ Cloudinary: " + e.getMessage());
+                }
+            }
+            // Cập nhật danh sách link hiện tại
+            currentImageLinks = currentImageLinks.stream()
+                    .filter(link -> !deletedImages.contains(link))
+                    .collect(Collectors.toList());
         }
 
-        SanPhamChiTiet updated = sanPhamChiTietRepository.save(spct);
-
-        // Cập nhật tongSoLuongSanPham trong SanPham
-        if (dto.getIdSP() != null) {
-            SanPham sanPham = sanPhamRepository.findById(dto.getIdSP()).orElse(null);
-            if (sanPham != null) {
-                Integer tongSoLuong = sanPhamChiTietRepository.findBySanPhamId(dto.getIdSP())
-                        .stream()
-                        .mapToInt(SanPhamChiTiet::getSoLuong)
-                        .sum();
-                sanPham.setTongSoLuongSanPham(tongSoLuong);
-                sanPhamRepository.save(sanPham);
+        // Thêm ảnh mới
+        if (imageFiles != null && imageFiles.length > 0) {
+            for (MultipartFile imageFile : imageFiles) {
+                if (!imageFile.isEmpty()) {
+                    if (imageFile.getSize() > 5 * 1024 * 1024) {
+                        throw new IllegalArgumentException("Kích thước ảnh phải nhỏ hơn 5MB: " + imageFile.getOriginalFilename());
+                    }
+                    Map uploadResult = cloudinary.uploader().upload(imageFile.getBytes(), ObjectUtils.asMap(
+                            "resource_type", "image",
+                            "folder", "san_pham_chi_tiet",
+                            "public_id", imageFile.getOriginalFilename().replaceAll("[^a-zA-Z0-9.-]", "_")
+                    ));
+                    String imageLink = uploadResult.get("secure_url").toString();
+                    Img img = new Img();
+                    img.setSanPhamChiTiet(spct);
+                    img.setLink(imageLink);
+                    imgRepository.save(img);
+                    currentImageLinks.add(imageLink);
+                }
             }
         }
 
-        return convertToDTO(updated);
+        // Cập nhật linkAnhDauTien nếu cần
+//        Img firstImage = imgRepository.findFirstBySanPhamChiTietId(id);
+//        if (firstImage != null) {
+//            spct.setLinkAnhDauTien(firstImage.getLink());
+//        } else if (!currentImageLinks.isEmpty()) {
+//            spct.setLinkAnhDauTien(currentImageLinks.get(0));
+//        } else {
+//            spct.setLinkAnhDauTien("");
+//        }
+
+        SanPhamChiTiet updated = sanPhamChiTietRepository.save(spct);
+        updateSanPhamStats(sanPham.getId());
+
+        SanPhamChiTietDTO result = convertToDTO(updated);
+        result.setImageLinks(currentImageLinks);
+        return result;
     }
 
     public void xoaSanPhamChiTiet(Integer id) {
         SanPhamChiTiet spct = sanPhamChiTietRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Sản phẩm chi tiết không tồn tại"));
         Integer idSP = spct.getSanPham().getId();
+
+        // Xóa tất cả ảnh liên quan
+        List<Img> images = imgRepository.findBySanPhamChiTietId(id);
+        for (Img img : images) {
+            String publicId = extractPublicId(img.getLink());
+            try {
+                cloudinary.uploader().destroy(publicId, ObjectUtils.emptyMap());
+            } catch (IOException e) {
+                System.err.println("Lỗi khi xóa ảnh từ Cloudinary: " + e.getMessage());
+            }
+        }
+        imgRepository.deleteBySanPhamChiTietId(id);
         sanPhamChiTietRepository.deleteById(id);
 
-        // Cập nhật tongSoLuongSanPham trong SanPham
-        SanPham sanPham = sanPhamRepository.findById(idSP).orElse(null);
-        if (sanPham != null) {
-            Integer tongSoLuong = sanPhamChiTietRepository.findBySanPhamId(idSP)
-                    .stream()
+        updateSanPhamStats(idSP);
+    }
+
+    private void updateSanPhamStats(Integer idSP) {
+        SanPham sanPham = sanPhamRepository.findById(idSP)
+                .orElseThrow(() -> new RuntimeException("Sản phẩm không tồn tại"));
+        List<SanPhamChiTiet> chiTiets = sanPhamChiTietRepository.findBySanPhamId(idSP);
+        if (!chiTiets.isEmpty()) {
+            Integer tongSoLuong = chiTiets.stream()
                     .mapToInt(SanPhamChiTiet::getSoLuong)
                     .sum();
             sanPham.setTongSoLuongSanPham(tongSoLuong);
-            sanPhamRepository.save(sanPham);
+
+            BigDecimal giaTrungBinh = chiTiets.stream()
+                    .map(SanPhamChiTiet::getGia)
+                    .filter(gia -> gia != null)
+                    .reduce(BigDecimal.ZERO, BigDecimal::add)
+                    .divide(BigDecimal.valueOf(chiTiets.size()), 2, BigDecimal.ROUND_HALF_UP);
+            sanPham.setGia(giaTrungBinh);
+
+            // Cập nhật ảnh chính nếu chưa có
+            List<String> imageLinks = imgRepository.findBySanPhamChiTietId(chiTiets.get(0).getId())
+                    .stream()
+                    .map(Img::getLink)
+                    .collect(Collectors.toList());
+            if (sanPham.getImg() == null && !imageLinks.isEmpty()) {
+                sanPham.setImg(imageLinks.get(0));
+            }
+        } else {
+            sanPham.setTongSoLuongSanPham(0);
+            sanPham.setGia(BigDecimal.ZERO);
+            sanPham.setImg(null);
         }
+        sanPhamRepository.save(sanPham);
     }
 
-    public Page<SanPhamChiTietDTO> findWithFilters(String keyword, String danhMuc, String thuongHieu,
-                                                   String mauSac, String chatLieu, String size,
+    public SanPhamChiTietDTO laySanPhamChiTietTheoId(Integer id) {
+        SanPhamChiTiet spct = sanPhamChiTietRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Sản phẩm chi tiết không tồn tại"));
+        SanPhamChiTietDTO dto = convertToDTO(spct);
+        List<String> imageLinks = imgRepository.findBySanPhamChiTietId(id)
+                .stream()
+                .map(Img::getLink)
+                .collect(Collectors.toList());
+        dto.setImageLinks(imageLinks);
+        return dto;
+    }
+
+    public List<SanPhamChiTietDTO> laySanPhamChiTietTheoSanPham(Integer idSP) {
+        List<SanPhamChiTiet> spctList = sanPhamChiTietRepository.findBySanPhamId(idSP);
+        return spctList.stream().map(spct -> {
+            SanPhamChiTietDTO dto = convertToDTO(spct);
+            List<String> imageLinks = imgRepository.findBySanPhamChiTietId(spct.getId())
+                    .stream()
+                    .map(Img::getLink)
+                    .collect(Collectors.toList());
+            dto.setImageLinks(imageLinks);
+            return dto;
+        }).collect(Collectors.toList());
+    }
+
+    public List<SanPhamChiTietDTO> layTatCaSanPhamChiTiet() {
+        List<SanPhamChiTiet> spctList = sanPhamChiTietRepository.findAll();
+        return spctList.stream().map(spct -> {
+            SanPhamChiTietDTO dto = convertToDTO(spct);
+            List<String> imageLinks = imgRepository.findBySanPhamChiTietId(spct.getId())
+                    .stream()
+                    .map(Img::getLink)
+                    .collect(Collectors.toList());
+            dto.setImageLinks(imageLinks);
+            return dto;
+        }).collect(Collectors.toList());
+    }
+
+    public Page<SanPhamChiTietDTO> findWithFilters(String keyword, String mauSac, String size,
                                                    BigDecimal minPrice, BigDecimal maxPrice,
                                                    Pageable pageable) {
-        List<Integer> danhMucIds = null;
-        if (danhMuc != null && !danhMuc.isEmpty()) {
-            try {
-                danhMucIds = Arrays.stream(danhMuc.split(","))
-                        .map(Integer::parseInt)
-                        .collect(Collectors.toList());
-            } catch (NumberFormatException e) {
-                danhMucIds = List.of(Integer.parseInt(danhMuc));
-            }
-        }
         keyword = keyword != null ? keyword.trim() : null;
-        thuongHieu = thuongHieu != null ? thuongHieu.trim().toLowerCase() : null;
         mauSac = mauSac != null ? mauSac.trim().toLowerCase() : null;
-        chatLieu = chatLieu != null ? chatLieu.trim().toLowerCase() : null;
         size = size != null ? size.trim().toLowerCase() : null;
 
         Page<SanPhamChiTiet> page = sanPhamChiTietRepository.findByFilters(
-                keyword, danhMucIds, thuongHieu, mauSac, chatLieu, size,
+                keyword, mauSac, size,
                 minPrice != null ? minPrice : BigDecimal.ZERO,
                 maxPrice != null ? maxPrice : new BigDecimal("5000000"),
                 pageable);
-        return page.map(this::convertToDTO);
+        return page.map(spct -> {
+            SanPhamChiTietDTO dto = convertToDTO(spct);
+            List<String> imageLinks = imgRepository.findBySanPhamChiTietId(spct.getId())
+                    .stream()
+                    .map(Img::getLink)
+                    .collect(Collectors.toList());
+            dto.setImageLinks(imageLinks);
+            return dto;
+        });
     }
 
     private SanPhamChiTietDTO convertToDTO(SanPhamChiTiet spct) {
@@ -239,18 +328,25 @@ public class SanPhamChiTietService {
         dto.setTenSP(spct.getSanPham() != null ? spct.getSanPham().getTenSP() : null);
         dto.setGia(spct.getGia());
         dto.setSoLuong(spct.getSoLuong());
-        dto.setMoTa(spct.getMoTa());
         dto.setTrangThai(spct.getTrangThai());
-        dto.setTenDanhMuc(spct.getDanhMuc() != null ? spct.getDanhMuc().getTenDM() : null);
-        dto.setTenThuongHieu(spct.getThuongHieu() != null ? spct.getThuongHieu().getTenThuongHieu() : null);
         dto.setTenMauSac(spct.getMauSac() != null ? spct.getMauSac().getTenMauSac() : null);
-        dto.setTenChatLieu(spct.getChatLieu() != null ? spct.getChatLieu().getTenChatLieu() : null);
         dto.setTenSize(spct.getSize() != null ? spct.getSize().getTenSize() : null);
-        dto.setIdDanhMuc(spct.getDanhMuc() != null ? spct.getDanhMuc().getIdDM() : null);
-        dto.setIdThuongHieu(spct.getThuongHieu() != null ? spct.getThuongHieu().getIdThuongHieu() : null);
         dto.setIdMauSac(spct.getMauSac() != null ? spct.getMauSac().getIdMauSac() : null);
-        dto.setIdChatLieu(spct.getChatLieu() != null ? spct.getChatLieu().getIdChatLieu() : null);
         dto.setIdSize(spct.getSize() != null ? spct.getSize().getIdSize() : null);
+        Img firstImage = imgRepository.findFirstBySanPhamChiTietId(spct.getId());
+        dto.setLinkAnhDauTien(firstImage != null ? firstImage.getLink() : null);
         return dto;
+    }
+
+    private String generateMaSPCT() {
+        Long count = sanPhamChiTietRepository.count();
+        return String.format("SPCT%03d", count + 1);
+    }
+
+    private String extractPublicId(String link) {
+        // Extract public_id from Cloudinary URL (e.g., https://res.cloudinary.com/cloud-name/image/upload/v123/folder/public_id.jpg)
+        String[] parts = link.split("/");
+        String fileName = parts[parts.length - 1]; // Lấy phần file name (public_id.jpg)
+        return fileName.split("\\.")[0]; // Lấy public_id (loại bỏ phần .jpg)
     }
 }

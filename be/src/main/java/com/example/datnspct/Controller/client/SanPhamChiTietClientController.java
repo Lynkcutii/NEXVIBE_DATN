@@ -55,7 +55,7 @@ public class SanPhamChiTietClientController {
             @RequestParam(required = false) BigDecimal maxPrice) {
         Pageable pageable = PageRequest.of(page != null ? page : 0, size != null ? size : 10);
         Page<SanPhamChiTietDTO> result = sanPhamChiTietService.findWithFilters(
-                keyword, danhMuc, thuongHieu, mauSac, chatLieu, tenSize, minPrice, maxPrice, pageable);
+                keyword, mauSac, tenSize, minPrice, maxPrice, pageable);
         return ResponseEntity.ok(result);
     }
 }

@@ -91,7 +91,7 @@
             <select v-model="shippingStatus" id="shippingStatus" class="form-select">
               <option value="Chờ xử lý">Chờ xử lý</option>
               <option value="Đang giao">Đang giao</option>
-              <option value="Hoàn thành">Hoàn thành</option>
+              <option value="HOAN_THANH">Hoàn thành</option>
               <option value="Đã hủy">Đã hủy</option>
             </select>
           </div>

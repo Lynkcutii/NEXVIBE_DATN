@@ -37,10 +37,13 @@ public class SecurityConfig {
                 .cors(cors -> cors.configurationSource(corsConfigurationSource())) // Kích hoạt CORS
                 .authorizeHttpRequests(auth -> auth
                         // Cho phép truy cập công khai
-                        .requestMatchers("/api/auth/**", "/css/**", "/js/**", "/api/**","/api/sanphamchitiet/bySanPham/**").permitAll()
+                        .requestMatchers("/api/auth/**", "/css/**", "/js/**", "/api/sanphamchitiet/bySanPham/**").permitAll()
+                        // Cho phép tất cả các request GET phía client (danh mục, sản phẩm, filter ...) không cần đăng nhập
+                        .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/**").permitAll()
                         // Phân quyền dựa trên ChucVu
-                        .requestMatchers("/admin/**","/api/**").hasAnyRole("ADMIN")
-                        .requestMatchers("/client/api/**","/api/**").hasAnyRole( "KHACH_HANG")
+                        .requestMatchers("/admin/**").hasRole("ADMIN")
+                        // Các phương thức khác (POST/PUT/DELETE ...) của client yêu cầu đăng nhập KHACH_HANG
+                        .requestMatchers("/client/api/**").hasAnyRole("KHACH_HANG", "ADMIN")
                         // Tất cả các request khác cần xác thực
                         .anyRequest().authenticated()
                 )

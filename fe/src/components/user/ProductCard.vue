@@ -1,11 +1,16 @@
+```vue
 <template>
   <div class="card h-100 product-card border-0 shadow-sm">
-    <router-link :to="`/products/${product.id}`">
-      <img :src="product.link" class="card-img-top" :alt="product.tenSP">
+    <router-link :to="`/products/${product.idSP}`">
+      <img 
+        :src="product.imageLink || '@/assets/placeholder-image.png'" 
+        class="card-img-top" 
+        :alt="product.tenSP || 'Không có tên'"
+      >
     </router-link>
     <div class="card-body d-flex flex-column">
       <h5 class="card-title flex-grow-1">
-        <router-link :to="`/products/${product.id}`" class="text-dark text-decoration-none product-name">
+        <router-link :to="`/products/${product.idSP}`" class="text-dark text-decoration-none product-name">
           {{ product.tenSP || 'Không có tên' }}
         </router-link>
       </h5>
@@ -24,16 +29,18 @@
 
 <script setup>
 import { useCartStore } from '@/stores/cart';
+
 const props = defineProps({
   product: {
     type: Object,
     required: true
   }
 });
+
 const cart = useCartStore();
 
 const handleAddToCart = () => {
-  cart.addToCart(props.product, 1, { size: 'M', color: 'Đen' });
+  cart.addToCart(props.product, 1);
   alert(`Đã thêm "${props.product.tenSP || 'Không có tên'}" vào giỏ hàng!`);
 };
 </script>
@@ -57,3 +64,4 @@ const handleAddToCart = () => {
   object-fit: cover;
 }
 </style>
+```

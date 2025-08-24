@@ -91,4 +91,21 @@ public class HoaDonChiTietController {
         hoaDonChiTietService.xoaHoaDonChiTiet(id);
         return ResponseEntity.noContent().build();
     }
+
+    // Lấy tất cả chi tiết theo id hóa đơn
+    @GetMapping("/hoadonct/{idHD}")
+    public ResponseEntity<List<HoaDonChiTietDTO>> getByHoaDonId(@PathVariable Integer idHD) {
+        List<HoaDonChiTietDTO> list = hoaDonChiTietService.getByHoaDonId(idHD);
+        return ResponseEntity.ok(list);
+    }
+
+    @PostMapping("/tru-ton-kho/{idHD}")
+    public ResponseEntity<Void> truTonKho(@PathVariable Integer idHD) {
+        try {
+            hoaDonChiTietService.truTonKhoKhiHoanThanhHoaDon(idHD);
+            return ResponseEntity.ok().build();
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(null);
+        }
+    }
 }

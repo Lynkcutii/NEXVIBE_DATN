@@ -12,7 +12,9 @@ public class OrderRequestDTO {
     private Integer paymentMethod;
     private BigDecimal total;
     private Integer idKM;
+    private Integer idPT;
     private List<OrderItemDTO> items;
+    private String loaiHoaDon;
 
     @Data
     public static class OrderItemDTO {

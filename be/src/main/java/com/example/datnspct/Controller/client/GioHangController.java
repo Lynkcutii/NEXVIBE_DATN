@@ -2,6 +2,7 @@ package com.example.datnspct.Controller.client;
 
 import com.example.datnspct.Model.GioHangCT;
 import com.example.datnspct.Repository.GioHangCTRepository;
+import com.example.datnspct.Service.GioHangCTService;
 import com.example.datnspct.Service.GioHangService;
 import com.example.datnspct.dto.AddToCartRequest;
 import com.example.datnspct.dto.GioHangCTDTO;
@@ -31,6 +32,8 @@ public class GioHangController {
     private GioHangService service;
     @Autowired
     private GioHangCTRepository gioHangCTRepository;
+    @Autowired
+    private GioHangCTService gioHangCTService;
 
     // Lấy hoặc tạo giỏ hàng theo idTK
     @GetMapping("/byTaiKhoanId/{idTK}")
@@ -46,7 +49,7 @@ public class GioHangController {
             System.out.println("getByTaiKhoanId: Returning GioHangDTO with id=" + dto.getIdGH());
             return ResponseEntity.ok(dto);
         } catch (RuntimeException e) {
-            System.out.println("Error in getByTaiKhoanId: " + e.getMessage());
+            System.err.println("Error in getByTaiKhoanId: " + e.getMessage());
             return ResponseEntity.status(400).body(null);
         }
     }
@@ -65,7 +68,7 @@ public class GioHangController {
             System.out.println("getOrCreateByTaiKhoan: Returning GioHangDTO with id=" + dto.getIdGH());
             return ResponseEntity.ok(dto);
         } catch (RuntimeException e) {
-            System.out.println("Error in getOrCreateByTaiKhoan: " + e.getMessage());
+            System.err.println("Error in getOrCreateByTaiKhoan: " + e.getMessage());
             return ResponseEntity.status(400).body(null);
         }
     }
@@ -93,7 +96,7 @@ public class GioHangController {
             System.out.println("addToCart: Successfully added to cart for taiKhoan=" + taiKhoan);
             return ResponseEntity.ok("Thêm vào giỏ hàng thành công");
         } catch (RuntimeException e) {
-            System.out.println("Error in addToCart: " + e.getMessage());
+            System.err.println("Error in addToCart: " + e.getMessage());
             e.printStackTrace();
             return ResponseEntity.status(400).body("Error: " + e.getMessage());
         }
@@ -119,28 +122,32 @@ public class GioHangController {
             System.out.println("updateGioHangCT: Success for idGHCT=" + idGHCT);
             return ResponseEntity.ok("Cập nhật số lượng thành công");
         } catch (RuntimeException e) {
-            System.out.println("Error in updateGioHangCT: " + e.getMessage());
+            System.err.println("Error in updateGioHangCT: " + e.getMessage());
             return ResponseEntity.status(400).body("Error: " + e.getMessage());
         }
     }
 
     // Xóa chi tiết giỏ hàng
     @DeleteMapping("/giohangct/{idGHCT}")
-    public ResponseEntity<Void> deleteGioHangCT(
+    public ResponseEntity<String> deleteGioHangCT(
             @PathVariable Integer idGHCT,
             Authentication authentication) {
         if (authentication == null || authentication.getName() == null || authentication.getName().isEmpty()) {
             System.out.println("deleteGioHangCT: Authentication is null or empty");
-            return ResponseEntity.status(401).build();
+            return ResponseEntity.status(401).body("Chưa đăng nhập");
         }
         try {
-            System.out.println("deleteGioHangCT: idGHCT=" + idGHCT);
-            gioHangCTRepository.deleteById(idGHCT);
-            System.out.println("deleteGioHangCT: Success for idGHCT=" + idGHCT);
-            return ResponseEntity.noContent().build();
+            System.out.println("deleteGioHangCT: Attempting to delete idGHCT=" + idGHCT);
+            gioHangCTService.delete(idGHCT);
+            System.out.println("deleteGioHangCT: Successfully deleted idGHCT=" + idGHCT);
+            return ResponseEntity.ok("Đã xóa chi tiết giỏ hàng thành công");
         } catch (RuntimeException e) {
-            System.out.println("Error in deleteGioHangCT: " + e.getMessage());
-            return ResponseEntity.status(400).build();
+            System.err.println("deleteGioHangCT: Error - " + e.getMessage());
+            return ResponseEntity.status(400).body(e.getMessage());
+        } catch (Exception e) {
+            System.err.println("deleteGioHangCT: Unexpected error - " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.status(500).body("Lỗi server: " + e.getMessage());
         }
     }
 
@@ -154,75 +161,60 @@ public class GioHangController {
             return ResponseEntity.status(401).body("Chưa đăng nhập");
         }
         try {
-            System.out.println("deleteMultipleGioHangCT: idGHCTs=" + idGHCTs);
-            
+            System.out.println("deleteMultipleGioHangCT: Starting, idGHCTs=" + idGHCTs);
             if (idGHCTs == null || idGHCTs.isEmpty()) {
+                System.out.println("deleteMultipleGioHangCT: Empty idGHCTs list");
                 return ResponseEntity.badRequest().body("Danh sách ID không được rỗng");
             }
-
             int deletedCount = 0;
             List<String> errors = new ArrayList<>();
-
             for (Integer idGHCT : idGHCTs) {
                 try {
-                    if (gioHangCTRepository.existsById(idGHCT)) {
-                        gioHangCTRepository.deleteById(idGHCT);
-                        deletedCount++;
-                        System.out.println("deleteMultipleGioHangCT: Successfully deleted idGHCT=" + idGHCT);
-                    } else {
-                        System.out.println("deleteMultipleGioHangCT: idGHCT=" + idGHCT + " not found");
-                        errors.add("Không tìm thấy chi tiết giỏ hàng với ID: " + idGHCT);
-                    }
-                } catch (Exception e) {
+                    gioHangCTService.delete(idGHCT);
+                    deletedCount++;
+                    System.out.println("deleteMultipleGioHangCT: Successfully deleted idGHCT=" + idGHCT);
+                } catch (RuntimeException e) {
                     System.err.println("deleteMultipleGioHangCT: Error deleting idGHCT=" + idGHCT + " - " + e.getMessage());
-                    errors.add("Lỗi khi xóa chi tiết giỏ hàng ID: " + idGHCT);
+                    errors.add("ID " + idGHCT + ": " + e.getMessage());
                 }
             }
-
             String message = "Đã xóa thành công " + deletedCount + "/" + idGHCTs.size() + " sản phẩm";
             if (!errors.isEmpty()) {
                 message += ". Lỗi: " + String.join(", ", errors);
+                System.out.println("deleteMultipleGioHangCT: Completed with errors - " + message);
+                return ResponseEntity.status(207).body(message);
             }
-
-            System.out.println("deleteMultipleGioHangCT: Completed - " + message);
+            System.out.println("deleteMultipleGioHangCT: Completed successfully - " + message);
             return ResponseEntity.ok(message);
-        } catch (RuntimeException e) {
-            System.out.println("Error in deleteMultipleGioHangCT: " + e.getMessage());
-            return ResponseEntity.status(400).body("Lỗi: " + e.getMessage());
+        } catch (Exception e) {
+            System.err.println("deleteMultipleGioHangCT: General error - " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.status(500).body("Lỗi server: " + e.getMessage());
         }
     }
 
     // Kiểm tra trạng thái giỏ hàng sau khi thanh toán
     @GetMapping("/status/after-order")
-    public ResponseEntity<Map<String, Object>> getCartStatusAfterOrder(
-            @RequestParam List<Integer> idGHCTs,
+    public ResponseEntity<Map<String, Object>> checkStatusAfterOrder(
+            @RequestParam("idGHCTs") List<Integer> idGHCTs,
             Authentication authentication) {
         if (authentication == null || authentication.getName() == null || authentication.getName().isEmpty()) {
-            System.out.println("getCartStatusAfterOrder: Authentication is null or empty");
-            return ResponseEntity.status(401).build();
+            System.out.println("checkStatusAfterOrder: Authentication is null or empty");
+            return ResponseEntity.status(401).body(null);
         }
         try {
-            System.out.println("getCartStatusAfterOrder: Checking status for idGHCTs=" + idGHCTs);
-            
-            Map<String, Object> status = new HashMap<>();
-            List<Map<String, Object>> itemStatus = new ArrayList<>();
-            
-            for (Integer idGHCT : idGHCTs) {
-                Map<String, Object> item = new HashMap<>();
-                item.put("idGHCT", idGHCT);
-                item.put("exists", gioHangCTRepository.existsById(idGHCT));
-                itemStatus.add(item);
-            }
-            
-            status.put("items", itemStatus);
-            status.put("totalChecked", idGHCTs.size());
-            status.put("stillExists", itemStatus.stream().filter(item -> (Boolean) item.get("exists")).count());
-            
-            System.out.println("getCartStatusAfterOrder: Status - " + status);
-            return ResponseEntity.ok(status);
-        } catch (RuntimeException e) {
-            System.out.println("Error in getCartStatusAfterOrder: " + e.getMessage());
-            return ResponseEntity.status(400).build();
+            System.out.println("checkStatusAfterOrder: Checking idGHCTs=" + idGHCTs);
+            Map<String, Object> result = new HashMap<>();
+            List<GioHangCT> remainingItems = gioHangCTRepository.findAllById(idGHCTs);
+            result.put("totalChecked", idGHCTs.size());
+            result.put("stillExists", remainingItems.size());
+            result.put("items", remainingItems);
+            System.out.println("checkStatusAfterOrder: Completed, stillExists=" + remainingItems.size());
+            return ResponseEntity.ok(result);
+        } catch (Exception e) {
+            System.err.println("checkStatusAfterOrder: Error - " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.status(500).body(null);
         }
     }
 
@@ -255,5 +247,37 @@ public class GioHangController {
     public ResponseEntity<Void> delete(@PathVariable Integer id) {
         service.delete(id);
         return ResponseEntity.noContent().build();
+    }
+    @DeleteMapping("/giohangct/all/{idGH}")
+    public ResponseEntity<String> deleteAllGioHangCT(
+            @PathVariable Integer idGH,
+            Authentication authentication) {
+        if (authentication == null || authentication.getName() == null || authentication.getName().isEmpty()) {
+            System.out.println("deleteAllGioHangCT: Authentication is null or empty");
+            return ResponseEntity.status(401).body("Chưa đăng nhập");
+        }
+        try {
+            System.out.println("deleteAllGioHangCT: idGH=" + idGH);
+            // Kiểm tra xem giỏ hàng có tồn tại không
+            GioHangDTO gioHang = service.getById(idGH);
+            if (gioHang == null) {
+                System.out.println("deleteAllGioHangCT: Giỏ hàng không tồn tại, idGH=" + idGH);
+                return ResponseEntity.status(404).body("Giỏ hàng không tồn tại");
+            }
+            // Lấy danh sách GioHangCT theo idGH
+            List<GioHangCT> chiTiets = gioHangCTRepository.findByGioHangIdGH(idGH);
+            if (chiTiets.isEmpty()) {
+                System.out.println("deleteAllGioHangCT: Không có sản phẩm trong giỏ hàng, idGH=" + idGH);
+                return ResponseEntity.ok("Giỏ hàng đã trống");
+            }
+            // Xóa từng GioHangCT
+            gioHangCTRepository.deleteAll(chiTiets);
+            System.out.println("deleteAllGioHangCT: Successfully deleted " + chiTiets.size() + " GioHangCT for idGH=" + idGH);
+            return ResponseEntity.ok("Đã xóa toàn bộ sản phẩm trong giỏ hàng");
+        } catch (RuntimeException e) {
+            System.out.println("Error in deleteAllGioHangCT: " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.status(400).body("Lỗi: " + e.getMessage());
+        }
     }
 }

@@ -11,8 +11,8 @@
           <div class="mb-4">
             <h6 class="filter-title">Nhóm sản phẩm</h6>
             <div class="form-check" v-for="cat in categories" :key="cat.idDM">
-              <input class="form-check-input" type="checkbox" :id="`cat-${cat.idDM}`" 
-                     :checked="filters.selectedCategories.some(c => c.idDM === cat.idDM)"
+              <input class="form-check-input" type="radio" name="category" :id="`cat-${cat.idDM}`" 
+                     :checked="filters.selectedCategory && filters.selectedCategory.idDM === cat.idDM"
                      @change="selectCategory(cat)">
               <label class="form-check-label" :for="`cat-${cat.idDM}`">{{ cat.tenDM }}</label>
             </div>
@@ -22,21 +22,10 @@
           <div class="mb-4">
             <h6 class="filter-title">Thương hiệu</h6>
             <div class="form-check" v-for="brand in brands" :key="brand.idThuongHieu">
-              <input class="form-check-input" type="checkbox" :id="`brand-${brand.idThuongHieu}`" 
-                     :checked="filters.selectedBrands.some(b => b.idThuongHieu === brand.idThuongHieu)"
+              <input class="form-check-input" type="radio" name="brand" :id="`brand-${brand.idThuongHieu}`" 
+                     :checked="filters.selectedBrand && filters.selectedBrand.idThuongHieu === brand.idThuongHieu"
                      @change="selectBrand(brand)">
               <label class="form-check-label" :for="`brand-${brand.idThuongHieu}`">{{ brand.tenThuongHieu }}</label>
-            </div>
-          </div>
-
-          <!-- Lọc theo Màu sắc -->
-          <div class="mb-4">
-            <h6 class="filter-title">Màu sắc</h6>
-            <div class="form-check" v-for="color in colors" :key="color.idMauSac">
-              <input class="form-check-input" type="checkbox" :id="`color-${color.idMauSac}`" 
-                     :checked="filters.selectedColors.some(c => c.idMauSac === color.idMauSac)"
-                     @change="selectColor(color)">
-              <label class="form-check-label" :for="`color-${color.idMauSac}`">{{ color.tenMauSac }}</label>
             </div>
           </div>
 
@@ -44,21 +33,10 @@
           <div class="mb-4">
             <h6 class="filter-title">Chất liệu</h6>
             <div class="form-check" v-for="material in materials" :key="material.idChatLieu">
-              <input class="form-check-input" type="checkbox" :id="`material-${material.idChatLieu}`" 
-                     :checked="filters.selectedMaterials.some(m => m.idChatLieu === material.idChatLieu)"
+              <input class="form-check-input" type="radio" name="material" :id="`material-${material.idChatLieu}`" 
+                     :checked="filters.selectedMaterial && filters.selectedMaterial.idChatLieu === material.idChatLieu"
                      @change="selectMaterial(material)">
               <label class="form-check-label" :for="`material-${material.idChatLieu}`">{{ material.tenChatLieu }}</label>
-            </div>
-          </div>
-
-          <!-- Lọc theo Size -->
-          <div class="mb-4">
-            <h6 class="filter-title">Kích cỡ</h6>
-            <div class="d-flex flex-wrap gap-2">
-              <button v-for="size in sizes" :key="size.idSize" 
-                      class="btn btn-sm btn-outline-dark size-btn"
-                      :class="{ 'active': filters.selectedSizes.includes(size.tenSize) }"
-                      @click="selectSize(size.tenSize)">{{ size.tenSize }}</button>
             </div>
           </div>
 
@@ -86,11 +64,9 @@
             <li class="breadcrumb-item active" aria-current="page">Sản phẩm</li>
           </ol>
         </nav>
-        <h1 class="fw-bolder">Đồ Thể Thao</h1>
 
         <!-- Khu vực sắp xếp -->
         <div class="d-flex justify-content-between align-items-center mb-4">
-          <span class="text-muted">{{ pagination.total }} kết quả</span>
           <div class="d-flex align-items-center">
             <label class="form-label me-2 mb-0">Sắp xếp theo</label>
             <select class="form-select form-select-sm" style="width: 150px;" v-model="filters.sortBy" @change="applyFilters">
@@ -116,17 +92,17 @@
 
         <!-- Lưới sản phẩm -->
         <div v-else class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
-          <div class="col" v-for="product in products" :key="product.id">
+          <div class="col" v-for="product in products" :key="product.idSP">
             <ProductCard :product="product" />
           </div>
         </div>
 
         <!-- Nút Xem thêm & Phân trang -->
         <div v-if="!loading && !error && products.length > 0" class="text-center mt-5">
-          <button v-if="products.length < pagination.total" 
+          <button v-if="products.length < (pagination.total || 0)" 
                   class="btn btn-outline-dark btn-lg" 
                   @click="loadMore">XEM THÊM</button>
-          <p class="text-muted mt-2">Hiển thị {{ products.length }} trên tổng số {{ pagination.total }} sản phẩm</p>
+          <p class="text-muted mt-2">Hiển thị {{ products.length }} trên tổng số {{ pagination.total !== undefined ? pagination.total : 0 }} sản phẩm</p>
         </div>
       </div>
     </div>
@@ -146,19 +122,15 @@ const API_BASE_URL = 'http://localhost:8080/api';
 const products = ref([]);
 const categories = ref([]);
 const brands = ref([]);
-const colors = ref([]);
 const materials = ref([]);
-const sizes = ref([]);
 const loading = ref(false);
 const error = ref(null);
 
 // Filters
 const filters = reactive({
-  selectedCategories: [],
-  selectedBrands: [],
-  selectedColors: [],
-  selectedMaterials: [],
-  selectedSizes: [],
+  selectedCategory: null, // Chỉ lưu một danh mục
+  selectedBrand: null,   // Chỉ lưu một thương hiệu
+  selectedMaterial: null, // Chỉ lưu một chất liệu
   priceRange: [0, 2000000],
   sortBy: 'newest'
 });
@@ -171,7 +143,9 @@ const pagination = reactive({
 });
 
 // Computed
-const selectedCategoryIds = computed(() => filters.selectedCategories.map(cat => cat.idDM));
+const selectedCategoryId = computed(() => filters.selectedCategory ? [filters.selectedCategory.idDM] : []);
+const selectedBrandId = computed(() => filters.selectedBrand ? [filters.selectedBrand.idThuongHieu] : []);
+const selectedMaterialId = computed(() => filters.selectedMaterial ? [filters.selectedMaterial.idChatLieu] : []);
 
 // Methods
 const loadCategories = async () => {
@@ -194,16 +168,6 @@ const loadBrands = async () => {
   }
 };
 
-const loadColors = async () => {
-  try {
-    const response = await axios.get(`${API_BASE_URL}/mausac`);
-    colors.value = response.data;
-  } catch (err) {
-    error.value = 'Không thể tải màu sắc: ' + (err.response?.data?.message || err.message);
-    console.error('Lỗi khi tải màu sắc:', err);
-  }
-};
-
 const loadMaterials = async () => {
   try {
     const response = await axios.get(`${API_BASE_URL}/chatlieu`);
@@ -211,16 +175,6 @@ const loadMaterials = async () => {
   } catch (err) {
     error.value = 'Không thể tải chất liệu: ' + (err.response?.data?.message || err.message);
     console.error('Lỗi khi tải chất liệu:', err);
-  }
-};
-
-const loadSizes = async () => {
-  try {
-    const response = await axios.get(`${API_BASE_URL}/size`);
-    sizes.value = response.data;
-  } catch (err) {
-    error.value = 'Không thể tải kích cỡ: ' + (err.response?.data?.message || err.message);
-    console.error('Lỗi khi tải kích cỡ:', err);
   }
 };
 
@@ -232,28 +186,30 @@ const loadProducts = async () => {
     const params = {
       page: pagination.page,
       size: pagination.size,
-      danhMuc: selectedCategoryIds.value.join(',') || null,
-      thuongHieu: filters.selectedBrands.map(b => b.tenThuongHieu).join(',') || null,
-      mauSac: filters.selectedColors.map(c => c.tenMauSac).join(',') || null,
-      chatLieu: filters.selectedMaterials.map(m => m.tenChatLieu).join(',') || null,
-      tenSize: filters.selectedSizes.join(',') || null,
+      danhMuc: selectedCategoryId.value.length ? selectedCategoryId.value.join(',') : null,
+      thuongHieu: selectedBrandId.value.length ? selectedBrandId.value.join(',') : null,
+      chatLieu: selectedMaterialId.value.length ? selectedMaterialId.value.join(',') : null,
       minPrice: filters.priceRange[0],
-      maxPrice: filters.priceRange[1]
+      maxPrice: filters.priceRange[1],
+      status: true
     };
 
-    const response = await axios.get(`${API_BASE_URL}/sanphamchitiet/filter`, { 
+    const response = await axios.get(`${API_BASE_URL}/sanpham/filter`, { 
       params,
       headers: {
-        Authorization: `Bearer ${localStorage.getItem('token') || ''}` // Thêm token nếu cần xác thực
+        Authorization: `Bearer ${localStorage.getItem('token') || ''}`
       }
     });
-    
+
+    console.log('API response:', response.data); // Debug response
+
     products.value = pagination.page === 0 
-      ? response.data.content 
-      : [...products.value, ...response.data.content];
-    pagination.total = response.data.totalElements;
+      ? response.data.content || []
+      : [...products.value, ...(response.data.content || [])];
+    pagination.total = response.data.totalElements !== undefined ? response.data.totalElements : 0;
   } catch (err) {
     error.value = 'Không thể tải danh sách sản phẩm: ' + (err.response?.data?.message || err.message);
+    pagination.total = 0;
     console.error('Lỗi khi tải sản phẩm:', err);
   } finally {
     loading.value = false;
@@ -271,57 +227,22 @@ const loadMore = () => {
 };
 
 const selectCategory = (category) => {
-  const index = filters.selectedCategories.findIndex(cat => cat.idDM === category.idDM);
-  if (index > -1) {
-    filters.selectedCategories.splice(index, 1);
-  } else {
-    filters.selectedCategories.push(category);
-  }
+  filters.selectedCategory = filters.selectedCategory && filters.selectedCategory.idDM === category.idDM ? null : category;
 };
 
 const selectBrand = (brand) => {
-  const index = filters.selectedBrands.findIndex(b => b.idThuongHieu === brand.idThuongHieu);
-  if (index > -1) {
-    filters.selectedBrands.splice(index, 1);
-  } else {
-    filters.selectedBrands.push(brand);
-  }
-};
-
-const selectColor = (color) => {
-  const index = filters.selectedColors.findIndex(c => c.idMauSac === color.idMauSac);
-  if (index > -1) {
-    filters.selectedColors.splice(index, 1);
-  } else {
-    filters.selectedColors.push(color);
-  }
+  filters.selectedBrand = filters.selectedBrand && filters.selectedBrand.idThuongHieu === brand.idThuongHieu ? null : brand;
 };
 
 const selectMaterial = (material) => {
-  const index = filters.selectedMaterials.findIndex(m => m.idChatLieu === material.idChatLieu);
-  if (index > -1) {
-    filters.selectedMaterials.splice(index, 1);
-  } else {
-    filters.selectedMaterials.push(material);
-  }
-};
-
-const selectSize = (size) => {
-  const index = filters.selectedSizes.indexOf(size);
-  if (index > -1) {
-    filters.selectedSizes.splice(index, 1);
-  } else {
-    filters.selectedSizes.push(size);
-  }
+  filters.selectedMaterial = filters.selectedMaterial && filters.selectedMaterial.idChatLieu === material.idChatLieu ? null : material;
 };
 
 // Lifecycle
 onMounted(() => {
   loadCategories();
   loadBrands();
-  loadColors();
   loadMaterials();
-  loadSizes();
   loadProducts();
 });
 </script>
@@ -336,11 +257,6 @@ onMounted(() => {
 .filter-title {
   font-weight: 600;
   margin-bottom: 10px;
-}
-
-.size-btn.active {
-  background-color: #343a40;
-  color: white;
 }
 
 .btn-outline-dark:hover {

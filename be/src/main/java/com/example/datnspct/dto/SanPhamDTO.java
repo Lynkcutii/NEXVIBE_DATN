@@ -4,17 +4,23 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
 import java.util.Date;
-
 
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 public class SanPhamDTO {
-    private Integer idSP; // ID Sản Phẩm
-    private String maSP; // Mã Sản Phẩm
-    private String tenSP; // Tên Sản Phẩm
-    private Date ngayTao; // Ngày Tạo
-    private Integer tongSoLuongSanPham; // Tổng Số Lượng Sản Phẩm
-    private Boolean trangThai; // Trạng Thái
+    private Integer idSP;
+    private String maSP;
+    private String tenSP;
+    private Date ngayTao;
+    private Integer tongSoLuongSanPham;
+    private Boolean trangThai;
+    private String imageLink;
+    private String moTa;
+    private BigDecimal gia;
+    private Integer idDanhMuc;
+    private Integer idThuongHieu;
+    private Integer idChatLieu;
 }

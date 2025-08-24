@@ -1,4 +1,3 @@
-```vue
 <template>
   <div class="checkout-page">
     <div class="container-fluid px-lg-5 py-4">
@@ -542,6 +541,48 @@ const clearSelectedItems = () => {
   }
 };
 
+// Xóa các chi tiết giỏ hàng đã chọn
+const deleteSelectedCartItems = async (idGHCTs) => {
+  console.log('deleteSelectedCartItems: Starting, idGHCTs=', idGHCTs);
+  try {
+    const response = await axios.delete(`${API_BASE_URL}/client/api/giohang/giohangct/batch`, {
+      data: idGHCTs,
+      withCredentials: true,
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    });
+    console.log('deleteSelectedCartItems: Response status=', response.status, ', data=', response.data);
+    if (response.status === 200 || response.status === 207) {
+      console.log('deleteSelectedCartItems: Successfully deleted cart items');
+      return true;
+    } else {
+      console.error('deleteSelectedCartItems: Unexpected response status=', response.status, ', data=', response.data);
+      throw new Error(`Unexpected response status: ${response.status}`);
+    }
+  } catch (err) {
+    console.error('deleteSelectedCartItems: Error -', err);
+    let errorMessage = 'Lỗi khi xóa các sản phẩm trong giỏ hàng!';
+    if (err.response) {
+      console.error('deleteSelectedCartItems: Response error - status=', err.response.status, ', data=', err.response.data);
+      errorMessage = typeof err.response.data === 'string' ? err.response.data : `Lỗi server: ${err.response.statusText} (mã ${err.response.status})`;
+      if (err.response.status === 401 || err.response.status === 403) {
+        console.warn('deleteSelectedCartItems: Unauthorized or forbidden, logging out');
+        auth.logout();
+        router.push('/login');
+        throw new Error('Unauthorized or forbidden');
+      }
+    } else if (err.request) {
+      console.error('deleteSelectedCartItems: No response received, possible CORS or network issue');
+      errorMessage = 'Lỗi mạng hoặc CORS: Không nhận được phản hồi từ server!';
+    } else {
+      console.error('deleteSelectedCartItems: Error setting up request -', err.message);
+      errorMessage = `Lỗi thiết lập yêu cầu: ${err.message}`;
+    }
+    throw new Error(errorMessage);
+  }
+};
+
 // Kiểm tra trạng thái giỏ hàng sau khi thanh toán
 const checkCartStatusAfterOrder = async (idGHCTs) => {
   try {
@@ -556,13 +597,14 @@ const checkCartStatusAfterOrder = async (idGHCTs) => {
     
     if (status.stillExists > 0) {
       console.warn('checkCartStatusAfterOrder: Some cart items still exist', status);
-      // Có thể gửi thông báo cho admin hoặc log để theo dõi
+      toast.warning(`Có ${status.stillExists}/${status.totalChecked} sản phẩm không được xóa khỏi giỏ hàng. Vui lòng kiểm tra lại.`);
     } else {
       console.log('checkCartStatusAfterOrder: All cart items successfully removed');
     }
+    return status;
   } catch (err) {
     console.error('checkCartStatusAfterOrder: Error checking status', err);
-    // Không hiển thị lỗi cho user vì đây chỉ là kiểm tra tùy chọn
+    return null;
   }
 };
 
@@ -623,6 +665,7 @@ const placeOrder = async () => {
   try {
     orderData = {
       idTK: auth.user.idTK,
+      loaiHoaDon: 'Trực tuyến',
       shippingInfo: {
         firstName: shippingInfo.firstName,
         lastName: shippingInfo.lastName,
@@ -664,7 +707,7 @@ const placeOrder = async () => {
     const calculatedTotal = orderData.items.reduce((sum, item) => sum + item.donGia * item.soLuong, 0) - totalDiscount.value;
     if (Math.abs(calculatedTotal - orderData.total) > 1) {
       console.error('placeOrder: Total mismatch', { calculatedTotal, sentTotal: orderData.total });
-      // errorMessage.value = `Tổng tiền không khớp. Tổng tính toán (sản phẩm - khuyến mãi): ${calculatedTotal}, Tổng gửi: ${orderData.total}`;
+      errorMessage.value = 'Tổng tiền không khớp!';
       errorDetails.value = ['Vui lòng kiểm tra lại tổng tiền và khuyến mãi.'];
       showErrorModal();
       return;
@@ -685,24 +728,24 @@ const placeOrder = async () => {
       statusText: response.statusText
     });
 
-    // Xóa các sản phẩm chi tiết trong giỏ hàng - Cải thiện logic
-    // Backend đã xử lý việc xóa, frontend chỉ cần cập nhật UI
+    // Xóa các chi tiết giỏ hàng đã chọn
+    const idGHCTs = orderData.items.map(item => item.idGHCT);
     try {
-      console.log('placeOrder: Backend has already handled cart item deletion');
-      // Không cần gọi API xóa nữa vì backend đã xử lý trong transaction
-      // Chỉ cần cập nhật UI và xóa sessionStorage
+      console.log('placeOrder: Attempting to delete cart items', idGHCTs);
+      await deleteSelectedCartItems(idGHCTs);
+      console.log('placeOrder: Successfully deleted cart items');
       
-      // Kiểm tra trạng thái giỏ hàng sau khi thanh toán (tùy chọn)
-      await checkCartStatusAfterOrder(orderData.items.map(item => item.idGHCT));
+      // Kiểm tra trạng thái giỏ hàng sau khi xóa
+      const status = await checkCartStatusAfterOrder(idGHCTs);
+      if (status && status.stillExists > 0) {
+        console.warn('placeOrder: Some cart items were not deleted', status);
+        toast.warning(`Có ${status.stillExists}/${status.totalChecked} sản phẩm không được xóa khỏi giỏ hàng. Vui lòng kiểm tra lại.`);
+      } else {
+        console.log('placeOrder: All cart items successfully deleted');
+      }
     } catch (err) {
-      console.error('placeOrder: Error in frontend cart cleanup', {
-        message: err.message,
-        response: err.response ? {
-          status: err.response.status,
-          data: err.response.data
-        } : null
-      });
-      // Không hiển thị lỗi cho user vì backend đã xử lý thành công
+      console.error('placeOrder: Error deleting cart items', err);
+      toast.warning('Đơn hàng đã được đặt, nhưng có lỗi khi xóa sản phẩm khỏi giỏ hàng: ' + err.message);
     }
 
     toast.success('Đặt hàng thành công!');
