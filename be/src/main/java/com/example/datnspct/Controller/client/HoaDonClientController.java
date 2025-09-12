@@ -70,7 +70,6 @@ public class HoaDonClientController {
             HoaDonDTO dto = new HoaDonDTO();
             dto.setIdHD(hoaDon.getIdHD());
             dto.setMaHD(hoaDon.getMaHD());
-            dto.setIdKhachHang(hoaDon.getIdKhachHang());
             dto.setIdNhanVien(hoaDon.getIdNhanVien());
             dto.setNgayTao(hoaDon.getNgayTao());
             dto.setNgaySua(hoaDon.getNgaySua());

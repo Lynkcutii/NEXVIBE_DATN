@@ -45,6 +45,21 @@ public class SanPhamChiTietController {
     public ResponseEntity<SanPhamChiTietDTO> createSanPhamChiTiet(
             @RequestPart("data") SanPhamChiTietDTO dto,
             @RequestPart(value = "imageFiles", required = false) MultipartFile[] imageFiles) throws IOException {
+        // Log để debug
+        System.out.println("Received imageFiles: " + (imageFiles != null ? imageFiles.length : "null"));
+        if (imageFiles == null || imageFiles.length == 0) {
+            System.out.println("No image files received for SanPhamChiTiet");
+        } else {
+            for (MultipartFile file : imageFiles) {
+                System.out.println("File received: " + file.getOriginalFilename() + ", Size: " + file.getSize());
+            }
+        }
+
+        // Kiểm tra nếu không có ảnh chi tiết
+        if (imageFiles == null || imageFiles.length == 0) {
+            throw new IllegalArgumentException("Vui lòng cung cấp ít nhất một ảnh chi tiết.");
+        }
+
         validateSanPhamChiTietDTO(dto);
         SanPhamChiTietDTO created = sanPhamChiTietService.taoSanPhamChiTiet(dto, imageFiles);
         return ResponseEntity.ok(created);

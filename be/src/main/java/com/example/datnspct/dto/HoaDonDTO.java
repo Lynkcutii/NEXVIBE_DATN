@@ -22,17 +22,7 @@ public class HoaDonDTO {
     private String trangThai;
     private String loaiHoaDon;
     private int totalProducts;
-
-//    private Integer idHD;
-//    private String maHD;
-//    private Integer idKhachHang;
-//    private Integer idNhanVien;
     private Integer idKM;
-//    private String loaiHoaDon;
-//    private LocalDateTime ngayTao;
-//    private LocalDateTime ngaySua;
-//    private BigDecimal tongTien;
-//    private String trangThai;
     private Integer idPT;
     private String maGiaoDich;
     private List<HoaDonChiTietDTO> chiTietSanPham;

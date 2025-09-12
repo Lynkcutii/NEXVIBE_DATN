@@ -327,14 +327,15 @@ const loadingSize = ref(false);
 // Khởi tạo form sản phẩm
 const newProduct = ref({
   tenSP: '',
-  gia: null, // Sẽ được tính trung bình từ SanPhamChiTiet
+  gia: null,
   moTa: '',
   trangThai: true,
   idDanhMuc: null,
   idThuongHieu: null,
   idChatLieu: null,
+  imageLink: null,
   sanPhamChiTiet: {
-    gia: null, // Giá chi tiết của biến thể
+    gia: null,
     soLuong: null,
     idMauSac: null,
     idSize: null,
@@ -437,10 +438,11 @@ const handleDetailImagesRemove = (file, fileList) => {
 
 // Kiểm tra ảnh trước khi upload
 const beforeUpload = (file) => {
-  const isImage = file.type.startsWith('image/');
+  console.log('File selected:', file.name, 'Type:', file.type, 'Size:', file.size);
+  const isImage = ['image/jpeg', 'image/png', 'image/gif', 'image/bmp', 'image/webp'].includes(file.type.toLowerCase());
   const isLt5M = file.size / 1024 / 1024 < 5;
   if (!isImage) {
-    ElMessage.error('Vui lòng chọn file ảnh!');
+    ElMessage.error('Vui lòng chọn file ảnh (JPEG, PNG, GIF, BMP, WEBP)!');
     return false;
   }
   if (!isLt5M) {
@@ -546,12 +548,13 @@ const openAddProductModal = () => {
   showAddProductModal.value = true;
   newProduct.value = {
     tenSP: '',
-    gia: null, // Sẽ được tính trung bình từ SanPhamChiTiet
+    gia: null,
     moTa: '',
     trangThai: true,
     idDanhMuc: null,
     idThuongHieu: null,
     idChatLieu: null,
+    imageLink: null,
     sanPhamChiTiet: {
       gia: null,
       soLuong: null,
@@ -584,6 +587,7 @@ const handleCloseAddModal = () => {
     idDanhMuc: null,
     idThuongHieu: null,
     idChatLieu: null,
+    imageLink: null,
     sanPhamChiTiet: {
       gia: null,
       soLuong: null,
@@ -597,10 +601,19 @@ const handleCloseAddModal = () => {
 const submitProduct = async () => {
   try {
     await productForm.value.validate(async (valid) => {
-      if (!valid || productImage.value.length === 0 || detailImages.value.length === 0) {
-        ElMessage.error('Vui lòng kiểm tra lại thông tin, chọn một ảnh sản phẩm và ít nhất một ảnh chi tiết.');
+      if (!valid) {
+        ElMessage.error('Vui lòng kiểm tra lại thông tin sản phẩm.');
         return;
       }
+      if (productImage.value.length === 0) {
+        ElMessage.error('Vui lòng chọn một ảnh cho sản phẩm.');
+        return;
+      }
+      if (detailImages.value.length === 0) {
+        ElMessage.error('Vui lòng chọn ít nhất một ảnh chi tiết.');
+        return;
+      }
+
       await ElMessageBox.confirm(
         'Bạn có chắc chắn muốn thêm sản phẩm này?',
         'Xác nhận',
@@ -618,10 +631,12 @@ const submitProduct = async () => {
         idThuongHieu: newProduct.value.idThuongHieu,
         idChatLieu: newProduct.value.idChatLieu,
       };
+      console.log('SanPhamDTO before sending:', sanPhamDTO);
       sanPhamFormData.append('data', new Blob([JSON.stringify(sanPhamDTO)], { type: 'application/json' }));
       if (productImage.value.length > 0) {
         sanPhamFormData.append('imageFile', productImage.value[0].raw);
       }
+      console.log('SanPham FormData entries:', [...sanPhamFormData.entries()]);
 
       // Tạo sản phẩm
       const sanPhamResponse = await axios.post('http://localhost:8080/admin/api/san-pham', sanPhamFormData, {
@@ -638,9 +653,11 @@ const submitProduct = async () => {
         idSize: newProduct.value.sanPhamChiTiet.idSize,
       };
       chiTietFormData.append('data', new Blob([JSON.stringify(chiTietDTO)], { type: 'application/json' }));
+      console.log('Detail Images before sending:', detailImages.value);
       detailImages.value.forEach((image) => {
-        chiTietFormData.append('imageFile', image.raw);
+        chiTietFormData.append('imageFiles', image.raw);
       });
+      console.log('ChiTiet FormData entries:', [...chiTietFormData.entries()]);
 
       // Tạo sản phẩm chi tiết
       await axios.post('http://localhost:8080/admin/api/sanphamchitiet', chiTietFormData, {
@@ -649,23 +666,22 @@ const submitProduct = async () => {
 
       ElMessage.success('Thêm sản phẩm thành công!');
       handleCloseAddModal();
-      fetchProducts(); // Cập nhật giá trung bình từ backend
+      fetchProducts();
     });
   } catch (error) {
     if (error === 'cancel') return;
-    
-    // Xử lý lỗi từ backend
+
     let errorMessage = 'Lỗi khi thêm sản phẩm.';
-    if (error.response?.data) {
-      if (error.response.data.error) {
-        errorMessage = error.response.data.error;
-      } else if (error.response.data.message) {
-        errorMessage = error.response.data.message;
-      }
+    if (error.response?.data?.error) {
+      errorMessage = error.response.data.error;
+    } else if (error.response?.data?.message) {
+      errorMessage = error.response.data.message;
+    } else if (error.message) {
+      errorMessage = error.message;
     }
-    
+
     ElMessage.error(errorMessage);
-    console.error('Lỗi khi thêm sản phẩm:', error);
+    console.error('Lỗi khi thêm sản phẩm:', error, error.response?.data);
   } finally {
     submitting.value = false;
   }
@@ -746,3 +762,4 @@ onMounted(fetchProducts);
   gap: 10px;
 }
 </style>
+```

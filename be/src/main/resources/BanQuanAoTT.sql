@@ -215,6 +215,7 @@ CREATE TABLE HoaDonCT (
                           IdHDCT INT IDENTITY(1,1) PRIMARY KEY,
                           IdSPCT INT NOT NULL,
                           IdHD INT NOT NULL,
+                          IdVoucher INT NULL,
                           SoLuong INT NOT NULL,
                           DonGia DECIMAL(18,2) NOT NULL,
                           ThanhTien DECIMAL(18,2) NOT NULL,
@@ -222,6 +223,7 @@ CREATE TABLE HoaDonCT (
                           NgaySua DATETIME NULL,
                           FOREIGN KEY (IdHD) REFERENCES HoaDon(IdHD),
                           FOREIGN KEY (IdSPCT) REFERENCES SanPhamCT(IdSPCT),
+                          FOREIGN KEY (IdVoucher) REFERENCES Voucher(IdVoucher),
 );
 
 -- 19. Giỏ hàng
@@ -246,6 +248,31 @@ CREATE TABLE GioHangCT (
                            DonGia DECIMAL(18,2) NOT NULL,
                            FOREIGN KEY (IdGH) REFERENCES GioHang(IdGH),
                            FOREIGN KEY (IdSPCT) REFERENCES SanPhamCT(IdSPCT)
+);
+
+CREATE TABLE MoMoTransaction (
+                                 IdMoMo INT IDENTITY(1,1) PRIMARY KEY,
+                                 IdHD INT NULL, -- Liên kết với hóa đơn (NULL khi chưa hoàn thành)
+                                 OrderId NVARCHAR(100) NOT NULL UNIQUE, -- Mã đơn hàng từ hệ thống
+                                 RequestId NVARCHAR(100) NOT NULL UNIQUE, -- Request ID từ MoMo
+                                 Amount DECIMAL(18,2) NOT NULL, -- Số tiền giao dịch
+                                 OrderInfo NVARCHAR(255) NOT NULL, -- Thông tin đơn hàng
+                                 RedirectUrl NVARCHAR(500), -- URL redirect sau thanh toán
+                                 IpnUrl NVARCHAR(500), -- URL nhận thông báo từ MoMo
+                                 PayUrl NVARCHAR(1000), -- URL thanh toán QR từ MoMo
+                                 QrCodeUrl NVARCHAR(1000), -- URL QR code
+                                 DeepLink NVARCHAR(1000), -- Deep link mở app MoMo
+                                 TransId NVARCHAR(100), -- Transaction ID từ MoMo (sau khi thanh toán)
+                                 ResponseCode NVARCHAR(10), -- Mã phản hồi từ MoMo
+                                 Message NVARCHAR(255), -- Thông báo từ MoMo
+                                 LocalMessage NVARCHAR(255), -- Thông báo địa phương hóa
+                                 PayType NVARCHAR(50), -- Loại thanh toán (qr, webpay, etc.)
+                                 TransactionStatus NVARCHAR(50) NOT NULL DEFAULT 'PENDING', -- PENDING, SUCCESS, FAILED, CANCELLED
+                                 NgayTao DATETIME NOT NULL DEFAULT GETDATE(),
+                                 NgayCapNhat DATETIME,
+                                 ExtraData NVARCHAR(MAX), -- Dữ liệu bổ sung
+                                 Signature NVARCHAR(500), -- Chữ ký từ MoMo
+                                 FOREIGN KEY (IdHD) REFERENCES HoaDon(IdHD)
 );
 
 /* ========================

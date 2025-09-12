@@ -3,10 +3,13 @@ package com.example.datnspct.Controller.admin;
 import com.example.datnspct.Service.VoucherService;
 import com.example.datnspct.dto.VoucherDTO;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/voucher")
@@ -23,16 +26,11 @@ public class VoucherController {
     @PostMapping("/applicable")
     public ResponseEntity<?> getApplicableVouchers(@RequestBody List<Integer> idSPCTs) {
         try {
-            if (idSPCTs == null || idSPCTs.isEmpty()) {
-                return ResponseEntity.badRequest().body("Danh sách idSPCT không được để trống");
-            }
             List<VoucherDTO> vouchers = voucherService.getApplicableVouchersForProducts(idSPCTs);
-            if (vouchers.isEmpty()) {
-                return ResponseEntity.ok().body("Không tìm thấy voucher nào phù hợp với các sản phẩm đã chọn");
-            }
             return ResponseEntity.ok(vouchers);
         } catch (Exception e) {
-            return ResponseEntity.status(500).body("Lỗi khi lấy danh sách voucher: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Collections.singletonMap("error", "Không thể lấy danh sách voucher: " + e.getMessage()));
         }
     }
 
@@ -54,21 +52,48 @@ public class VoucherController {
     }
 
     /**
+     * Lấy thông tin voucher theo ID
+     * @param id ID của voucher
+     * @return VoucherDTO
+     */
+    @GetMapping("/{id}")
+    public ResponseEntity<?> getVoucherById(@PathVariable Integer id) {
+        try {
+            VoucherDTO voucher = voucherService.getVoucherById(id);
+            return ResponseEntity.ok(voucher);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(Collections.singletonMap("error", e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Collections.singletonMap("error", "Không thể lấy thông tin voucher: " + e.getMessage()));
+        }
+    }
+
+    /**
      * Cập nhật số lượng voucher sau khi sử dụng
      * @param id ID của voucher
-     * @param soLuong Số lượng mới
+     * @param body Body chứa số lượng mới { "soLuong": <giá trị> }
      * @return Thông báo trạng thái
      */
-    @PutMapping("/{id}")
-    public ResponseEntity<?> updateVoucherQuantity(@PathVariable Integer id, @RequestBody Integer soLuong) {
+    @PutMapping("/{id}/quantity")
+    public ResponseEntity<?> updateVoucherQuantity(@PathVariable Integer id, @RequestBody Map<String, Integer> body) {
         try {
+            Integer soLuong = body.get("soLuong");
+            if (soLuong == null) {
+                return ResponseEntity.badRequest().body("Thiếu trường 'soLuong' trong body");
+            }
             if (soLuong < 0) {
                 return ResponseEntity.badRequest().body("Số lượng voucher không thể âm");
             }
             voucherService.updateVoucherQuantity(id, soLuong);
             return ResponseEntity.ok("Cập nhật số lượng voucher thành công");
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(Collections.singletonMap("error", e.getMessage()));
         } catch (Exception e) {
-            return ResponseEntity.status(500).body("Lỗi khi cập nhật số lượng voucher: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Collections.singletonMap("error", "Không thể cập nhật số lượng voucher: " + e.getMessage()));
         }
     }
 }

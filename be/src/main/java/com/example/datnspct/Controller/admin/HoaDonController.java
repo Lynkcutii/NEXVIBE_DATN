@@ -7,6 +7,7 @@ import com.example.datnspct.dto.HoaDonDTO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -46,9 +47,24 @@ public class HoaDonController {
 
     // Read (Get all)
     @GetMapping
-    public ResponseEntity<List<HoaDonDTO>> getAllHoaDon() {
-        List<HoaDonDTO> hoaDonDTOs = hoaDonService.getAllHoaDon();
-        return ResponseEntity.ok(hoaDonDTOs);
+    public ResponseEntity<Page<HoaDonDTO>> getHoaDons(
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) String trangThai,
+            @RequestParam(required = false) String loaiHoaDon,
+            @RequestParam(required = false) String dateFrom,
+            @RequestParam(required = false) String dateTo,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        System.out.println("Nhận yêu cầu GET /admin/api/hoadon: trangThai=" + trangThai);
+        try {
+            Pageable pageable = PageRequest.of(page, size);
+            Page<HoaDonDTO> result = hoaDonService.filterHoaDon(keyword, trangThai, loaiHoaDon, dateFrom, dateTo, pageable);
+            System.out.println("Trả về danh sách hóa đơn: " + result.getContent().size() + " hóa đơn");
+            return ResponseEntity.ok(result);
+        } catch (Exception e) {
+            System.err.println("Lỗi khi lấy danh sách hóa đơn: " + e.getMessage());
+            return ResponseEntity.badRequest().body(null);
+        }
     }
 
     // Update

@@ -1,4 +1,3 @@
-```vue
 <template>
   <div class="container-fluid">
     <div class="d-flex justify-content-between align-items-center mb-4">
@@ -30,16 +29,29 @@
               <el-option v-for="item in chatLieuList" :key="item.idChatLieu" :label="item.tenChatLieu" :value="item.idChatLieu" />
             </el-select>
           </el-form-item>
-          <el-form-item label="Ảnh sản phẩm (chọn 1 ảnh)" prop="imageLink">
+          <el-form-item label="Ảnh sản phẩm (chọn 1 ảnh nếu muốn thay đổi)">
             <el-upload :auto-upload="false" :on-change="handleProductImageChange" :on-remove="handleProductImageRemove"
                        :file-list="productImage" :limit="1" accept="image/*" :before-upload="beforeUpload">
               <el-button type="primary">Chọn ảnh</el-button>
-              <template #tip><div class="el-upload__tip">Chọn 1 ảnh, kích thước < 5MB.</div></template>
+              <template #tip><div class="el-upload__tip">Chọn 1 ảnh, kích thước < 5MB. Nếu không chọn, ảnh hiện tại sẽ được giữ.</div></template>
             </el-upload>
             <div class="thumbnail-list mt-2" v-if="productImage.length > 0">
-              <el-image :src="productImage[0].url" class="thumbnail-item" fit="cover" :preview-src-list="[productImage[0].url]" />
+              <div class="thumbnail-wrapper">
+                <el-image :src="productImage[0].url" class="thumbnail-item" fit="cover" :preview-src-list="[productImage[0].url]" />
+                <el-button type="danger" size="small" class="delete-button" @click="removeProductImage" title="Xóa ảnh">
+                  <i class="fas fa-trash-alt"></i>
+                </el-button>
+              </div>
             </div>
-            <div v-else class="no-image">Chưa chọn ảnh</div>
+            <div v-else-if="sanPham.imageLink" class="thumbnail-list mt-2">
+              <div class="thumbnail-wrapper">
+                <el-image :src="sanPham.imageLink" class="thumbnail-item" fit="cover" :preview-src-list="[sanPham.imageLink]" />
+                <el-button type="danger" size="small" class="delete-button" @click="removeExistingProductImage" title="Xóa ảnh">
+                  <i class="fas fa-trash-alt"></i>
+                </el-button>
+              </div>
+            </div>
+            <div v-else class="no-image">Chưa có ảnh</div>
           </el-form-item>
           <el-form-item label="Ngày tạo">
             <el-input :value="formatDate(sanPham.ngayTao)" disabled></el-input>
@@ -161,11 +173,12 @@
 
 <script setup>
 import { ref, onMounted, computed } from 'vue';
-import { useRoute } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 import axios from 'axios';
 import { ElMessage, ElMessageBox } from 'element-plus';
 
 const route = useRoute();
+const router = useRouter();
 const sanPham = ref({});
 const sanPhamChiTietList = ref([]);
 const loading = ref(true);
@@ -177,6 +190,7 @@ const sanPhamChiTietForm = ref(null);
 const showSanPhamChiTietModal = ref(false);
 const isEditingSanPhamChiTiet = ref(false);
 const productImage = ref([]);
+const deletedProductImage = ref(null); // Lưu trữ URL ảnh sản phẩm bị xóa
 const detailImages = ref([]);
 const sanPhamChiTietData = ref({
   id: null,
@@ -209,12 +223,6 @@ const rules = ref({
   idDanhMuc: [{ required: true, message: 'Vui lòng chọn danh mục', trigger: 'change' }],
   idThuongHieu: [{ required: true, message: 'Vui lòng chọn thương hiệu', trigger: 'change' }],
   idChatLieu: [{ required: true, message: 'Vui lòng chọn chất liệu', trigger: 'change' }],
-  imageLink: [
-    { validator: (rule, value, callback) => {
-        if (productImage.value.length === 0 && !sanPham.value.imageLink) callback(new Error('Vui lòng chọn một ảnh cho sản phẩm'));
-        else callback();
-      }, trigger: 'change' },
-  ],
 });
 
 const spctRules = ref({
@@ -230,8 +238,11 @@ const spctRules = ref({
   ],
   images: [
     { validator: (rule, value, callback) => {
-        if (detailImages.value.length === 0) callback(new Error('Vui lòng chọn ít nhất một ảnh chi tiết'));
-        else callback();
+        if (detailImages.value.length === 0 && (!sanPhamChiTietData.value.images || sanPhamChiTietData.value.images.length === 0)) {
+          callback(new Error('Vui lòng chọn ít nhất một ảnh chi tiết'));
+        } else {
+          callback();
+        }
       }, trigger: 'change' },
   ],
 });
@@ -239,8 +250,25 @@ const spctRules = ref({
 const formatDate = (date) => !date ? 'N/A' : new Intl.DateTimeFormat('vi-VN', { year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date(date));
 const formatPrice = (price) => !price ? 'N/A' : new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price);
 
-const handleProductImageChange = (file, fileList) => productImage.value = fileList.map(item => ({ raw: item.raw, url: URL.createObjectURL(item.raw) }));
-const handleProductImageRemove = (file, fileList) => productImage.value = fileList.map(item => ({ raw: item.raw, url: URL.createObjectURL(item.raw) }));
+const handleProductImageChange = (file, fileList) => {
+  productImage.value = fileList.map(item => ({ raw: item.raw, url: URL.createObjectURL(item.raw) }));
+  deletedProductImage.value = null; // Reset ảnh bị xóa khi chọn ảnh mới
+};
+const handleProductImageRemove = (file, fileList) => {
+  productImage.value = fileList.map(item => ({ raw: item.raw, url: URL.createObjectURL(item.raw) }));
+};
+const removeProductImage = () => {
+  if (productImage.value.length > 0) {
+    deletedProductImage.value = productImage.value[0].url;
+    productImage.value = [];
+  }
+};
+const removeExistingProductImage = () => {
+  if (sanPham.value.imageLink) {
+    deletedProductImage.value = sanPham.value.imageLink;
+    sanPham.value.imageLink = null;
+  }
+};
 const handleDetailImagesChange = (file, fileList) => detailImages.value = fileList.map(item => ({ raw: item.raw, url: URL.createObjectURL(item.raw) }));
 const handleDetailImagesRemove = (file, fileList) => {
   detailImages.value = fileList.map(item => ({ raw: item.raw, url: URL.createObjectURL(item.raw) }));
@@ -349,51 +377,61 @@ const submitSanPham = async () => {
       if (valid) {
         submittingSanPham.value = true;
         const formData = new FormData();
-        formData.append('data', new Blob([JSON.stringify({
+        const sanPhamDTO = {
+          idSP: parseInt(route.params.id),
           tenSP: sanPham.value.tenSP,
           idDanhMuc: sanPham.value.idDanhMuc,
           idThuongHieu: sanPham.value.idThuongHieu,
           idChatLieu: sanPham.value.idChatLieu,
-        })], { type: 'application/json' }));
-        if (productImage.value.length > 0 && productImage.value[0].raw) formData.append('imageFile', productImage.value[0].raw);
+          imageLink: sanPham.value.imageLink // Gửi imageLink hiện tại
+        };
+        console.log('SanPhamDTO before sending:', sanPhamDTO);
+        formData.append('data', new Blob([JSON.stringify(sanPhamDTO)], { type: 'application/json' }));
+        if (productImage.value.length > 0 && productImage.value[0].raw) {
+          formData.append('imageFile', productImage.value[0].raw);
+        }
+        if (deletedProductImage.value) {
+          formData.append('deletedImage', deletedProductImage.value);
+        }
+        console.log('FormData entries:', [...formData.entries()]);
         await axios.put(`http://localhost:8080/admin/api/san-pham/${route.params.id}`, formData, { headers: { 'Content-Type': 'multipart/form-data' } });
         ElMessage.success('Cập nhật sản phẩm thành công!');
-        fetchSanPham();
+        if (router.hasRoute('admin.products')) {
+          router.push({ name: 'admin.products' });
+        } else {
+          router.push('/admin/products');
+        }
       }
     });
-  } catch (error) { if (error !== 'cancel') ElMessage.error(error.response?.data?.message || 'Lỗi khi cập nhật sản phẩm.'); }
-  finally { submittingSanPham.value = false; }
+  } catch (error) {
+    if (error !== 'cancel') {
+      let errorMessage = 'Lỗi khi cập nhật sản phẩm.';
+      if (error.response?.data?.error) {
+        errorMessage = error.response.data.error;
+      } else if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      ElMessage.error(errorMessage);
+      console.error('Lỗi khi cập nhật sản phẩm:', error, error.response?.data);
+    }
+  } finally {
+    submittingSanPham.value = false;
+  }
 };
 
 const submitSanPhamChiTiet = async () => {
   try {
-    // Lấy tên màu sắc và kích thước từ danh sách để kiểm tra
-    const selectedMauSac = mauSacList.value.find(item => item.idMauSac === sanPhamChiTietData.value.idMauSac);
-    const selectedSize = sizeList.value.find(item => item.idSize === sanPhamChiTietData.value.idSize);
-    const mauSacName = selectedMauSac ? selectedMauSac.tenMauSac.toLowerCase() : '';
-    const sizeName = selectedSize ? selectedSize.tenSize.toLowerCase() : '';
-
-    // Quy tắc 1: Chỉ màu "Đen" được phép kết hợp với "Small" hoặc "Large"
-    if (['small', 'large'].includes(sizeName) && mauSacName !== 'đen') {
-      ElMessage.error('Chỉ màu "Đen" được phép kết hợp với kích thước "Small" hoặc "Large".');
-      return;
-    }
-    if (mauSacName === 'đen' && !['small', 'large'].includes(sizeName)) {
-      ElMessage.error('Màu "Đen" chỉ được phép kết hợp với kích thước "Small" hoặc "Large".');
-      return;
-    }
-
-    // Quy tắc 2: Không được phép có hai "Đen" và "Small"
-    const isBlackSmallExist = sanPhamChiTietList.value.some(
+    // Kiểm tra trùng lặp màu và size
+    const isDuplicate = sanPhamChiTietList.value.some(
       item =>
         item.id !== sanPhamChiTietData.value.id && // Bỏ qua sản phẩm chi tiết đang chỉnh sửa
         item.idMauSac === sanPhamChiTietData.value.idMauSac &&
-        item.idSize === sanPhamChiTietData.value.idSize &&
-        mauSacName === 'đen' &&
-        sizeName === 'small'
+        item.idSize === sanPhamChiTietData.value.idSize
     );
-    if (isBlackSmallExist) {
-      ElMessage.error('Đã tồn tại sản phẩm chi tiết với màu "Đen" và kích thước "Small".');
+    if (isDuplicate) {
+      ElMessage.error('Đã tồn tại sản phẩm chi tiết với màu và kích thước này.');
       return;
     }
 
@@ -460,7 +498,16 @@ const submitSanPhamChiTiet = async () => {
     });
   } catch (error) {
     if (error !== 'cancel') {
-      ElMessage.error(error.response?.data?.error || 'Lỗi khi xử lý sản phẩm chi tiết.');
+      let errorMessage = 'Lỗi khi xử lý sản phẩm chi tiết.';
+      if (error.response?.data?.error) {
+        errorMessage = error.response.data.error;
+      } else if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      ElMessage.error(errorMessage);
+      console.error('Lỗi khi xử lý sản phẩm chi tiết:', error, error.response?.data);
     }
   } finally {
     submittingSanPhamChiTiet.value = false;
@@ -476,7 +523,10 @@ const confirmDeleteSanPhamChiTiet = (spct) => {
         ElMessage.success('Xóa sản phẩm chi tiết thành công!');
         fetchSanPhamChiTiet();
         fetchSanPham();
-      } catch (error) { ElMessage.error('Có lỗi xảy ra khi xóa sản phẩm chi tiết.'); }
+      } catch (error) {
+        ElMessage.error('Có lỗi xảy ra khi xóa sản phẩm chi tiết.');
+        console.error('Lỗi khi xóa sản phẩm chi tiết:', error);
+      }
     })
     .catch(() => ElMessage.info('Đã hủy thao tác xóa'));
 };
@@ -495,4 +545,3 @@ onMounted(() => {
 .delete-button i { margin: 0; }
 .no-image { color: #999; }
 </style>
-```

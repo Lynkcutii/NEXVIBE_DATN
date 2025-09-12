@@ -34,14 +34,8 @@ public class HoaDon {
     @Column(name = "MaHD", length = 50)
     private String maHD;
 
-    @Column(name = "IdKH")
-    private Integer idKhachHang;
-
     @Column(name = "IdNV")
     private Integer idNhanVien;
-
-    @Column(name = "IdKM")  // <-- Thêm dòng này
-    private Integer idKM;
 
     @Column(name = "LoaiHoaDon")
     private String loaiHoaDon;
@@ -58,17 +52,16 @@ public class HoaDon {
     @Column(name = "TrangThai")
     private String trangThai;
 
-
     @ManyToOne
     @JoinColumn(name = "IdPT", referencedColumnName = "IdPT")
     private PhuongTT phuongThucThanhToan;
 
     @ManyToOne
-    @JoinColumn(name = "IdKM", referencedColumnName = "IdKM", insertable = false, updatable = false)
+    @JoinColumn(name = "IdKM", referencedColumnName = "IdKM")
     private KhuyenMai khuyenMai;
 
     @ManyToOne
-    @JoinColumn(name = "IdKH", referencedColumnName = "IdKH", insertable = false, updatable = false)
+    @JoinColumn(name = "IdKH", referencedColumnName = "IdKH")
     private KhachHang khachHang;
 
     @ManyToOne

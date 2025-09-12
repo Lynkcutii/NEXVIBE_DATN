@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -25,7 +26,9 @@ public class VoucherService {
     public List<VoucherDTO> getApplicableVouchersForProducts(List<Integer> idSPCTs) {
         Date now = new Date();
         List<Voucher> vouchers = voucherRepository.findAllByTrangThaiAndSoLuongGreaterThan((byte) 1, 0);
-
+        if (vouchers == null) {
+            return Collections.emptyList(); // Trả về mảng rỗng nếu vouchers là null
+        }
         return vouchers.stream()
                 .filter(v -> now.after(v.getNgayBatDau()) && now.before(v.getNgayKetThuc()))
                 .filter(v -> {
@@ -41,6 +44,12 @@ public class VoucherService {
                 .stream()
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
+    }
+
+    public VoucherDTO getVoucherById(Integer id) {
+        Voucher voucher = voucherRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Voucher không tồn tại"));
+        return convertToDTO(voucher);
     }
 
     public void updateVoucherQuantity(Integer id, Integer soLuong) {

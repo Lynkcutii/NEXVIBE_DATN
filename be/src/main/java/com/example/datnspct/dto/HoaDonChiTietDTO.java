@@ -14,21 +14,22 @@ import java.time.LocalDateTime;
 @Builder
 public class HoaDonChiTietDTO {
     private Integer idHDCT;
-    private Integer idSP;
     private Integer idHD;
-    private Integer idKM;
+    private Integer idCtSanPham;
+    private Integer idSP;
+    private String maSPCT;
+    private String tenSanPham;
+    private String tenSize;
+    private String tenMauSac;
+    private String tenThuongHieu;
+    private String tenChatLieu;
+    private String anhGiay;
+    private Integer soLuongTonKho;
     private Integer soLuong;
     private BigDecimal donGia;
     private BigDecimal thanhTien;
     private Boolean trangThai;
     private LocalDateTime ngayTao;
     private LocalDateTime ngaySua;
-    private String tenSanPham; // Lấy từ SanPhamCT
-    private String tenSize;
-    private String tenMauSac;
-
-
-    private Integer idCtSanPham;
-
-
+    private Integer idVoucher;
 }
