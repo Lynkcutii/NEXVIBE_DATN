@@ -1,3 +1,4 @@
+```vue
 <template>
   <div v-if="loading" class="text-center py-5">
     <div class="spinner-border" style="width: 3rem; height: 3rem;"></div>
@@ -8,47 +9,42 @@
     <div class="row g-5">
       <div class="col-lg-7">
         <div class="product-gallery">
-          <img :src="activeImageUrl" class="img-fluid main-image mb-3" alt="Hình ảnh sản phẩm">
+          <img :src="activeImageUrl" class="img-fluid main-image mb-3" :alt="product.tenSP || 'Hình ảnh sản phẩm'">
           <div class="thumbnail-list">
-            <img v-for="image in product.gallery" :key="image.id" 
-                 :src="image.url" @click="activeImageUrl = image.url"
-                 class="thumbnail-item" :class="{ 'active': activeImageUrl === image.url }" 
-                 alt="Hình ảnh thu nhỏ">
+            <img v-for="image in product.gallery" :key="image.idImg" 
+                 :src="image.link" @click="activeImageUrl = image.link"
+                 class="thumbnail-item" :class="{ 'active': activeImageUrl === image.link }" 
+                 :alt="image.name || 'Hình ảnh thu nhỏ'">
           </div>
         </div>
       </div>
       
       <div class="col-lg-5">
         <h1 class="fw-bolder display-5 mb-3">{{ product.tenSP }}</h1>
-        <div class="d-flex align-items-center mb-3">
-          <div class="text-warning me-2">
-            <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star-half-alt"></i>
-          </div>
-          <span class="text-muted">(125 đánh giá)</span>
-        </div>
-        <p class="h3 fw-bold text-danger mb-4">{{ product.gia.toLocaleString('vi-VN') }}đ</p>
+        <p class="h3 fw-bold text-danger mb-4">{{ selectedPrice }}</p>
         
         <p class="text-muted">{{ product.moTa }}</p>
         <hr class="my-4">
         
         <div class="variant-selector">
           <div class="mb-4">
-            <div class="variant-label">Màu sắc: <span class="text-dark fw-normal">{{ selectedVariant.color.name }}</span></div>
+            <div class="variant-label">Màu sắc: <span class="text-dark fw-normal">{{ selectedVariant.color.name || 'Chưa chọn' }}</span></div>
             <div class="btn-group">
               <button v-for="color in product.colors" :key="color.name" 
                       @click="selectColor(color)" 
-                      class="color-option me-2" 
-                      :class="{ 'active': selectedVariant.color.name === color.name }"
-                      :style="{ backgroundColor: color.hex }"></button>
+                      class="color-option btn me-2" 
+                      :class="selectedVariant.color.name === color.name ? 'btn-dark' : 'btn-outline-dark'"
+                      :disabled="!isColorAvailable(color.name)">{{ color.name }}</button>
             </div>
           </div>
           <div class="mb-4">
-            <div class="variant-label">Size:</div>
+            <div class="variant-label">Size: <span class="text-dark fw-normal">{{ selectedVariant.size || 'Chưa chọn' }}</span></div>
             <div class="btn-group">
               <button v-for="size in product.sizes" :key="size" 
                       @click="selectSize(size)" 
                       class="btn me-2" 
-                      :class="selectedVariant.size === size ? 'btn-dark' : 'btn-outline-dark'">{{ size }}</button>
+                      :class="selectedVariant.size === size ? 'btn-dark' : 'btn-outline-dark'"
+                      :disabled="!isSizeAvailable(size)">{{ size }}</button>
             </div>
           </div>
         </div>
@@ -80,7 +76,7 @@
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tiếp tục mua sắm</button>
-          <router-link to="/cart" class="btn btn-primary">Xem giỏ hàng</router-link>
+          <button @click="goToCart" class="btn btn-primary">Xem giỏ hàng</button>
         </div>
       </div>
     </div>
@@ -88,13 +84,21 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue';
+import { ref, reactive, onMounted, computed } from 'vue';
 import { useCartStore } from '@/stores/cart';
 import { useAuthStore } from '@/stores/auth';
 import { useToast } from 'vue-toastification';
 import { useRoute, useRouter } from 'vue-router';
 import axios from 'axios';
 import * as bootstrap from 'bootstrap';
+
+// Khai báo props để xử lý thuộc tính id từ RouterView
+defineProps({
+  id: {
+    type: [String, Number],
+    required: false
+  }
+});
 
 const route = useRoute();
 const router = useRouter();
@@ -112,22 +116,86 @@ const cartSuccessMessage = ref({ tenSP: '', soLuong: 0, mauSac: '', kichThuoc: '
 
 const API_BASE_URL = 'http://localhost:8080';
 
+const formatPrice = (price) => !price ? 'N/A' : new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price);
+
 const selectColor = (color) => {
   console.log('selectColor: Selected color=' + color.name);
   selectedVariant.color = color;
-  const colorImage = product.value.gallery.find(img => img.color === color.name);
-  if (colorImage) activeImageUrl.value = colorImage.url;
+  if (!isSizeAvailable(selectedVariant.size)) {
+    selectedVariant.size = '';
+  }
+  updateActiveImage();
 };
 
 const selectSize = (size) => {
   console.log('selectSize: Selected size=' + size);
   selectedVariant.size = size;
+  if (!isColorAvailable(selectedVariant.color.name)) {
+    selectedVariant.color = {};
+  }
+  updateActiveImage();
 };
+
+const isSizeAvailable = (size) => {
+  if (!selectedVariant.color.name) return true;
+  return product.value.variants.some(v => v.tenMauSac === selectedVariant.color.name && v.tenSize === size);
+};
+
+const isColorAvailable = (colorName) => {
+  if (!selectedVariant.size) return true;
+  return product.value.variants.some(v => v.tenMauSac === colorName && v.tenSize === selectedVariant.size);
+};
+
+const updateActiveImage = () => {
+  if (filteredGallery.value.length > 0) {
+    activeImageUrl.value = filteredGallery.value[0].link;
+  } else {
+    activeImageUrl.value = product.value.gallery[0]?.link || 'https://placehold.co/600x400';
+  }
+};
+
+const filteredGallery = computed(() => {
+  let filtered = product.value.gallery;
+  if (selectedVariant.color.name) {
+    filtered = filtered.filter(img => img.color === selectedVariant.color.name);
+  }
+  if (selectedVariant.size) {
+    filtered = filtered.filter(img => img.size === selectedVariant.size);
+  }
+  return filtered;
+});
+
+const selectedSPCT = computed(() => {
+  if (selectedVariant.color.name && selectedVariant.size) {
+    return product.value.variants.find(v => 
+      v.tenMauSac === selectedVariant.color.name && v.tenSize === selectedVariant.size
+    );
+  }
+  return null;
+});
+
+const selectedPrice = computed(() => {
+  return selectedSPCT.value ? formatPrice(selectedSPCT.value.gia) : formatPrice(product.value.gia);
+});
 
 const showAddToCartModal = () => {
   const modalElement = document.getElementById('addToCartModal');
   const modal = new bootstrap.Modal(modalElement);
   modal.show();
+};
+
+const goToCart = () => {
+  const modalElement = document.getElementById('addToCartModal');
+  const modal = bootstrap.Modal.getInstance(modalElement);
+  if (modal) {
+    modal.hide();
+  }
+  router.push('/cart').then(() => {
+    console.log('goToCart: Navigation to /cart successful');
+  }).catch(err => {
+    console.error('goToCart: Navigation error', err);
+    toast.error('Lỗi khi chuyển hướng đến giỏ hàng!');
+  });
 };
 
 const handleAddToCart = async () => {
@@ -159,18 +227,16 @@ const handleAddToCart = async () => {
       return;
     }
 
-    const selectedSPCT = product.value.variants.find(v => 
-      v.tenMauSac === selectedVariant.color.name && v.tenSize === selectedVariant.size
-    );
-    if (!selectedSPCT) {
+    const selectedSPCTVal = selectedSPCT.value;
+    if (!selectedSPCTVal) {
       console.log('handleAddToCart: Variant not found for color=' + selectedVariant.color.name + ', size=' + selectedVariant.size);
       toast.error('Biến thể không tồn tại!');
       return;
     }
 
-    console.log('handleAddToCart: Sending request to /client/api/giohang/addToCart, idSpct=' + selectedSPCT.id + ', soLuong=' + quantity.value);
+    console.log('handleAddToCart: Sending request to /client/api/giohang/addToCart, idSpct=' + selectedSPCTVal.id + ', soLuong=' + quantity.value);
     const response = await axios.post(`${API_BASE_URL}/client/api/giohang/addToCart`, {
-      idSpct: selectedSPCT.id,
+      idSpct: selectedSPCTVal.id,
       soLuong: quantity.value,
       mauSac: selectedVariant.color.name,
       kichThuoc: selectedVariant.size
@@ -225,60 +291,94 @@ const loadProduct = async () => {
   loading.value = true;
   error.value = null;
   try {
+    // Lấy thông tin sản phẩm
     console.log('loadProduct: Fetching product with id=' + route.params.id);
-    const response = await axios.get(`${API_BASE_URL}/api/sanphamchitiet/${route.params.id}`, {
+    const productResponse = await axios.get(`${API_BASE_URL}/api/sanpham/${route.params.id}`, {
       withCredentials: true
     });
-    const data = response.data;
-    console.log('loadProduct: Product fetched, idSP=' + data.idSP);
+    const productData = productResponse.data;
+    console.log('loadProduct: Product fetched, idSP=' + productData.idSP + ', tenSP=' + productData.tenSP);
 
-    console.log('loadProduct: Fetching variants for idSP=' + data.idSP);
-    const variantsResponse = await axios.get(`${API_BASE_URL}/api/sanphamchitiet/bySanPham/${data.idSP}`, {
+    // Lấy tất cả sản phẩm chi tiết của sản phẩm
+    console.log('loadProduct: Fetching variants for idSP=' + productData.idSP);
+    const variantsResponse = await axios.get(`${API_BASE_URL}/api/sanphamchitiet/bySanPham/${productData.idSP}`, {
       withCredentials: true
     });
-    const variants = variantsResponse.data;
+    let variants = Array.isArray(variantsResponse.data) ? variantsResponse.data : [];
     console.log('loadProduct: Variants fetched, count=' + variants.length);
+    console.log('loadProduct: Variants data=', JSON.stringify(variants));
 
+    // Lọc sản phẩm chi tiết có soLuong > 0
+    variants = variants.filter(v => v.soLuong > 0);
+    console.log('loadProduct: Filtered variants (soLuong > 0), count=' + variants.length);
+
+    // Lấy tất cả ảnh cho từng sản phẩm chi tiết
+    let allImages = [];
+    for (const variant of variants) {
+      console.log('loadProduct: Fetching images for idSPCT=' + variant.id);
+      const imagesResponse = await axios.get(`${API_BASE_URL}/api/img/bySanPhamChiTiet/${variant.id}`, {
+        withCredentials: true
+      });
+      const images = Array.isArray(imagesResponse.data) ? imagesResponse.data : [];
+      console.log('loadProduct: Images fetched for idSPCT=' + variant.id + ', count=' + images.length);
+      console.log('loadProduct: Images data=', JSON.stringify(images));
+
+      // Thêm ảnh vào danh sách với thông tin màu sắc và kích thước tương ứng
+      const variantImages = images.map((img, index) => ({
+        idImg: img.idImg || `spct_${variant.id}_${index}`,
+        link: img.link || 'https://placehold.co/600x400',
+        name: img.name || `Hình ảnh sản phẩm chi tiết ${variant.id}`,
+        color: variant.tenMauSac || 'Mặc định',
+        size: variant.tenSize || 'M'
+      }));
+      allImages.push(...variantImages);
+    }
+
+    // Nếu không có ảnh, thêm ảnh mặc định
+    if (allImages.length === 0) {
+      console.log('loadProduct: No images found, adding default image');
+      allImages.push({
+        idImg: 'default_0',
+        link: 'https://placehold.co/600x400',
+        name: 'Hình ảnh mặc định',
+        color: 'Mặc định',
+        size: 'M'
+      });
+    }
+    console.log('loadProduct: Total images collected, count=' + allImages.length);
+    console.log('loadProduct: All images data=', JSON.stringify(allImages));
+
+    // Lấy danh sách màu sắc duy nhất
+    const uniqueColors = [...new Set(variants.map(v => v.tenMauSac || 'Mặc định'))].map(colorName => ({
+      name: colorName
+    }));
+    console.log('loadProduct: Unique colors=', JSON.stringify(uniqueColors));
+
+    // Lấy danh sách kích thước duy nhất
+    const uniqueSizes = [...new Set(variants.map(v => v.tenSize || 'M'))];
+    console.log('loadProduct: Unique sizes=', JSON.stringify(uniqueSizes));
+
+    // Cấu trúc dữ liệu sản phẩm
     product.value = {
-      id: data.id,
-      idSP: data.idSP,
-      tenSP: data.tenSP || 'Không có tên',
-      gia: data.gia || 0,
-      moTa: data.moTa || 'Không có mô tả',
+      id: productData.idSP,
+      idSP: productData.idSP,
+      tenSP: productData.tenSP || 'Không có tên',
+      gia: productData.gia || 0,
+      moTa: productData.moTa || 'Không có mô tả',
       variants: variants,
-      gallery: variants.map((v, index) => ({
-        id: index + 1,
-        url: v.link || 'https://placehold.co/600x400',
-        color: v.tenMauSac || 'Mặc định'
-      })),
-      colors: [...new Set(variants.map(v => ({
-        name: v.tenMauSac || 'Mặc định',
-        hex: getColorHex(v.tenMauSac)
-      })))],
-      sizes: [...new Set(variants.map(v => v.tenSize || 'M'))]
+      gallery: allImages,
+      colors: uniqueColors,
+      sizes: uniqueSizes
     };
-    activeImageUrl.value = product.value.gallery[0]?.url || 'https://placehold.co/600x400';
-    selectedVariant.color = product.value.colors[0] || {};
-    selectedVariant.size = product.value.sizes[0] || '';
-    console.log('loadProduct: Product loaded successfully');
+    activeImageUrl.value = product.value.gallery[0]?.link || 'https://placehold.co/600x400';
+    console.log('loadProduct: Product loaded successfully, product=', JSON.stringify(product.value));
   } catch (err) {
     console.error('loadProduct: Error -', err);
-    error.value = 'Không tìm thấy sản phẩm: ' + (err.response?.data || err.message);
+    error.value = 'Không tìm thấy sản phẩm: ' + (err.response?.data?.message || err.message);
     toast.error(error.value);
   } finally {
     loading.value = false;
   }
-};
-
-const getColorHex = (colorName) => {
-  const colorMap = {
-    'Đen': '#000000',
-    'Trắng': '#FFFFFF',
-    'Xanh Dương': '#0d6efd',
-    'Đỏ': '#dc3545',
-    'Mặc định': '#000000'
-  };
-  return colorMap[colorName] || '#000000';
 };
 
 onMounted(() => {
@@ -321,19 +421,18 @@ onMounted(() => {
   margin-bottom: 8px;
 }
 
-.color-option {
-  width: 30px;
-  height: 30px;
-  border-radius: 50%;
-  border: 2px solid #dee2e6;
-  cursor: pointer;
-}
-
-.color-option.active {
-  border-color: #0d6efd;
+.color-option.btn {
+  min-width: 60px;
+  text-align: center;
 }
 
 .btn-group .btn {
   min-width: 50px;
 }
+
+.btn-group .btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
 </style>
+```

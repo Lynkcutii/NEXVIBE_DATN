@@ -20,33 +20,29 @@ public interface SanPhamChiTietRepository extends JpaRepository<SanPhamChiTiet, 
 
     @Modifying
     @Query("UPDATE SanPhamChiTiet spct SET spct.soLuong = spct.soLuong - :soLuong WHERE spct.id = :idSPCT AND spct.soLuong >= :soLuong")
-    int updateSoLuongTon(Integer idSPCT, Integer soLuong);
+    int updateSoLuongTon(@Param("idSPCT") Integer idSPCT, @Param("soLuong") Integer soLuong);
 
     List<SanPhamChiTiet> findBySanPhamId(Integer idSP);
 
     @Query("SELECT spct FROM SanPhamChiTiet spct " +
             "LEFT JOIN spct.sanPham sp " +
-            "LEFT JOIN spct.danhMuc dm " +
-            "LEFT JOIN spct.thuongHieu th " +
             "LEFT JOIN spct.mauSac ms " +
-            "LEFT JOIN spct.chatLieu cl " +
             "LEFT JOIN spct.size s " +
-            "WHERE (:keyword IS NULL OR sp.tenSP LIKE %:keyword% OR spct.maSPCT LIKE %:keyword%) " +
-            "AND (:danhMucIds IS NULL OR spct.danhMuc.idDM IN :danhMucIds) " +
-            "AND (:thuongHieu IS NULL OR th.tenThuongHieu = :thuongHieu) " +
-            "AND (:mauSac IS NULL OR ms.tenMauSac = :mauSac) " +
-            "AND (:chatLieu IS NULL OR cl.tenChatLieu = :chatLieu) " +
-            "AND (:size IS NULL OR s.tenSize = :size) " +
+            "WHERE (:keyword IS NULL OR LOWER(sp.tenSP) LIKE LOWER(CONCAT('%', :keyword, '%')) OR LOWER(spct.maSPCT) LIKE LOWER(CONCAT('%', :keyword, '%'))) " +
+            "AND (:mauSac IS NULL OR LOWER(ms.tenMauSac) = LOWER(:mauSac)) " +
+            "AND (:size IS NULL OR LOWER(s.tenSize) = LOWER(:size)) " +
             "AND (:minPrice IS NULL OR spct.gia >= :minPrice) " +
             "AND (:maxPrice IS NULL OR spct.gia <= :maxPrice)")
     Page<SanPhamChiTiet> findByFilters(
             @Param("keyword") String keyword,
-            @Param("danhMucIds") List<Integer> danhMucIds,
-            @Param("thuongHieu") String thuongHieu,
             @Param("mauSac") String mauSac,
-            @Param("chatLieu") String chatLieu,
             @Param("size") String size,
             @Param("minPrice") BigDecimal minPrice,
             @Param("maxPrice") BigDecimal maxPrice,
             Pageable pageable);
+
+    // Đếm sản phẩm theo số lượng tồn kho
+    long countBySoLuongGreaterThan(int soLuong);
+    long countBySoLuong(int soLuong);
+    long countBySoLuongBetween(int minSoLuong, int maxSoLuong);
 }

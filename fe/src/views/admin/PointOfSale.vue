@@ -1,13 +1,15 @@
+```vue
 <template>
-  <div class="ban-hang-tai-quay container-fluid">
-    <div class="card">
+  <!-- Giữ nguyên template hiện tại, không cần thay đổi -->
+  <div class="ban-hang-tai-quay container-fluid py-4">
+    <div class="card shadow-sm">
       <div class="card-body">
         <!-- Header -->
         <div class="d-flex justify-content-between align-items-center mb-4">
           <h2 class="mb-0">Bán hàng</h2>
           <button
             type="button"
-            class="btn btn-primary animated-btn"
+            class="btn btn-primary"
             :disabled="hoaDons.length >= 5"
             @click="taoHoaDon"
           >
@@ -17,23 +19,33 @@
 
         <!-- No data state -->
         <div v-if="hoaDons.length === 0" class="text-center py-5 bg-light rounded">
-          <p class="mb-0">No Data Found</p>
+          <p class="mb-0">Chưa có đơn hàng nào</p>
         </div>
 
         <!-- Tabs for invoices -->
         <div v-else>
-          <ul class="nav nav-tabs mb-3" role="tablist">
+          <ul class="nav nav-tabs mb-3">
             <li class="nav-item" v-for="(hd, idx) in hoaDons" :key="hd.maHoaDon">
               <a
-                class="nav-link animated-tab"
+                class="nav-link d-flex align-items-center"
                 :class="{ active: tabActive === hd.maHoaDon }"
-                :id="`tab-${hd.maHoaDon}`"
-                data-bs-toggle="tab"
                 :href="`#pane-${hd.maHoaDon}`"
-                role="tab"
+                data-bs-toggle="tab"
                 @click="tabActive = hd.maHoaDon"
               >
                 Đơn hàng {{ idx + 1 }} - {{ hd.maHoaDon }}
+                <span
+                  v-if="hd.trangThai === 'CHO_THANH_TOAN' && hd.countdown > 0"
+                  class="ms-2 badge bg-warning text-dark"
+                >
+                  {{ formatCountdown(hd.countdown) }}
+                </span>
+                <span
+                  v-else-if="hd.trangThai === 'CHO_THANH_TOAN'"
+                  class="ms-2 badge bg-danger"
+                >
+                  Hết thời gian
+                </span>
               </a>
             </li>
           </ul>
@@ -45,32 +57,31 @@
               :id="`pane-${hd.maHoaDon}`"
               class="tab-pane fade"
               :class="{ show: tabActive === hd.maHoaDon, active: tabActive === hd.maHoaDon }"
-              role="tabpanel"
             >
               <div class="row">
                 <!-- Left side - Product actions and list -->
-                <div class=" mb-4 mb-lg3-0">
+                <div class="col-lg-8 mb-4 mb-lg-0">
                   <div class="card h-100">
                     <div class="card-body">
                       <div class="d-flex gap-2 mb-3">
                         <button
                           type="button"
-                          class="btn btn-success btn-sm animated-btn"
+                          class="btn btn-success btn-sm"
                           @click="showChonSanPham(hd)"
                         >
                           <i class="bi bi-plus-circle"></i> Thêm sản phẩm
                         </button>
                         <button
                           type="button"
-                          class="btn btn-info btn-sm animated-btn"
+                          class="btn btn-info btn-sm"
                           @click="showChonSanPham(hd, true)"
                         >
                           <i class="bi bi-qr-code"></i> Quét QR sản phẩm
                         </button>
                         <button
                           type="button"
-                          class="btn btn-danger btn-sm animated-btn"
-                          @click="xoaHoaDon(hd.maHoaDon)"
+                          class="btn btn-danger btn-sm"
+                          @click="xoaHoaDon(hd)"
                         >
                           <i class="bi bi-trash"></i> Xóa hóa đơn
                         </button>
@@ -78,57 +89,74 @@
 
                       <!-- Product section -->
                       <h5 class="card-title">Sản phẩm</h5>
-                      <div class="product-list" style="max-height: 400px; overflow-y: auto;">
+                      <div class="table-responsive" style="max-height: 400px;">
                         <div v-if="hd.sanPhams.length === 0" class="text-center py-5 bg-light rounded">
                           <p class="mb-0">Chưa có sản phẩm nào</p>
                         </div>
-                        <el-table :data="hd.sanPhams" style="margin-top: 10px; border-radius: 10px; overflow: hidden;">
-                          <el-table-column label="Ảnh" width="80">
-                            <template #default="scope">
-                              <img :src="scope.row.anhGiay" alt="Ảnh" style="width: 60px; height: 60px; object-fit: cover; border-radius: 8px; border: 1px solid #eee;" />
-                            </template>
-                          </el-table-column>
-                          <el-table-column label="Thông tin sản phẩm">
-                            <template #default="scope">
-                              <div style="font-weight: 600; color: #1976d2;">{{ scope.row.tenGiay }}</div>
-                              <div style="font-size: 13px; color: #888;">Mã: {{ scope.row.maCtSanPham }} | Size: {{ scope.row.tenKichThuoc }} | Màu: {{ scope.row.tenMauSac }}</div>
-                              <div style="font-size: 13px; color: #888;">Thương hiệu: {{ scope.row.tenThuongHieu }} | Chất liệu: {{ scope.row.tenChatLieu }}</div>
-                            </template>
-                          </el-table-column>
-                          <el-table-column label="Giá bán">
-                            <template #default="scope">
-                              <span style="font-weight: bold; color: #e53935;">{{ scope.row.giaBan.toLocaleString() }} VND</span>
-                            </template>
-                          </el-table-column>
-                          <el-table-column label="Số lượng">
-                            <template #default="scope">
-                              <el-input-number
-                                v-model="scope.row.soLuong"
-                                :min="1"
-                                :max="scope.row.soLuongTonKho || 1000"
-                                size="small"
-                                @change="onChangeSoLuong(scope.row, hd)"
-                              />
-                              <span v-if="scope.row.soLuong > scope.row.soLuongTonKho" style="color: red; font-size: 12px;">Vượt quá tồn kho!</span>
-                            </template>
-                          </el-table-column>
-                          <el-table-column label="Thành tiền">
-                            <template #default="scope">
-                              <span style="font-weight: 600; color: #1976d2;">{{ (scope.row.giaBan * scope.row.soLuong).toLocaleString() }} VND</span>
-                            </template>
-                          </el-table-column>
-                          <el-table-column label="Xóa" width="80">
-                            <template #default="scope">
-                              <button
-                                type="button"
-                                class="btn btn-danger btn-sm animated-btn"
-                                @click="xoaSanPham(hd, scope.row)"
-                              >
-                                <i class="bi bi-trash"></i>
-                              </button>
-                            </template>
-                          </el-table-column>
-                        </el-table>
+                        <table v-else class="table table-striped table-hover">
+                          <thead>
+                            <tr>
+                              <th>Ảnh</th>
+                              <th>Thông tin sản phẩm</th>
+                              <th>Giá bán</th>
+                              <th>Số lượng</th>
+                              <th>Thành tiền</th>
+                              <th>Voucher</th>
+                              <th>Xóa</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            <tr v-for="sp in hd.sanPhams" :key="sp.id">
+                              <td>
+                                <img :src="sp.anhGiay" alt="Ảnh" class="img-fluid rounded" style="width: 60px; height: 60px; object-fit: cover;" />
+                              </td>
+                              <td>
+                                <div class="fw-bold text-primary">{{ sp.tenGiay }}</div>
+                                <div class="small text-muted">
+                                   Size: {{ sp.tenKichThuoc }} <br>  Màu: {{ sp.tenMauSac }}
+                                </div>
+                                <div v-if="sp.selectedVoucher" class="mt-1">
+                                  <span class="badge bg-success">Voucher: {{ sp.selectedVoucher.tenVoucher }}</span>
+                                </div>
+                              </td>
+                              <td>
+                                <span class="fw-bold text-danger">{{ sp.giaBan != null ? sp.giaBan.toLocaleString() : '0' }} VND</span>
+                              </td>
+                              <td>
+                                <input
+                                  type="number"
+                                  v-model="sp.soLuong"
+                                  class="form-control form-control-sm w-50"
+                                  :min="1"
+                                  :max="sp.soLuongTonKho || 1000"
+                                  @change="onChangeSoLuong(sp, hd)"
+                                />
+                                <small v-if="sp.soLuong > sp.soLuongTonKho" class="text-danger">Vượt quá tồn kho!</small>
+                              </td>
+                              <td>
+                                <span class="fw-bold text-primary">{{ sp.giaBan != null ? (sp.giaBan * sp.soLuong - (sp.selectedVoucher ? tinhGiamGiaSanPham(sp) : 0)).toLocaleString() : '0' }} VND</span>
+                              </td>
+                              <td>
+                                <button
+                                  type="button"
+                                  class="btn btn-primary btn-sm"
+                                  @click="showVoucherModal(hd, sp)"
+                                >
+                                  <i class="bi bi-tag"></i> Voucher
+                                </button>
+                              </td>
+                              <td>
+                                <button
+                                  type="button"
+                                  class="btn btn-danger btn-sm"
+                                  @click="xoaSanPham(hd, sp)"
+                                >
+                                  <i class="bi bi-trash"></i>
+                                </button>
+                              </td>
+                            </tr>
+                          </tbody>
+                        </table>
                       </div>
                     </div>
                   </div>
@@ -155,188 +183,29 @@
                           />
                           <button
                             type="button"
-                            class="btn btn-primary btn-sm animated-btn"
+                            class="btn btn-primary btn-sm"
                             @click="showCustomerModal(hd)"
                           >
-                            <i class="bi bi-person-plus me-1"></i>
-                            Chọn khách hàng
+                            <i class="bi bi-person-plus me-1"></i> Chọn
                           </button>
                         </div>
                       </div>
-                      <!-- Enhanced delivery toggle -->
-                      <div class="delivery-section mb-3">
-                        <div class="d-flex justify-content-between align-items-center p-3 bg-light rounded">
-                          <div class="d-flex align-items-center">
-                            <i class="bi bi-truck me-3 text-info"></i>
-                            <label class="form-label mb-0 fw-semibold">Giao hàng</label>
-                          </div>
-                          <div class="form-check form-switch">
-                            <input 
-                              class="form-check-input delivery-switch" 
-                              type="checkbox" 
-                              role="switch" 
-                              id="deliverySwitch"
-                              v-model="hd.giaoHang"
-                              @change="toggleDeliveryInfo(hd)"
-                            >
-                          </div>
-                        </div>
-                      </div> 
-                      <!-- Customer delivery info - Show when delivery is enabled -->
-                      <div v-if="hd.giaoHang" class="delivery-info mt-3 p-3 border border-info rounded bg-info bg-opacity-10">
-                        <h6 class="text-info fw-semibold mb-3">
-                          <i class="bi bi-geo-alt-fill me-2"></i>
-                          Thông tin giao hàng
-                        </h6>
-                        
-                        <div v-if="hd.customerInfo" class="customer-details">
-                          <div class="row g-2 mb-3">
-                            <div class="col-12">
-                              <div class="form-group">
-                                <label class="form-label text-info fw-semibold">Họ tên</label>
-                                <input
-                                  v-model="hd.customerInfo.hoTen"
-                                  type="text"
-                                  class="form-control"
-                                  placeholder="Nhập họ tên"
-                                  :disabled="!hd.customerInfo"
-                                />
-                              </div>
-                            </div>
-                            <div class="col-12">
-                              <div class="form-group">
-                                <label class="form-label text-info fw-semibold">Số điện thoại</label>
-                                <input
-                                  v-model="hd.customerInfo.sdt"
-                                  type="text"
-                                  class="form-control"
-                                  placeholder="Nhập số điện thoại"
-                                  :disabled="!hd.customerInfo"
-                                />
-                              </div>
-                            </div>
-                          </div>
-                          
-                          <!-- Delivery address selection -->
-                          <div class="mb-3">
-                            <label class="form-label text-info fw-semibold">
-                              <i class="bi bi-pin-map me-1"></i>
-                              Địa chỉ giao hàng
-                            </label>
-                            <select
-                              v-model="hd.customerInfo.selectedDiaChi"
-                              class="form-control"
-                              @change="updateDiaChi(hd)"
-                              :disabled="!hd.customerInfo || diaChiList.length === 0"
-                            >
-                              <option :value="null" disabled>Chọn địa chỉ</option>
-                              <option v-for="diaChi in diaChiList" :key="diaChi.id" :value="diaChi">
-                                {{ diaChi.tenDiaChi }} ({{ diaChi.maDiaChi }})
-                              </option>
-                              <option :value="{ id: null, tenDiaChi: '' }">Nhập địa chỉ mới</option>
-                            </select>
-                          </div>
-                          
-                          <!-- Delivery address input -->
-                          <div class="mb-3" v-if="hd.customerInfo.selectedDiaChi && !hd.customerInfo.selectedDiaChi.id">
-                            <label class="form-label text-info fw-semibold">
-                              <i class="bi bi-pin-map me-1"></i>
-                              Nhập địa chỉ mới
-                            </label>
-                            <textarea
-                              v-model="hd.customerInfo.diaChiKhachHangs"
-                              class="form-control"
-                              rows="2"
-                              placeholder="Nhập địa chỉ giao hàng"
-                            ></textarea>
-                          </div>
-                          <div class="mb-3" v-else-if="hd.customerInfo.selectedDiaChi">
-                            <label class="form-label text-info fw-semibold">
-                              <i class="bi bi-pin-map me-1"></i>
-                              Địa chỉ đã chọn
-                            </label>
-                            <input
-                              v-model="hd.customerInfo.diaChiKhachHangs"
-                              class="form-control"
-                              readonly
-                            />
-                          </div>
-                          
-                          <!-- Delivery note -->
-                          <div class="mb-3">
-                            <label class="form-label text-info fw-semibold">
-                              <i class="bi bi-chat-text me-1"></i>
-                              Ghi chú giao hàng
-                            </label>
-                            <textarea
-                              v-model="hd.ghiChuGiaoHang"
-                              class="form-control"
-                              rows="2"
-                              placeholder="Ghi chú đặc biệt cho shipper..."
-                            ></textarea>
-                          </div>
-                        </div>
-                        
-                        <!-- When no customer selected -->
-                        <div v-else class="text-center py-3">
-                          <i class="bi bi-exclamation-triangle text-warning fs-1"></i>
-                          <p class="text-muted mt-2 mb-0">
-                            Vui lòng chọn khách hàng để hiển thị thông tin giao hàng
-                          </p>
-                          <button
-                            type="button"
-                            class="btn btn-outline-primary btn-sm mt-2"
-                            @click="showCustomerModal(hd)"
-                          >
-                            <i class="bi bi-person-plus me-1"></i>
-                            Chọn khách hàng ngay
-                          </button>
-                        </div>
-                      </div>
-                      <hr> 
-
-                      <!-- Voucher section -->
-                      <div class="mb-3">
-                        <label class="form-label">Voucher</label>
-                        <el-select v-model="hd.selectedVoucherId" placeholder="Chọn voucher" filterable style="width: 100%" @change="chonVoucher(hd)">
-                          <el-option 
-                            v-for="v in getValidVouchers(hd)" 
-                            :key="v.id" 
-                            :label="`${v.tenVoucher} - ${v.hinhThucGiam === 'Phần trăm' ? v.mucGiam + '%' : v.mucGiam.toLocaleString() + ' VND'}`" 
-                            :value="v.id"
-                          >
-                            <div>
-                              <div class="fw-bold">{{ v.tenVoucher }}</div>
-                              <div class="text-success">
-                                <i class="bi bi-tag-fill me-1"></i>
-                                {{ v.hinhThucGiam === 'Phần trăm' ? v.mucGiam + '%' : v.mucGiam.toLocaleString() + ' VND' }}
-                              </div>
-                              <small class="text-muted">
-                                <i class="bi bi-currency-dollar me-1"></i>
-                                Tối thiểu: {{ v.giaTriDonHangToiThieu.toLocaleString() }} VND
-                              </small>
-                            </div>
-                          </el-option>
+                      <el-form-item label="Khuyến mãi">
+                        <el-select
+                          v-model="selectedVoucherId"
+                          placeholder="Chọn khuyến mãi"
+                          :disabled="!hd.idKhachHang"
+                          @change="chonVoucherHoaDon(hd)"
+                          clearable
+                        >
+                          <el-option
+                            v-for="voucher in applicableVouchers"
+                            :key="voucher.id"
+                            :label="voucher.tenVoucher"
+                            :value="voucher.id"
+                          />
                         </el-select>
-                        <div v-if="hd.selectedVoucher" class="mt-2 p-2 bg-light rounded">
-                          <div class="d-flex justify-content-between">
-                            <span class="fw-bold">{{ hd.selectedVoucher.tenVoucher }}</span>
-                            <span class="text-success">
-                              {{ hd.selectedVoucher.hinhThucGiam === 'Phần trăm' ? hd.selectedVoucher.mucGiam + '%' : hd.selectedVoucher.mucGiam.toLocaleString() + ' VND' }}
-                            </span>
-                          </div>
-                          <small class="text-muted">
-                            Điều kiện: Tổng tiền hàng ≥ {{ hd.selectedVoucher.giaTriDonHangToiThieu.toLocaleString() }} VND
-                          </small>
-                        </div>
-                        <div v-if="getValidVouchers(hd).length === 0" class="mt-2 text-muted small">
-                          <div class="alert alert-info py-2">
-                            <i class="bi bi-info-circle me-1"></i>
-                            Không có voucher phù hợp với tổng tiền hàng hiện tại ({{ tinhTienHang(hd).toLocaleString() }} VND)
-                          </div>
-                        </div>
-                      </div>
-
+                      </el-form-item>
                       <!-- Payment summary -->
                       <h5 class="card-title">Tổng kết thanh toán</h5>
                       <div class="bg-light p-3 rounded mb-3">
@@ -345,26 +214,14 @@
                           <span class="fw-bold text-danger">{{ tinhTongTien(hd).toLocaleString() }} VND</span>
                         </div>
                       </div>
-
                       <div class="mb-3">
                         <div class="d-flex justify-content-between mb-2">
                           <span>Tổng tiền hàng</span>
                           <span>{{ tinhTienHang(hd).toLocaleString() }} VND</span>
                         </div>
                         <div class="d-flex justify-content-between mb-2">
-                          <span>Phí vận chuyển</span>
-                          <span>{{ tinhPhiVanChuyen(hd).toLocaleString() }} VND</span>
-                        </div>
-                        <div v-if="hd.selectedVoucher" class="d-flex justify-content-between mb-2">
-                          <span>
-                            Giảm giá 
-                            <span class="badge bg-success ms-1">{{ hd.selectedVoucher.tenVoucher }}</span>
-                          </span>
+                          <span>Giảm giá (Voucher)</span>
                           <span class="text-success">-{{ tinhGiamGia(hd).toLocaleString() }} VND</span>
-                        </div>
-                        <div v-else class="d-flex justify-content-between mb-2">
-                          <span>Giảm giá</span>
-                          <span>0 VND</span>
                         </div>
                         <hr class="my-2">
                         <div class="d-flex justify-content-between mb-2">
@@ -372,34 +229,27 @@
                           <span class="fw-bold text-danger">{{ tinhTongTien(hd).toLocaleString() }} VND</span>
                         </div>
                       </div>
-
                       <div class="mb-3">
-                        <div class="d-flex justify-content-between mb-2">
+                        <div class="d-flex justify-content-between mb-2 align-items-center">
                           <button
                             type="button"
-                            class="btn btn-warning btn-sm animated-btn"
+                            class="btn btn-warning btn-sm"
                             :disabled="hd.sanPhams.length === 0"
                             @click="openThanhToan(hd)"
                           >
                             Phương thức thanh toán
                           </button>
-                          <span v-if="hd.thanhToan" class="text-primary">
-                            {{ hd.thanhToan.soTien.toLocaleString() }} VND
-                            <i :class="hd.thanhToan.phuongThuc === 'chuyen_khoan' ? 'bi bi-bank' : 'bi bi-cash'" class="ms-2"></i>
+                          <span v-if="hd.trangThai === 'DA_THANH_TOAN' && hd.thanhToan && hd.thanhToan.soTien > 0" class="text-primary">
+                            {{ Number(hd.thanhToan.soTien).toLocaleString('vi-VN') }} VND
+                            <i :class="hd.thanhToan.phuongThuc === 'MOMO' ? 'bi bi-qr-code' : 'bi bi-cash'" class="ms-2"></i>
                             <span v-if="hd.thanhToan.maGiaoDich" class="text-muted ms-1">({{ hd.thanhToan.maGiaoDich }})</span>
                           </span>
-                          <span v-else>0 VND</span>
+                          <span v-else-if="hd.trangThai === 'DA_THANH_TOAN'" class="text-warning">
+                            Thông tin thanh toán không hợp lệ
+                          </span>
+                          <span v-else>Chưa thanh toán</span>
                         </div>
                       </div>
-
-                      <button
-                        type="button"
-                        class="btn btn-success w-100 animated-btn"
-                        :disabled="!hd.thanhToan || hd.thanhToan.soTien < tinhTongTien(hd)"
-                        @click="xacNhanDatHang(hd)"
-                      >
-                        Xác nhận đặt hàng & In hóa đơn
-                      </button>
                     </div>
                   </div>
                 </div>
@@ -410,224 +260,318 @@
       </div>
     </div>
 
-    <!-- Modal Chon San Pham -->
-    <el-dialog
-    v-model="productSearchModal"
-    title="Tìm kiếm sản phẩm"
-    width="80%"
-    top="5vh"
-    class="product-search-dialog"
-  >
-    <div class="dialog-content-wrapper">
-      <!-- Thanh tìm kiếm -->
-      <div class="search-bar-wrapper mb-3">
-        <el-input
-          v-model="productSearchQuery"
-          placeholder="Tìm kiếm theo tên hoặc mã sản phẩm..."
-          @input="debouncedSearchProducts"
-          clearable
-        >
-          <template #prepend>
-            <i class="bi bi-search"></i>
-          </template>
-        </el-input>
-      </div>
+    <!-- Modal Chọn Sản Phẩm -->
+    <div v-if="productSearchModal" class="modal fade show d-block" tabindex="-1" style="background: rgba(0,0,0,0.6);">
+      <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+          <div class="modal-header bg-primary text-white">
+            <h5 class="modal-title">Tìm kiếm sản phẩm</h5>
+            <button type="button" class="btn-close btn-close-white" @click="productSearchModal = false"></button>
+          </div>
+          <div class="modal-body">
+            <!-- Search bar -->
+            <div class="input-group mb-3">
+              <span class="input-group-text"><i class="bi bi-search"></i></span>
+              <input
+                v-model="productSearchQuery"
+                type="text"
+                class="form-control"
+                placeholder="Tìm kiếm theo tên hoặc mã sản phẩm..."
+                @input="debouncedSearchProducts"
+              />
+            </div>
 
-      <!-- Bộ lọc -->
-      <div class="filter-wrapper mb-3">
-        <div class="row g-3">
-          <!-- Bộ lọc danh mục -->
-          <div class="col-md-3">
-            <el-select
-              v-model="selectedCategory"
-              placeholder="Chọn danh mục"
-              clearable
-              @change="debouncedSearchProducts"
-              style="width: 100%"
-            >
-              <el-option
-                v-for="cat in categories"
-                :key="cat.value"
-                :label="cat.label"
-                :value="cat.value"
+            <!-- Filters -->
+            <div class="row g-3 mb-3">
+              <div class="col-md-3">
+                <select v-model="selectedCategory" class="form-select" @change="debouncedSearchProducts">
+                  <option value="" disabled>Chọn danh mục</option>
+                  <option v-for="cat in categories" :key="cat.value" :value="cat.value">{{ cat.label }}</option>
+                </select>
+              </div>
+              <div class="col-md-3">
+                <select v-model="selectedBrand" class="form-select" @change="debouncedSearchProducts">
+                  <option value="" disabled>Chọn thương hiệu</option>
+                  <option v-for="brand in brands" :key="brand.value" :value="brand.value">{{ brand.label }}</option>
+                </select>
+              </div>
+              <div class="col-md-3">
+                <select v-model="selectedMaterial" class="form-select" @change="debouncedSearchProducts">
+                  <option value="" disabled>Chọn chất liệu</option>
+                  <option v-for="material in materials" :key="material.value" :value="material.value">{{ material.label }}</option>
+                </select>
+              </div>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Khoảng giá: {{ priceRange[0].toLocaleString() }} - {{ priceRange[1].toLocaleString() }} VND</label>
+              <input
+                type="range"
+                v-model="priceRange[0]"
+                class="form-range"
+                :min="0"
+                :max="5000000"
+                :step="10000"
+                @change="debouncedSearchProducts"
               />
-            </el-select>
-          </div>
-          <!-- Bộ lọc thương hiệu -->
-          <div class="col-md-3">
-            <el-select
-              v-model="selectedBrand"
-              placeholder="Chọn thương hiệu"
-              clearable
-              @change="debouncedSearchProducts"
-              style="width: 100%"
-            >
-              <el-option
-                v-for="brand in brands"
-                :key="brand.value"
-                :label="brand.label"
-                :value="brand.value"
+              <input
+                type="range"
+                v-model="priceRange[1]"
+                class="form-range"
+                :min="0"
+                :max="5000000"
+                :step="10000"
+                @change="debouncedSearchProducts"
               />
-            </el-select>
+            </div>
+
+            <!-- Product table -->
+            <div class="table-responsive" v-loading="productLoading">
+              <table class="table table-striped table-hover">
+                <thead>
+                  <tr>
+                    <th>Ảnh</th>
+                    <th>Tên sản phẩm</th>
+                    <th>Mã SP</th>
+                    <th>Danh mục</th>
+                    <th>Thương hiệu</th>
+                    <th>Chất liệu</th>
+                    <th>Giá</th>
+                    <th>Tồn kho</th>
+                    <th>Thao tác</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="row in listSanPham.content" :key="row.id" @click="chonSanPham(row)">
+                    <td><img :src="row.anhGiay" alt="Ảnh" class="img-fluid rounded" style="width: 60px; height: 60px; object-fit: cover;" /></td>
+                    <td>{{ row.tenSP }}</td>
+                    <td>{{ row.maSPCT }}</td>
+                    <td>{{ row.tenDanhMuc }}</td>
+                    <td>{{ row.tenThuongHieu }}</td>
+                    <td>{{ row.tenChatLieu }}</td>
+                    <td>{{ row.giaBan != null ? row.giaBan.toLocaleString() : '0' }} VND</td>
+                    <td>{{ row.soLuongTonKho }}</td>
+                    <td>
+                      <button type="button" class="btn btn-primary btn-sm" @click.stop="chonSanPham(row)">Chọn</button>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <!-- Pagination -->
+            <nav class="mt-3">
+              <ul class="pagination justify-content-center">
+                <li class="page-item" :class="{ disabled: listSanPham.number === 0 }">
+                  <button class="page-link" @click="onProductPageChange(listSanPham.number)">Trước</button>
+                </li>
+                <li class="page-item">
+                  <span class="page-link">{{ listSanPham.number + 1 }} / {{ Math.ceil(listSanPham.totalElements / listSanPham.size) }}</span>
+                </li>
+                <li class="page-item" :class="{ disabled: listSanPham.number + 1 >= Math.ceil(listSanPham.totalElements / listSanPham.size) }">
+                  <button class="page-link" @click="onProductPageChange(listSanPham.number + 2)">Sau</button>
+                </li>
+                <li class="page-item disabled">
+                  <span class="page-link">Tổng: {{ listSanPham.totalElements }}</span>
+                </li>
+              </ul>
+            </nav>
           </div>
-          <!-- Bộ lọc màu sắc -->
-          <div class="col-md-3">
-            <el-select
-              v-model="selectedColor"
-              placeholder="Chọn màu sắc"
-              clearable
-              @change="debouncedSearchProducts"
-              style="width: 100%"
-            >
-              <el-option
-                v-for="color in colors"
-                :key="color.value"
-                :label="color.label"
-                :value="color.value"
-              >
-                <span style="display: flex; align-items: center;">
-                  <span
-                    :style="{ backgroundColor: color.colorCode, width: '20px', height: '20px', borderRadius: '50%', marginRight: '8px' }"
-                  ></span>
-                  {{ color.label }}
-                </span>
-              </el-option>
-            </el-select>
-          </div>
-          <!-- Bộ lọc chất liệu -->
-          <div class="col-md-3">
-            <el-select
-              v-model="selectedMaterial"
-              placeholder="Chọn chất liệu"
-              clearable
-              @change="debouncedSearchProducts"
-              style="width: 100%"
-            >
-              <el-option
-                v-for="material in materials"
-                :key="material.value"
-                :label="material.label"
-                :value="material.value"
-              />
-            </el-select>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" @click="productSearchModal = false">Đóng</button>
+            <button type="button" class="btn btn-primary" @click="taiLaiDanhSachSanPham">
+              <i class="bi bi-arrow-clockwise"></i> Tải lại
+            </button>
           </div>
         </div>
-        <!-- Thanh trượt giá -->
-        <div class="mt-3">
-          <label class="form-label">Khoảng giá: {{ priceRange[0].toLocaleString() }} - {{ priceRange[1].toLocaleString() }} VND</label>
-          <el-slider
-            v-model="priceRange"
-            range
-            :min="0"
-            :max="5000000"
-            :step="10000"
-            @change="debouncedSearchProducts"
-          />
-        </div>
-      </div>
-
-      <!-- Bảng sản phẩm -->
-      <div class="table-wrapper" v-loading="productLoading">
-        <el-table
-            :data="listSanPham.content"
-            style="width: 100%"
-            height="100%"
-            @row-click="chonSanPham"
-            class="product-table"
-        >
-          <el-table-column label="Ảnh" width="80">
-              <template #default="{ row }">
-                <img :src="row.anhGiay" alt="Ảnh sản phẩm" class="product-image" />
-              </template>
-            </el-table-column>
-            <el-table-column prop="tenSP" label="Tên sản phẩm" width="180"></el-table-column>
-            <el-table-column prop="maSPCT" label="Mã SP" width="120"></el-table-column>
-            <el-table-column prop="tenDanhMuc" label="Danh mục"></el-table-column>
-            <el-table-column prop="tenThuongHieu" label="Thương hiệu"></el-table-column>
-            <el-table-column prop="tenMauSac" label="Màu sắc"></el-table-column>
-            <el-table-column prop="tenChatLieu" label="Chất liệu"></el-table-column>
-            <el-table-column prop="tenKichThuoc" label="Size"></el-table-column>
-            <el-table-column label="Giá">
-                <template #default="{ row }">
-                    {{ row.giaBan.toLocaleString() }} VND
-                </template>
-            </el-table-column>
-            <el-table-column label="Thao tác" width="100" fixed="right">
-                <template #default="{ row }">
-                    <el-button type="primary" size="small" @click.stop="chonSanPham(row)">Chọn</el-button>
-                </template>
-            </el-table-column>
-        </el-table>
-      </div>
-
-      <!-- Phân trang -->
-      <div class="pagination-wrapper">
-        <el-pagination
-          background
-          layout="prev, pager, next, total"
-          :current-page="listSanPham.number + 1"
-          :page-size="listSanPham.size"
-          :total="listSanPham.totalElements"
-          @current-change="onProductPageChange"
-        />
       </div>
     </div>
-    <template #footer>
-      <span class="dialog-footer">
-        <el-button @click="productSearchModal = false">Đóng</el-button>
-        <el-button type="primary" @click="taiLaiDanhSachSanPham">
-          <i class="bi bi-arrow-clockwise"></i> Tải lại
-        </el-button>
-      </span>
-    </template>
-  </el-dialog>
 
-    <!-- Modal hóa đơn -->
-    <el-dialog :visible.sync="modalHoaDon" width="600px" title="Hóa đơn bán hàng">
-      <div v-if="hoaDonIn">
-        <div style="text-align:center;">
-          <h3>F-Shoes</h3>
-          <div>SĐT: 0123456789</div>
-          <div>Email: fshoesweb@gmail.com</div>
-          <div>Địa chỉ: FPT POLYTECHNIC Cơ Sở Trịnh Văn Bô, Nam Từ Li, Hà Nội</div>
-        </div>
-        <h4 style="text-align:center;">HÓA ĐƠN BÁN HÀNG</h4>
-        <div>Mã hóa đơn: {{ hoaDonIn.maHoaDon }}</div>
-        <div>Ngày tạo: {{ hoaDonIn.ngayTao }}</div>
-        <div>Khách hàng: {{ hoaDonIn.khachHang || 'khách lẻ' }}</div>
-        <el-table :data="hoaDonIn.sanPhams" style="margin-top: 10px;">
-          <el-table-column prop="tenGiay" label="Tên sản phẩm"></el-table-column>
-          <el-table-column prop="soLuong" label="Số lượng"></el-table-column>
-          <el-table-column prop="giaBan" label="Đơn giá">
-            <template #default="scope">{{ scope.row.giaBan.toLocaleString() }} VND</template>
-          </el-table-column>
-          <el-table-column label="Thành tiền">
-            <template #default="scope">{{ (scope.row.giaBan * scope.row.soLuong).toLocaleString() }} VND</template>
-          </el-table-column>
-        </el-table>
-        <div style="margin-top:10px;">Tổng tiền hàng: {{ tinhTienHang(hoaDonIn).toLocaleString() }} VND</div>
-        <div>Phí vận chuyển: {{ tinhPhiVanChuyen(hoaDonIn).toLocaleString() }} VND</div>
-        <div>Giảm giá: {{ tinhGiamGia(hoaDonIn).toLocaleString() }} VND</div>
-        <div><b>Tổng tiền cần thanh toán: {{ tinhTongTien(hoaDonIn).toLocaleString() }} VND</b></div>
-        <div style="margin-top: 15px; padding: 10px; background-color: #e8f5e8; border-radius: 5px; text-align: center; color: #2d5a2d;">
-          <i class="bi bi-check-circle-fill me-2"></i>
-          Hóa đơn đã được tạo thành công! Màn hình sẽ được reset sau 2 giây.
+    <!-- Modal Chọn Sản Phẩm Chi Tiết -->
+    <div v-if="productDetailModal" class="modal fade show d-block" tabindex="-1" style="background: rgba(0,0,0,0.6);">
+      <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+          <div class="modal-header bg-info text-white">
+            <h5 class="modal-title">Chọn sản phẩm chi tiết - {{ selectedSanPham?.tenSP }}</h5>
+            <button type="button" class="btn-close btn-close-white" @click="productDetailModal = false"></button>
+          </div>
+          <div class="modal-body">
+            <div class="table-responsive" v-loading="productLoading">
+              <table class="table table-striped table-hover">
+                <thead>
+                  <tr>
+                    <th>Ảnh</th>
+                    <th>Tên sản phẩm</th>
+                    <th>Mã SPCT</th>
+                    <th>Màu sắc</th>
+                    <th>Kích thước</th>
+                    <th>Giá</th>
+                    <th>Tồn kho</th>
+                    <th>Thao tác</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="row in listSanPhamChiTiet.content" :key="row.id" @click="chonSanPhamChiTiet(row)">
+                    <td><img :src="row.anhGiay" alt="Ảnh" class="img-fluid rounded" style="width: 60px; height: 60px; object-fit: cover;" /></td>
+                    <td>{{ row.tenSP }}</td>
+                    <td>{{ row.maSPCT }}</td>
+                    <td>{{ row.tenMauSac }}</td>
+                    <td>{{ row.tenKichThuoc }}</td>
+                    <td>{{ row.giaBan != null ? row.giaBan.toLocaleString() : '0' }} VND</td>
+                    <td>{{ row.soLuongTonKho }}</td>
+                    <td>
+                      <button type="button" class="btn btn-primary btn-sm" @click.stop="chonSanPhamChiTiet(row)">Chọn</button>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <!-- Pagination -->
+            <nav class="mt-3">
+              <ul class="pagination justify-content-center">
+                <li class="page-item" :class="{ disabled: listSanPhamChiTiet.number === 0 }">
+                  <button class="page-link" @click="onProductDetailPageChange(listSanPhamChiTiet.number)">Trước</button>
+                </li>
+                <li class="page-item">
+                  <span class="page-link">{{ listSanPhamChiTiet.number + 1 }} / {{ Math.ceil(listSanPhamChiTiet.totalElements / listSanPhamChiTiet.size) }}</span>
+                </li>
+                <li class="page-item" :class="{ disabled: listSanPhamChiTiet.number + 1 >= Math.ceil(listSanPhamChiTiet.totalElements / listSanPhamChiTiet.size) }">
+                  <button class="page-link" @click="onProductDetailPageChange(listSanPhamChiTiet.number + 2)">Sau</button>
+                </li>
+                <li class="page-item disabled">
+                  <span class="page-link">Tổng: {{ listSanPhamChiTiet.totalElements }}</span>
+                </li>
+              </ul>
+            </nav>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" @click="productDetailModal = false">Đóng</button>
+          </div>
         </div>
       </div>
-      <span slot="footer" class="dialog-footer">
-        <el-button @click="modalHoaDon = false">Đóng</el-button>
-        <el-button type="success" @click="taoHoaDonMoiNgay">Tạo hóa đơn mới</el-button>
-        <el-button type="primary" @click="inHoaDon">In hóa đơn</el-button>
-      </span>
-    </el-dialog>
+    </div>
 
-    <!-- Modal thanh toán -->
-    <div v-if="modalThanhToan" class="modal fade show d-block" tabindex="-1" style="background: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center;">
-      <div class="modal-dialog modal-lg">
-        <div class="modal-content" style="height: 550px; width: 500px;">
+    <!-- Modal Chọn Voucher Sản Phẩm -->
+<div v-if="voucherModal" class="modal fade show d-block" tabindex="-1" style="background: rgba(0,0,0,0.6);">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header bg-primary text-white">
+        <h5 class="modal-title">Chọn Voucher cho {{ selectedProduct?.tenGiay }}</h5>
+        <button type="button" class="btn-close btn-close-white" @click="voucherModal = false"></button>
+      </div>
+      <div class="modal-body" v-loading="voucherLoading">
+        <div v-if="productVouchers.length === 0 && !voucherLoading" class="text-center py-3">
+          <p>Không có voucher áp dụng được</p>
+        </div>
+        <div v-else-if="productVouchers.length > 0">
+          <table class="table table-striped table-hover">
+            <thead>
+              <tr>
+                <th>Tên Voucher</th>
+                <th>Giảm giá</th>
+                <th>Tối thiểu</th>
+                <th>Thao tác</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr
+                v-for="voucher in productVouchers"
+                :key="voucher.id"
+                @click="chonVoucherSanPham(selectedHoaDon, selectedProduct, voucher.id)"
+                style="cursor: pointer;"
+              >
+                <td>{{ voucher.tenVoucher }}</td>
+                <td>
+                  {{ voucher.hinhThucGiam === '%' ? `${voucher.mucGiam}%` : `${voucher.giaGiam.toLocaleString()} VND` }}
+                </td>
+                <td>{{ voucher.giaTriDonHangToiThieu ? voucher.giaTriDonHangToiThieu.toLocaleString() : '0' }} VND</td>
+                <td>
+                  <button
+                    type="button"
+                    class="btn btn-primary btn-sm"
+                    @click.stop="chonVoucherSanPham(selectedHoaDon, selectedProduct, voucher.id)"
+                  >
+                    Chọn
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" @click="voucherModal = false">Đóng</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+    <!-- Modal Hóa Đơn -->
+    <div v-if="modalHoaDon" class="modal fade show d-block" tabindex="-1" style="background: rgba(0,0,0,0.6);">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header bg-primary text-white">
+            <h5 class="modal-title">Hóa đơn bán hàng</h5>
+            <button type="button" class="btn-close btn-close-white" @click="modalHoaDon = false"></button>
+          </div>
+          <div class="modal-body">
+            <div v-if="hoaDonIn">
+              <div class="text-center">
+                <h3>NEXVIBE</h3>
+                <div>SĐT: 0123456789</div>
+                <div>Email: nexvibeweb@gmail.com</div>
+                <div>Địa chỉ: FPT POLYTECHNIC Cơ Sở Trịnh Văn Bô, Nam Từ Liêm, Hà Nội</div>
+              </div>
+              <h4 class="text-center mt-3">HÓA ĐƠN BÁN HÀNG</h4>
+              <div>Mã hóa đơn: {{ hoaDonIn.maHoaDon }}</div>
+              <div>Ngày tạo: {{ formatDate(hoaDonIn.ngayTao) }}</div>
+              <div>Khách hàng: {{ hoaDonIn.khachHang || 'Khách lẻ' }}</div>
+              <div v-if="hoaDonIn.thanhToan">Phương thức thanh toán: {{ hoaDonIn.thanhToan.phuongThuc }}</div>
+              <div v-if="hoaDonIn.thanhToan && hoaDonIn.thanhToan.maGiaoDich">Mã giao dịch: {{ hoaDonIn.thanhToan.maGiaoDich }}</div>
+              <table class="table table-striped mt-3">
+                <thead>
+                  <tr>
+                    <th>Tên sản phẩm</th>
+                    <th>Số lượng</th>
+                    <th>Đơn giá</th>
+                    <th>Thành tiền</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="sp in hoaDonIn.sanPhams" :key="sp.id">
+                    <td>{{ sp.tenGiay }}</td>
+                    <td>{{ sp.soLuong }}</td>
+                    <td>{{ sp.giaBan != null ? sp.giaBan.toLocaleString() : '0' }} VND</td>
+                    <td>{{ sp.giaBan != null ? (sp.giaBan * sp.soLuong - (sp.selectedVoucher ? tinhGiamGiaSanPham(sp) : 0)).toLocaleString() : '0' }} VND</td>
+                  </tr>
+                </tbody>
+              </table>
+              <div class="mt-3">
+                <div>Tổng tiền hàng: {{ tinhTienHang(hoaDonIn).toLocaleString() }} VND</div>
+                <div>Giảm giá: {{ tinhGiamGia(hoaDonIn).toLocaleString() }} VND</div>
+                <div><b>Tổng tiền cần thanh toán: {{ tinhTongTien(hoaDonIn).toLocaleString() }} VND</b></div>
+                <div v-if="hoaDonIn.thanhToan && hoaDonIn.thanhToan.soTien > tinhTongTien(hoaDonIn)">
+                  <b>Tiền thừa trả lại: {{ (hoaDonIn.thanhToan.soTien - tinhTongTien(hoaDonIn)).toLocaleString() }} VND</b>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" @click="modalHoaDon = false">Đóng</button>
+            <button type="button" class="btn btn-success" @click="taoHoaDonMoiNgay">Tạo hóa đơn mới</button>
+            <button type="button" class="btn btn-primary" @click="inHoaDon">In hóa đơn</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal Thanh Toán -->
+    <div v-if="modalThanhToan" class="modal fade show d-block" tabindex="-1" style="background: rgba(0,0,0,0.6); z-index: 3000; pointer-events: auto;">
+      <div class="modal-dialog" style="z-index: 3001; pointer-events: auto;">
+        <div class="modal-content" style="position: relative; z-index: 3002; pointer-events: auto;">
           <div class="modal-header bg-warning text-white">
             <h5 class="modal-title">THANH TOÁN</h5>
-            <button type="button" class="btn-close" @click="modalThanhToan = false"></button>
+            <button type="button" class="btn-close btn-close-white" @click="closeThanhToanModal"></button>
           </div>
           <div class="modal-body text-center">
             <div class="mb-3">
@@ -637,90 +581,80 @@
             <div class="d-flex justify-content-center gap-2 mb-3">
               <button
                 type="button"
-                class="btn btn-outline-danger animated-btn"
-                :class="{ 'active': thanhToanPhuongThuc === 'chuyen_khoan' }"
-                @click="thanhToanPhuongThuc = 'chuyen_khoan'"
+                class="btn btn-outline-success"
+                :class="{ active: thanhToanPhuongThuc === 'MOMO' }"
+                @click="thanhToanPhuongThuc = 'MOMO'"
               >
-                Chuyển khoản
+                <i class="bi bi-qr-code"></i> MOMO
               </button>
               <button
                 type="button"
-                class="btn btn-outline-success animated-btn"
-                :class="{ 'active': thanhToanPhuongThuc === 'tien_mat' }"
-                @click="thanhToanPhuongThuc = 'tien_mat'"
+                class="btn btn-outline-primary"
+                :class="{ active: thanhToanPhuongThuc === 'TIỀN MẶT' }"
+                @click="thanhToanPhuongThuc = 'TIỀN MẶT'"
               >
-                Tiền mặt
+                <i class="bi bi-cash"></i> TIỀN MẶT
               </button>
             </div>
-            <div class="mb-3">
-              <div class="row" v-if="thanhToanPhuongThuc === 'tien_mat'">
-                <div class="col-12">
-                  <div class="form-floating mb-2">
-                    <input
-                      v-model.number="thanhToanTienKhachDua"
-                      type="number"
-                      class="form-control"
-                      id="floatingCash"
-                      placeholder="Tiền khách đưa"
-                    />
-                    <label for="floatingCash">Tiền khách đưa</label>
-                  </div>
+            <!-- MoMo QR Payment Section -->
+            <div v-if="thanhToanPhuongThuc === 'MOMO'" class="mt-4 mb-4">
+              <div class="text-center">
+                <div class="bg-light p-4 rounded mb-3">
+                  <h6 class="text-muted mb-2">
+                    <i class="bi bi-qr-code me-2"></i>Thanh toán bằng MoMo
+                  </h6>
+                  <p class="mb-0 small text-muted">
+                    Quét mã QR hoặc nhấn nút để chuyển đến trang thanh toán MoMo
+                  </p>
                 </div>
-              </div>
-              <div class="row" v-if="thanhToanPhuongThuc === 'chuyen_khoan'">
-                <div class="col-6">
-                  <div class="form-floating mb-2">
-                    <input
-                      v-model.number="thanhToanTienKhachDua"
-                      type="number"
-                      class="form-control"
-                      id="floatingCashTransfer"
-                      placeholder="Tiền khách đưa"
-                    />
-                    <label for="floatingCashTransfer">Tiền khách đưa</label>
+                <div v-if="momoLoading">
+                  <div class="spinner-border text-success" role="status">
+                    <span class="visually-hidden">Đang tạo thanh toán...</span>
                   </div>
+                  <p class="mt-2 text-muted">Đang tạo thanh toán MoMo...</p>
                 </div>
-                <div class="col-6">
-                  <div class="form-floating mb-2">
-                    <input
-                      v-model="thanhToanMaGiaoDich"
-                      type="text"
-                      class="form-control"
-                      id="floatingTransaction"
-                      placeholder="Mã giao dịch"
-                    />
-                    <label for="floatingTransaction">Mã giao dịch</label>
-                  </div>
+                <div v-else-if="momoQrCodeUrl">
+                  <img :src="momoQrCodeUrl" alt="Mã QR MoMo" class="img-fluid" style="max-width: 200px;" />
+                  <p class="mt-2 text-muted">Quét mã QR bằng ứng dụng MoMo để thanh toán</p>
                 </div>
-              </div>
-              <div class="text-end" v-if="thanhToanTienKhachDua">
-                <p class="mb-0">Tiền thiếu: {{ (tinhTongTien(thanhToanHoaDon) - tongTienDaThanhToan).toLocaleString() }} VND</p>
+                <div v-else>
+                  <button 
+                    type="button" 
+                    class="btn btn-success btn-lg px-5"
+                    @click="taoMoMoQR"
+                  >
+                    <i class="bi bi-qr-code me-2"></i>Tạo mã thanh toán MoMo
+                  </button>
+                </div>
               </div>
             </div>
-            <el-table :data="thanhToanLichSu" style="margin-bottom: 10px;">
-              <el-table-column label="STT" type="index" width="50" />
-              <el-table-column prop="maGiaoDich" label="Mã giao dịch" />
-              <el-table-column prop="phuongThuc" label="Phương thức" />
-              <el-table-column prop="soTien" label="Số tiền" />
-              <el-table-column label="Hành động" width="80">
-                <template #default="scope">
-                  <button
-                    type="button"
-                    class="btn btn-danger btn-sm animated-btn"
-                    @click="xoaThanhToan(scope.$index)"
-                  >
-                    <i class="bi bi-trash"></i>
-                  </button>
-                </template>
-              </el-table-column>
-            </el-table>
+            <!-- Tiền mặt -->
+            <div v-if="thanhToanPhuongThuc === 'TIỀN MẶT'" class="mt-4 mb-4">
+              <div class="mb-3">
+                <label class="form-label">Số tiền khách đưa</label>
+                <input
+                  type="number"
+                  class="form-control text-center"
+                  v-model.number="thanhToanTienKhachDua"
+                  @input="validateTienKhachDua"
+                />
+              </div>
+              <div v-if="thanhToanTienKhachDua > tinhTongTien(thanhToanHoaDon)" class="mb-3">
+                <label class="form-label">Tiền trả lại</label>
+                <p class="fw-bold text-success">
+                  {{ (thanhToanTienKhachDua - tinhTongTien(thanhToanHoaDon)).toLocaleString('vi-VN') }} VND
+                </p>
+              </div>
+            </div>
           </div>
-          <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" @click="modalThanhToan = false">Đóng</button>
+          <div class="modal-footer" style="position: relative; z-index: 3003; pointer-events: auto;">
+            <button type="button" class="btn btn-secondary" @click="closeThanhToanModal">
+              Hủy
+            </button>
             <button
               type="button"
-              class="btn btn-success animated-btn"
-              :disabled="(tinhTongTien(thanhToanHoaDon) - tongTienDaThanhToan > 0) && (thanhToanTienKhachDua < tinhTongTien(thanhToanHoaDon))"
+              class="btn btn-success"
+              :disabled="thanhToanPhuongThuc === 'TIỀN MẶT' && thanhToanTienKhachDua < tinhTongTien(thanhToanHoaDon)"
               @click="xacNhanThanhToan"
             >
               Xác nhận
@@ -730,21 +664,20 @@
       </div>
     </div>
 
-    <!-- Modal chọn khách hàng -->
-    <div v-if="modalCustomer" class="modal fade show d-block" tabindex="-1" 
-         style="background: rgba(0,0,0,0.6); position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 1050; display: flex; align-items: center; justify-content: center;">
-      <div class="modal-dialog" style="margin: 0; max-width: 1000px; width: 100%;">
-        <div class="modal-content" style="max-height: 90vh; overflow: hidden; display: flex; flex-direction: column;">
+    <!-- Modal Chọn Khách Hàng -->
+    <div v-if="modalCustomer" class="modal fade show d-block" tabindex="-1" style="background: rgba(0,0,0,0.6);">
+      <div class="modal-dialog modal-lg">
+        <div class="modal-content">
           <div class="modal-header bg-info text-white">
             <h5 class="modal-title">Chọn khách hàng</h5>
             <button type="button" class="btn-close btn-close-white" @click="modalCustomer = false"></button>
           </div>
-          <div class="modal-body p-4" style="flex: 1; overflow: hidden; display: flex; flex-direction: column;">
-            <div class="input-group mb-4">
+          <div class="modal-body">
+            <div class="input-group mb-3">
               <input
                 v-model="customerSearch"
                 type="text"
-                class="form-control shadow-sm"
+                class="form-control"
                 placeholder="Tìm kiếm theo số điện thoại hoặc họ tên..."
                 @input="debounceSearchCustomers"
               />
@@ -752,7 +685,7 @@
                 <i class="bi bi-search"></i>
               </button>
             </div>
-            <div class="customer-list" style="flex: 1; overflow-y: auto; max-height: 400px;">
+            <div class="table-responsive" style="max-height: 400px;">
               <div v-if="loadingCustomers" class="text-center py-3">
                 <i class="bi bi-hourglass-split fs-1 text-primary"></i>
                 <p>Đang tải danh sách khách hàng...</p>
@@ -761,8 +694,8 @@
                 <i class="bi bi-exclamation-triangle fs-1 text-warning"></i>
                 <p>Không tìm thấy khách hàng</p>
               </div>
-              <table v-else class="table table-striped table-hover custom-table">
-                <thead class="table-light sticky-top">
+              <table v-else class="table table-striped table-hover">
+                <thead>
                   <tr>
                     <th class="text-center">STT</th>
                     <th>Họ tên</th>
@@ -773,18 +706,18 @@
                   </tr>
                 </thead>
                 <tbody>
-                  <tr v-for="(customer, index) in filteredCustomers" :key="customer.id" class="table-row">
+                  <tr v-for="(customer, index) in filteredCustomers" :key="customer.id">
                     <td class="text-center">{{ (currentPageCustomer - 1) * pageSizeCustomer + index + 1 }}</td>
-                    <td>{{ customer.hoTen }}</td>
+                    <td>{{ customer.tenKH }}</td>
                     <td>{{ customer.sdt }}</td>
                     <td>{{ customer.gioiTinh ? 'Nam' : 'Nữ' }}</td>
                     <td>
-                      <span v-if="customer.trangThai" class="badge bg-success rounded-pill">Hoạt động</span>
-                      <span v-else class="badge bg-secondary rounded-pill">Ngừng hoạt động</span>
+                      <span v-if="customer.trangThai" class="badge bg-success">Hoạt động</span>
+                      <span v-else class="badge bg-secondary">Ngừng hoạt động</span>
                     </td>
                     <td class="text-center">
                       <button
-                        class="btn btn-primary btn-sm rounded-pill"
+                        class="btn btn-primary btn-sm"
                         @click="selectCustomer(customer, selectedHoaDon)"
                       >
                         CHỌN
@@ -794,23 +727,24 @@
                 </tbody>
               </table>
             </div>
-            <!-- Phân trang -->
-            <div class="pagination-section mt-3" v-if="!loadingCustomers && totalCustomers > 0">
+            <div class="d-flex justify-content-between align-items-center mt-3" v-if="!loadingCustomers && totalCustomers > 0">
               <span>Trang {{ currentPageCustomer }} / {{ Math.ceil(totalCustomers / pageSizeCustomer) }}</span>
-              <button
-                @click="fetchCustomers(currentPageCustomer - 2)"
-                :disabled="currentPageCustomer <= 1"
-                class="btn btn-sm btn-outline-secondary me-2"
-              >
-                Trước
-              </button>
-              <button
-                @click="fetchCustomers(currentPageCustomer)"
-                :disabled="currentPageCustomer >= Math.ceil(totalCustomers / pageSizeCustomer)"
-                class="btn btn-sm btn-outline-secondary"
-              >
-                Sau
-              </button>
+              <div>
+                <button
+                  class="btn btn-outline-secondary btn-sm me-2"
+                  :disabled="currentPageCustomer <= 1"
+                  @click="fetchCustomers(currentPageCustomer - 2)"
+                >
+                  Trước
+                </button>
+                <button
+                  class="btn btn-outline-secondary btn-sm"
+                  :disabled="currentPageCustomer >= Math.ceil(totalCustomers / pageSizeCustomer)"
+                  @click="fetchCustomers(currentPageCustomer)"
+                >
+                  Sau
+                </button>
+              </div>
               <span>Tổng: <strong>{{ totalCustomers }}</strong> khách hàng</span>
             </div>
           </div>
@@ -823,34 +757,44 @@
   </div>
 </template>
 
+```vue
 <script>
 import axios from 'axios';
 import { ElMessage } from 'element-plus';
 import _ from 'lodash';
+import { useAuthStore } from '@/stores/auth';
+import { useRouter } from 'vue-router';
 
 export default {
   name: 'BanHangTaiQuay',
+  setup() {
+    const auth = useAuthStore();
+    const router = useRouter();
+    return { auth, router };
+  },
   data() {
     return {
       hoaDons: [],
       tabActive: '',
-      modalSanPham: false,
-      sanPhamList: [],
-      totalSanPham: 0,
-      pageSanPham: 1,
-      pageSizeSanPham: 10,
-      searchSanPham: '',
+      productSearchModal: false,
+      productSearchQuery: '',
+      productLoading: false,
+      listSanPham: { content: [], number: 0, size: 5, totalElements: 0 },
       hoaDonChon: null,
+      productDetailModal: false,
+      listSanPhamChiTiet: { content: [], number: 0, size: 5, totalElements: 0 },
+      selectedSanPham: null,
       vouchers: [],
       modalHoaDon: false,
       hoaDonIn: null,
       modalThanhToan: false,
       thanhToanHoaDon: null,
       thanhToanTongTien: 0,
-      thanhToanPhuongThuc: 'chuyen_khoan',
+      thanhToanPhuongThuc: 'CHUYỂN KHOẢN',
       thanhToanTienKhachDua: 0,
       thanhToanMaGiaoDich: '',
       thanhToanLichSu: [],
+      phuongThucThanhToans: [],
       modalCustomer: false,
       customerSearch: '',
       selectedHoaDon: null,
@@ -859,80 +803,362 @@ export default {
       currentPageCustomer: 1,
       pageSizeCustomer: 10,
       totalCustomers: 0,
-      productSearchModal: false,
-      productSearchQuery: '',
-      productLoading: false,
-      listSanPham: { content: [], number: 0, size: 10, totalElements: 0 },
-      diaChiList: [],
-      // Bộ lọc sản phẩm
       categories: [],
       brands: [],
       colors: [],
-      materials: [], // Thêm bộ lọc chất liệu
-      priceRange: [0, 1000000], // Giá mặc định từ 0 đến 1 triệu
+      materials: [],
+      priceRange: [0, 5000000],
       selectedCategory: '',
       selectedBrand: '',
       selectedColor: '',
-      selectedMaterial: '', // Biến cho chất liệu được chọn
+      selectedMaterial: '',
+      voucherModal: false,
+      selectedProduct: null,
+      productVouchers: [],
+      pageSanPham: 1,
+      pageSizeSanPham: 5,
+      pageSanPhamChiTiet: 1,
+      pageSizeSanPhamChiTiet: 5,
+      cleanupInterval: null,
+      timeoutIds: new Map(),
+      momoCheckInterval: null,
+      momoLoading: false,
+      momoTransactionStatus: null,
+      momoOrderId: null,
+      momoQrCodeUrl: null,
+      momoPayUrl: null,
+      applicableVouchers: [],
+      selectedVoucherId: null,
+      voucherLoading: false,
     };
   },
   created() {
-    this.fetchVouchers();
+    this.checkAuth();
+    this.hoaDons = [];
+    this.tabActive = '';
     this.fetchCategories();
     this.fetchBrands();
     this.fetchColors();
     this.fetchMaterials();
+    this.fetchPhuongThucThanhToan();
+    this.fetchPendingInvoices();
+    
+    const momoOrderId = localStorage.getItem('momo_last_order_id');
+    if (momoOrderId) {
+      console.log(`[CREATED] Tìm thấy momo_last_order_id: ${momoOrderId}`);
+      ElMessage.info('Đang kiểm tra trạng thái thanh toán MoMo...');
+      localStorage.removeItem('momo_last_order_id');
+      this.handleMoMoReturn(momoOrderId);
+    }
+  },
+  beforeUnmount() {
+    this.timeoutIds.forEach((timeoutId) => clearTimeout(timeoutId));
+    this.timeoutIds.clear();
+    this.stopCheckingMomoStatus();
   },
   computed: {
     tongTienDaThanhToan() {
-      return this.thanhToanLichSu.reduce((sum, t) => sum + (t.soTien || 0), 0);
+      return this.thanhToanLichSu.reduce((sum, t) => sum + (Number(t.soTien) || 0), 0);
     },
     filteredCustomers() {
       return this.customers;
     },
-    voucherInfo() {
-      return (hd) => {
-        if (!hd.selectedVoucher) return null;
-        return {
-          name: hd.selectedVoucher.tenVoucher,
-          discount: hd.selectedVoucher.hinhThucGiam === 'Phần trăm' 
-            ? `${hd.selectedVoucher.mucGiam}%` 
-            : `${hd.selectedVoucher.mucGiam.toLocaleString()} VND`,
-          minAmount: hd.selectedVoucher.giaTriDonHangToiThieu.toLocaleString(),
-          currentAmount: this.tinhTienHang(hd).toLocaleString(),
-          isValid: this.getValidVouchers(hd).some(v => v.id === hd.selectedVoucherId)
-        };
-      };
-    }
   },
   methods: {
-    taoHoaDon() {
-      const ma = 'HD' + (Math.floor(Math.random() * 9000) + 1000);
-      const hd = {
-        maHoaDon: ma,
-        sanPhams: [],
-        khachHang: '',
-        idKhachHang: null,
-        voucherCode: '',
-        selectedVoucher: null,
-        selectedVoucherId: null,
-        ngayTao: new Date().toISOString(),
-        thanhToan: null,
-        trangThai: '0',
-        hinhThucThanhToan: 'null',
-        idNhanVien: localStorage.getItem('userId') || 1,
-        giaoHang: false,
-        customerInfo: null,
-        ghiChuGiaoHang: ''
-      };
-      this.hoaDons.push(hd);
-      this.tabActive = ma;
+    formatCountdown(seconds) {
+      if (seconds <= 0) return '00:00';
+      const minutes = Math.floor(seconds / 60);
+      const secs = seconds % 60;
+      return `${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
     },
-    xoaHoaDon(ma) {
-      this.hoaDons = this.hoaDons.filter(hd => hd.maHoaDon !== ma);
-      if (this.hoaDons.length > 0) this.tabActive = this.hoaDons[0].maHoaDon;
+    async checkAuth() {
+      try {
+        console.log('checkAuth: Kiểm tra trạng thái đăng nhập');
+        await this.auth.checkAuth();
+        if (!this.auth.isAuthenticated || !this.auth.user || !this.auth.isAdmin()) {
+          ElMessage.error('Vui lòng đăng nhập với tài khoản admin!');
+          this.router.push('/login');
+        }
+      } catch (error) {
+        console.error('checkAuth: Lỗi kiểm tra đăng nhập -', error.response?.data || error.message);
+        ElMessage.error('Lỗi kiểm tra đăng nhập, vui lòng đăng nhập lại!');
+        this.router.push('/login');
+      }
     },
-    showChonSanPham(hd, isQR = false) {
+    async fetchPendingInvoices() {
+      try {
+        const response = await axios.get('http://localhost:8080/admin/api/hoadon', {
+          params: {
+            trangThai: 'CHO_THANH_TOAN,DA_THANH_TOAN'
+          },
+          withCredentials: true,
+          paramsSerializer: params => {
+            return Object.entries(params)
+              .filter(([_, value]) => value != null)
+              .map(([key, value]) => `${key}=${encodeURIComponent(value)}`)
+              .join('&');
+          },
+        });
+        console.log('Raw API response:', JSON.stringify(response.data, null, 2));
+        this.hoaDons = response.data.content
+          .filter(hd => {
+            if (!hd.idHD || isNaN(hd.idHD)) {
+              console.warn(`Hóa đơn không hợp lệ, thiếu idHD:`, hd);
+              return false;
+            }
+            return ['CHO_THANH_TOAN', 'DA_THANH_TOAN'].includes(hd.trangThai);
+          })
+          .map(hd => {
+            const createdAt = new Date(hd.ngayTao).getTime();
+            const now = Date.now();
+            const elapsedSeconds = Math.floor((now - createdAt) / 1000);
+            const initialCountdown = 1800;
+            const countdown = hd.trangThai === 'CHO_THANH_TOAN' ? Math.max(0, initialCountdown - elapsedSeconds) : 0;
+            const sanPhams = (hd.chiTietSanPham || []).map(ct => {
+              if (!ct.idCtSanPham || !ct.maSPCT || !ct.tenSanPham) {
+                console.warn(`Dữ liệu chi tiết sản phẩm không hợp lệ cho hóa đơn ${hd.maHD}:`, ct);
+                return null;
+              }
+              return {
+                id: ct.idCtSanPham,
+                idSP: ct.idSP,
+                idHDCT: ct.idHDCT || null,
+                maCtSanPham: ct.maSPCT,
+                tenGiay: ct.tenSanPham,
+                giaBan: parseFloat(ct.donGia) || 0,
+                soLuong: Number(ct.soLuong) || 1,
+                soLuongTonKho: Number(ct.soLuongTonKho) || 0,
+                tenKichThuoc: ct.tenSize || 'N/A',
+                tenMauSac: ct.tenMauSac || 'N/A',
+                tenThuongHieu: ct.tenThuongHieu || 'N/A',
+                tenChatLieu: ct.tenChatLieu || 'N/A',
+                anhGiay: ct.anhGiay || 'https://placehold.co/60x60',
+                selectedVoucherId: ct.idVoucher || null, // Lấy idVoucher từ API
+                selectedVoucher: ct.idVoucher ? { id: ct.idVoucher, tenVoucher: ct.tenVoucher || 'N/A' } : null,
+              };
+            }).filter(sp => sp !== null);
+            console.log('Danh sách sản phẩm ánh xạ:', sanPhams);
+            const thanhToan = hd.thanhToan ? {
+              phuongThuc: hd.thanhToan.phuongThuc || 'N/A',
+              soTien: parseFloat(hd.thanhToan.soTien) || 0,
+              maGiaoDich: hd.thanhToan.maGiaoDich || '',
+              idPT: hd.thanhToan.idPT || null,
+            } : null;
+            console.log(`Hóa đơn ${hd.maHD} thanhToan:`, thanhToan);
+            return {
+              idHD: hd.idHD,
+              maHoaDon: hd.maHD,
+              sanPhams,
+              countdown,
+              createdAt,
+              ngayTao: hd.ngayTao,
+              ngaySua: hd.ngaySua,
+              tongTien: parseFloat(hd.tongTien) || 0,
+              trangThai: hd.trangThai,
+              loaiHoaDon: hd.loaiHoaDon,
+              totalProducts: hd.totalProducts || sanPhams.length,
+              idKhachHang: hd.idKhachHang || null,
+              khachHang: hd.customerName || 'Khách lẻ',
+              idNhanVien: hd.idNhanVien,
+              idKM: hd.idKM,
+              idPT: hd.idPT,
+              maGiaoDich: hd.maGiaoDich,
+              thanhToan,
+            };
+          });
+        console.log('Danh sách hóa đơn sau ánh xạ:', JSON.stringify(this.hoaDons, null, 2));
+        if (this.hoaDons.length === 0) {
+          ElMessage.warning('Không tìm thấy hóa đơn đang chờ hoặc đã thanh toán.');
+        } else if (this.hoaDons.length > 0 && !this.tabActive) {
+          this.tabActive = this.hoaDons[0].maHoaDon;
+        }
+      } catch (error) {
+        console.error('Lỗi khi tải hóa đơn:', error.response?.data || error.message);
+        ElMessage.error('Không thể tải danh sách hóa đơn!');
+      }
+    },
+    async taoHoaDon() {
+      try {
+        await this.checkAuth();
+        if (!this.auth.isAuthenticated || !this.auth.user?.idNV || !this.auth.isAdmin()) {
+          ElMessage.error('Vui lòng đăng nhập với tài khoản admin!');
+          this.router.push('/login');
+          return;
+        }
+        if (!this.auth.user.idNV || isNaN(this.auth.user.idNV)) {
+          ElMessage.error('ID nhân viên không hợp lệ!');
+          return;
+        }
+        const hoaDonDTO = {
+          maHD: `HD${Date.now()}${Math.floor(Math.random() * 1000)}`,
+          idNhanVien: Number(this.auth.user.idNV),
+          idKhachHang: null,
+          idPT: null,
+          idKM: null,
+          ngayTao: new Date().toISOString(),
+          ngaySua: new Date().toISOString(),
+          trangThai: 'CHO_THANH_TOAN',
+          loaiHoaDon: 'Tại quầy',
+          tongTien: 0,
+          chiTietSanPham: [],
+          maGiaoDich: null,
+        };
+        console.log('Tạo hóa đơn mới:', JSON.stringify(hoaDonDTO, null, 2));
+        const response = await axios.post('http://localhost:8080/admin/api/hoadon', hoaDonDTO, {
+          withCredentials: true,
+          headers: { 'Content-Type': 'application/json; charset=UTF-8' },
+        });
+        console.log('Phản hồi từ POST /hoadon:', JSON.stringify(response.data, null, 2));
+        if (!response.data.idHD || isNaN(response.data.idHD)) {
+          console.error('Lỗi: Phản hồi API không chứa idHD hợp lệ:', response.data);
+          ElMessage.error('Không thể tạo hóa đơn: ID hóa đơn không hợp lệ từ server!');
+          return;
+        }
+        const hd = {
+          idHD: response.data.idHD,
+          maHoaDon: response.data.maHD,
+          sanPhams: [],
+          khachHang: response.data.customerName || 'Khách lẻ',
+          idKhachHang: response.data.idKhachHang || null,
+          ngayTao: response.data.ngayTao,
+          createdAt: new Date().getTime(),
+          countdown: 300,
+          thanhToan: null,
+          trangThai: response.data.trangThai,
+          idNhanVien: response.data.idNhanVien,
+        };
+        this.hoaDons.push(hd);
+        this.tabActive = hd.maHoaDon;
+        this.hoaDonChon = hd;
+        console.log('Hóa đơn đã chọn:', JSON.stringify(this.hoaDonChon, null, 2));
+        ElMessage.success('Tạo hóa đơn mới thành công!');
+      } catch (error) {
+        console.error('Lỗi khi tạo hóa đơn:', error.response?.data || error.message);
+        let errorMessage = 'Không thể tạo hóa đơn!';
+        if (error.response) {
+          if (error.response.status === 401 || error.response.status === 403) {
+            errorMessage = 'Phiên đăng nhập hết hạn hoặc không có quyền truy cập!';
+            this.router.push('/login');
+          } else if (error.response.status === 400) {
+            errorMessage = error.response.data?.message || error.response.data?.error || 'Dữ liệu gửi lên không hợp lệ!';
+          } else if (error.response.data?.message) {
+            errorMessage = error.response.data.message;
+          }
+        } else if (error.message) {
+          errorMessage = error.message;
+        }
+        ElMessage.error(errorMessage);
+      }
+    },
+    async fetchSanPhamList() {
+      this.productLoading = true;
+      try {
+        await this.checkAuth();
+        const params = {
+          page: this.pageSanPham - 1,
+          size: this.pageSizeSanPham,
+          tenSP: this.productSearchQuery || '',
+          danhMuc: this.selectedCategory ? [this.selectedCategory] : null,
+          thuongHieu: this.selectedBrand ? [this.selectedBrand] : null,
+          chatLieu: this.selectedMaterial ? [this.selectedMaterial] : null,
+          minPrice: Number(this.priceRange[0]) || 0,
+          maxPrice: Number(this.priceRange[1]) || 5000000,
+        };
+        console.log('Tham số gửi API:', JSON.stringify(params, null, 2));
+        const response = await axios.get('http://localhost:8080/admin/api/san-pham', {
+          params,
+          withCredentials: true,
+          paramsSerializer: params => {
+            return Object.entries(params)
+              .filter(([_, value]) => value != null)
+              .map(([key, value]) => {
+                if (Array.isArray(value)) {
+                  return value.map(v => `${key}=${encodeURIComponent(v)}`).join('&');
+                }
+                return `${key}=${encodeURIComponent(value)}`;
+              })
+              .join('&');
+          },
+        });
+        console.log('Dữ liệu API sản phẩm:', JSON.stringify(response.data, null, 2));
+        this.listSanPham = {
+          content: response.data.content.map(item => ({
+            id: item.idSP || null,
+            maSPCT: item.maSP || 'N/A',
+            maCtSanPham: item.maSP || 'N/A',
+            tenSP: item.tenSP || 'Không xác định',
+            tenGiay: item.tenSP || 'Không xác định',
+            giaBan: item.gia != null ? Number(item.gia) : 0,
+            soLuongTonKho: Number(item.tongSoLuongSanPham) || 0,
+            moTa: item.moTa || '',
+            trangThai: item.trangThai != null ? item.trangThai : true,
+            tenDanhMuc: item.idDanhMuc ? this.categories.find(cat => cat.value === item.idDanhMuc)?.label || 'N/A' : 'N/A',
+            tenThuongHieu: item.idThuongHieu ? this.brands.find(brand => brand.value === item.idThuongHieu)?.label || 'N/A' : 'N/A',
+            tenChatLieu: item.idChatLieu ? this.materials.find(mat => mat.value === item.idChatLieu)?.label || 'N/A' : 'N/A',
+            anhGiay: item.imageLink || 'https://placehold.co/60x60',
+          })),
+          number: response.data.number || 0,
+          size: response.data.size || 5,
+          totalElements: response.data.totalElements || 0,
+        };
+        if (this.listSanPham.totalElements === 0) {
+          ElMessage.warning('Không tìm thấy sản phẩm nào phù hợp.');
+        }
+      } catch (error) {
+        console.error('Lỗi khi lấy danh sách sản phẩm:', error.response?.data || error.message);
+        this.listSanPham = { content: [], number: 0, size: 5, totalElements: 0 };
+        ElMessage.error(`Không thể tải danh sách sản phẩm: ${error.response?.data?.message || error.message}`);
+      } finally {
+        this.productLoading = false;
+      }
+    },
+    async fetchSanPhamChiTietList(idSP) {
+      this.productLoading = true;
+      try {
+        await this.checkAuth();
+        const response = await axios.get(`http://localhost:8080/admin/api/sanphamchitiet/bySanPham/${idSP}`, {
+          withCredentials: true,
+        });
+        console.log('Dữ liệu API sản phẩm chi tiết:', JSON.stringify(response.data, null, 2));
+        const dataContent = Array.isArray(response.data) ? response.data : [];
+        this.listSanPhamChiTiet = {
+          content: dataContent.map(item => {
+            if (!item.id || !item.maSPCT) {
+              console.warn('Sản phẩm chi tiết không hợp lệ:', item);
+              return null;
+            }
+            return {
+              id: item.id || null,
+              idSP: item.idSP || idSP,
+              maSPCT: item.maSPCT || 'N/A',
+              maCtSanPham: item.maSPCT || 'N/A',
+              tenSP: item.tenSP || 'Không xác định',
+              tenGiay: item.tenSP || 'Không xác định',
+              giaBan: item.gia != null ? Number(item.gia) : 0,
+              soLuongTonKho: Number(item.soLuong) || 0,
+              tenMauSac: item.tenMauSac || 'N/A',
+              tenKichThuoc: item.tenSize || 'N/A',
+              anhGiay: item.linkAnhDauTien || (item.imageLinks && item.imageLinks.length > 0 ? item.imageLinks[0] : 'https://placehold.co/60x60'),
+              moTa: item.moTa || '',
+              trangThai: item.trangThai != null ? item.trangThai : true,
+            };
+          }).filter(item => item !== null),
+          number: 0,
+          size: dataContent.length,
+          totalElements: dataContent.length,
+        };
+        if (this.listSanPhamChiTiet.totalElements === 0) {
+          ElMessage.warning('Không tìm thấy sản phẩm chi tiết nào cho sản phẩm này.');
+        }
+      } catch (error) {
+        console.error('Lỗi khi lấy danh sách sản phẩm chi tiết:', error.response?.data || error.message);
+        this.listSanPhamChiTiet = { content: [], number: 0, size: 5, totalElements: 0 };
+        ElMessage.error(`Không thể tải danh sách sản phẩm chi tiết: ${error.response?.data?.message || error.message}`);
+      } finally {
+        this.productLoading = false;
+      }
+    },
+    async showChonSanPham(hd, isQR = false) {
       this.hoaDonChon = hd;
       this.productSearchModal = true;
       this.productSearchQuery = '';
@@ -941,203 +1167,398 @@ export default {
       this.selectedColor = '';
       this.selectedMaterial = '';
       this.priceRange = [0, 5000000];
-      this.fetchSanPhamList();
+      this.pageSanPham = 1;
+      await this.fetchSanPhamList();
       if (isQR) {
         ElMessage.info('Chức năng quét QR chưa được triển khai');
       }
     },
-    // Cập nhật fetchSanPhamList để hỗ trợ bộ lọc
-    async fetchSanPhamList() {
-      this.productLoading = true;
-      try {
-          // Kiểm tra xem có bộ lọc nào được áp dụng không
-          const hasFilters = this.productSearchQuery || this.selectedCategory || this.selectedBrand ||
-                            this.selectedColor || this.selectedMaterial ||
-                            this.priceRange[0] !== 0 || this.priceRange[1] !== 5000000;
-        
-          if (!hasFilters) {
-              // Gọi API lấy toàn bộ sản phẩm khi không có bộ lọc
-              const response = await axios.get('http://localhost:8080/admin/api/sanphamchitiet', {
-                  // headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-              });
-              console.log('API http://localhost:8080/admin/api/sanphamchitiet response:', response.data); // Debug dữ liệu
-              this.listSanPham = {
-                  content: response.data.map(item => ({
-                      id: item.id,
-                      maSPCT: item.maSPCT,
-                      maCtSanPham: item.maSPCT, // Để khớp với template
-                      tenSP: item.tenSP,
-                      tenGiay: item.tenSP, // Để khớp với template
-                      giaBan: item.gia,
-                      soLuongTonKho: item.soLuong,
-                      moTa: item.moTa,
-                      trangThai: item.trangThai,
-                      tenDanhMuc: item.tenDanhMuc,
-                      tenThuongHieu: item.tenThuongHieu,
-                      tenMauSac: item.tenMauSac,
-                      tenChatLieu: item.tenChatLieu,
-                      tenKichThuoc: item.tenKichThuoc,
-                  })),
-                  number: 0,
-                  size: response.data.length,
-                  totalElements: response.data.length
-              };
-           } 
-          else {
-              // Gọi API lọc sản phẩm khi có bộ lọc
-              const params = {
-                  page: this.pageSanPham - 1,
-                  size: this.pageSizeSanPham,
-                  keyword: this.productSearchQuery || '',
-                  danhMuc: this.selectedCategory || '',
-                  thuongHieu: this.selectedBrand || '',
-                  mauSac: this.selectedColor || '',
-                  chatLieu: this.selectedMaterial || '',
-                  minPrice: this.priceRange[0],
-                  maxPrice: this.priceRange[1]
-              };
-              console.log('API http://localhost:8080/admin//api/sanphamchitiet/filter params:', params); // Debug tham số
-              const response = await axios.get('http://localhost:8080/admin/api/sanphamchitiet/filter', {
-                  params,
-                  headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-              });
-              console.log('API http://localhost:8080/admin/api/sanphamchitiet/filter response:', response.data); // Debug dữ liệu
-              this.listSanPham = {
-                  content: response.data.content.map(item => ({
-                      id: item.id,
-                      maSPCT: item.maSPCT,
-                      maCtSanPham: item.maSPCT,
-                      tenSP: item.tenSP,
-                      tenGiay: item.tenSP,
-                      giaBan: item.gia,
-                      soLuongTonKho: item.soLuong,
-                      moTa: item.moTa,
-                      trangThai: item.trangThai,
-                      tenDanhMuc: item.tenDanhMuc,
-                      tenThuongHieu: item.tenThuongHieu,
-                      tenMauSac: item.tenMauSac,
-                      tenChatLieu: item.tenChatLieu,
-                      tenKichThuoc: item.tenKichThuoc,
-                  })),
-                  number: response.data.number,
-                  size: response.data.size,
-                  totalElements: response.data.totalElements
-              };
-          }
-      } catch (error) {
-          console.error('Lỗi khi lấy danh sách sản phẩm:', error);
-          this.listSanPham = { content: [], number: 0, size: 10, totalElements: 0 };
-          ElMessage.error(`Không thể tải danh sách sản phẩm: ${error.message || 'Lỗi mạng'}`);
-      } finally {
-          this.productLoading = false;
-      }
-    },
-
-    chonSanPham(sp) {
-      const existed = this.hoaDonChon.sanPhams.find(x => x.id === sp.id);
-      const tonKho = sp.soLuongTonKho;
-      if (existed) {
-        if (existed.soLuong + 1 > tonKho) {
-          ElMessage.error('Vượt quá số lượng tồn kho!');
-        } else {
-          existed.soLuong += 1;
-        }
-      } else {
-        this.hoaDonChon.sanPhams.push({ ...sp, soLuong: 1, soLuongTonKho: tonKho });
-      }
+    async chonSanPham(sp) {
+      this.selectedSanPham = sp;
       this.productSearchModal = false;
+      this.productDetailModal = true;
+      this.pageSanPhamChiTiet = 1;
+      await this.fetchSanPhamChiTietList(sp.id);
     },
-    onChangeSoLuong(row, hd) {
-      if (row.soLuong > row.soLuongTonKho) {
+    async fetchApplicableVouchers(idKH) {
+      if (!idKH) {
+        this.applicableVouchers = [];
+        this.selectedVoucherId = null;
+        return;
+      }
+      try {
+        const response = await axios.get(`http://localhost:8080/api/khuyenmai/applicable/${idKH}`, {
+          withCredentials: true,
+        });
+        this.applicableVouchers = response.data.map(voucher => ({
+          id: voucher.idKM,
+          tenVoucher: voucher.tenKM,
+          hinhThucGiam: voucher.hinhThucGiam,
+          mucGiam: voucher.mucGiam,
+          giaGiam: voucher.giamToiDa,
+          giaTriDonHangToiThieu: voucher.giaTriDonHangToiThieu,
+        }));
+        if (this.applicableVouchers.length === 0) {
+          ElMessage.warning('Không tìm thấy khuyến mãi nào áp dụng cho khách hàng này.');
+        }
+      } catch (error) {
+        console.error('Lỗi khi lấy danh sách khuyến mãi:', error.response?.data || error.message);
+        this.applicableVouchers = [];
+        this.selectedVoucherId = null;
+        ElMessage.error('Không thể tải danh sách khuyến mãi!');
+      }
+    },
+    async chonVoucherHoaDon(hd) {
+      try {
+        hd.idKM = this.selectedVoucherId;
+        await this.capNhatHoaDon(hd, hd.trangThai);
+        const selectedVoucher = this.applicableVouchers.find(v => v.id === this.selectedVoucherId);
+        ElMessage.success(`Đã áp dụng khuyến mãi ${selectedVoucher?.tenVoucher || 'N/A'} cho hóa đơn`);
+      } catch (error) {
+        console.error('chonVoucherHoaDon:', error);
+        ElMessage.error('Không thể áp dụng khuyến mãi cho hóa đơn');
+      }
+    },
+    async capNhatHoaDon(hd, trangThai) {
+      try {
+        const calculatedTongTien = this.tinhTongTien(hd);
+        const hoaDonDTO = {
+          idHD: hd.idHD,
+          maHD: hd.maHoaDon,
+          idKhachHang: hd.idKhachHang || null,
+          customerName: hd.khachHang || "Khách lẻ",
+          idNhanVien: hd.idNhanVien,
+          ngayTao: hd.ngayTao,
+          ngaySua: new Date().toISOString(),
+          tongTien: Number(calculatedTongTien.toFixed(2)),
+          trangThai: trangThai,
+          loaiHoaDon: hd.loaiHoaDon || "Tại quầy",
+          totalProducts: hd.sanPhams ? hd.sanPhams.reduce((sum, sp) => sum + sp.soLuong, 0) : 0,
+          idKM: hd.idKM || null,
+          idPT: hd.idPT || null,
+          maGiaoDich: hd.maGiaoDich || null,
+          chiTietSanPham: hd.sanPhams ? hd.sanPhams.map(sp => ({
+            idHDCT: sp.idHDCT || null,
+            idCtSanPham: Number(sp.id),
+            idSP: Number(sp.idSP),
+            maSPCT: sp.maCtSanPham,
+            tenSanPham: sp.tenGiay,
+            donGia: Number((sp.giaBan).toFixed(2)),
+            soLuong: Number(sp.soLuong),
+            thanhTien: Number((sp.giaBan * sp.soLuong).toFixed(2)),
+            tenSize: sp.tenKichThuoc,
+            tenMauSac: sp.tenMauSac,
+            anhGiay: sp.anhGiay,
+            soLuongTonKho: Number(sp.soLuongTonKho),
+            trangThai: true,
+            idKM: sp.selectedVoucherId || null,
+          })) : [],
+        };
+        console.log('Cập nhật hoaDonDTO:', JSON.stringify(hoaDonDTO, null, 2));
+        await axios.put(`http://localhost:8080/admin/api/hoadon/${hd.idHD}`, hoaDonDTO, {
+          withCredentials: true,
+          headers: { 'Content-Type': 'application/json; charset=UTF-8' },
+        });
+        console.log('Cập nhật hóa đơn thành công');
+      } catch (error) {
+        console.error('Lỗi khi cập nhật hóa đơn:', error.response?.data || error.message);
+        ElMessage.error(`Không thể cập nhật hóa đơn: ${error.response?.data?.message || error.message}`);
+        throw error;
+      }
+    },
+    async chonSanPhamChiTiet(sanPhamChiTiet) {
+      try {
+        console.log('Sản phẩm chi tiết được chọn:', JSON.stringify(sanPhamChiTiet, null, 2));
+        if (!this.hoaDonChon || !this.hoaDonChon.idHD || isNaN(this.hoaDonChon.idHD)) {
+          console.error('Hóa đơn đang chọn không hợp lệ:', this.hoaDonChon);
+          ElMessage.error('Vui lòng chọn hoặc tạo một hóa đơn trước khi thêm sản phẩm!');
+          return;
+        }
+        const newProduct = {
+          id: sanPhamChiTiet.id,
+          idSP: sanPhamChiTiet.idSP,
+          idHDCT: null,
+          maCtSanPham: sanPhamChiTiet.maSPCT || sanPhamChiTiet.maCtSanPham || 'N/A',
+          tenGiay: sanPhamChiTiet.tenGiay,
+          giaBan: parseFloat(sanPhamChiTiet.giaBan) || 0,
+          soLuong: Number(sanPhamChiTiet.soLuong) || 1,
+          soLuongTonKho: Number(sanPhamChiTiet.soLuongTonKho) || 0,
+          tenKichThuoc: sanPhamChiTiet.tenKichThuoc || 'N/A',
+          tenMauSac: sanPhamChiTiet.tenMauSac || 'N/A',
+          tenThuongHieu: sanPhamChiTiet.tenThuongHieu || 'N/A',
+          tenChatLieu: sanPhamChiTiet.tenChatLieu || 'N/A',
+          anhGiay: sanPhamChiTiet.anhGiay || 'https://placehold.co/60x60',
+          selectedVoucher: sanPhamChiTiet.selectedVoucher || null,
+          selectedVoucherId: sanPhamChiTiet.selectedVoucherId || null,
+        };
+        console.log('Thêm sản phẩm mới:', JSON.stringify(newProduct, null, 2));
+        await this.themHoaDonChiTiet(newProduct, this.hoaDonChon);
+        ElMessage.success('Thêm sản phẩm vào hóa đơn thành công!');
+        this.productDetailModal = false;
+      } catch (error) {
+        console.error('Lỗi khi thêm sản phẩm:', error);
+        ElMessage.error(error.message || 'Không thể thêm sản phẩm vào hóa đơn!');
+      }
+    },
+    async themHoaDonChiTiet(newProduct, hd) {
+      try {
+        console.log('Hóa đơn được chọn:', JSON.stringify(hd, null, 2));
+        console.log('Sản phẩm mới:', JSON.stringify(newProduct, null, 2));
+        if (!hd || !hd.idHD || isNaN(hd.idHD)) {
+          console.error('Hóa đơn không hợp lệ:', hd);
+          throw new Error('ID hóa đơn không hợp lệ');
+        }
+        if (!newProduct.id || !newProduct.maCtSanPham || isNaN(newProduct.giaBan)) {
+          console.error('Sản phẩm không hợp lệ:', newProduct);
+          throw new Error('Dữ liệu sản phẩm không hợp lệ');
+        }
+        const chiTietDTO = {
+          idHD: Number(hd.idHD),
+          idCtSanPham: newProduct.id,
+          idSP: newProduct.idSP,
+          donGia: newProduct.giaBan,
+          soLuong: newProduct.soLuong || 1,
+          thanhTien: (newProduct.giaBan * (newProduct.soLuong || 1)).toString(),
+          tenSize: newProduct.tenKichThuoc || 'N/A',
+          tenMauSac: newProduct.tenMauSac || 'N/A',
+          tenThuongHieu: newProduct.tenThuongHieu || 'N/A',
+          tenChatLieu: newProduct.tenChatLieu || 'N/A',
+          anhGiay: newProduct.anhGiay || 'https://placehold.co/60x60',
+          soLuongTonKho: newProduct.soLuongTonKho || 0,
+          ngayTao: new Date().toISOString(),
+          ngaySua: new Date().toISOString(),
+          trangThai: true,
+          idVoucher: newProduct.selectedVoucherId || null, // Sử dụng idVoucher
+        };
+        console.log('chiTietDTO:', JSON.stringify(chiTietDTO, null, 2));
+        const response = await axios.post('http://localhost:8080/admin/api/hoadonchitiet', chiTietDTO, {
+          withCredentials: true,
+          headers: { 'Content-Type': 'application/json; charset=UTF-8' },
+        });
+        console.log('Phản hồi từ POST /hoadonchitiet:', JSON.stringify(response.data, null, 2));
+        hd.sanPhams.push({
+          ...newProduct,
+          idHDCT: response.data.idHDCT,
+        });
+        this.$forceUpdate();
+      } catch (error) {
+        console.error('Lỗi khi thêm chi tiết hóa đơn:', error.response?.data || error.message);
+        const errorMessage = error.response?.data?.message || error.message || 'Không thể thêm chi tiết hóa đơn';
+        throw new Error(errorMessage);
+      }
+    },
+    async capNhatHoaDonChiTiet(sp, hd) {
+      try {
+        const chiTietDTO = {
+          idHDCT: sp.idHDCT,
+          idHD: Number(hd.idHD),
+          idCtSanPham: Number(sp.id),
+          idSP: Number(sp.idSP),
+          maSPCT: sp.maCtSanPham,
+          tenSanPham: sp.tenGiay,
+          donGia: parseFloat(sp.giaBan).toFixed(2),
+          soLuong: Number(sp.soLuong),
+          thanhTien: parseFloat(sp.giaBan * sp.soLuong).toFixed(2),
+          tenSize: sp.tenKichThuoc,
+          tenMauSac: sp.tenMauSac,
+          tenThuongHieu: sp.tenThuongHieu,
+          tenChatLieu: sp.tenChatLieu,
+          anhGiay: sp.anhGiay,
+          soLuongTonKho: Number(sp.soLuongTonKho),
+          ngaySua: new Date().toISOString(),
+          trangThai: true,
+          idVoucher: sp.selectedVoucherId,
+        };
+        console.log('Cập nhật chiTietDTO:', chiTietDTO);
+        await axios.put(`http://localhost:8080/admin/api/hoadonchitiet/${sp.idHDCT}`, chiTietDTO, {
+          withCredentials: true,
+          headers: { 'Content-Type': 'application/json; charset=UTF-8' },
+        });
+        console.log('Cập nhật chi tiết hóa đơn thành công');
+      } catch (error) {
+        console.error('Lỗi khi cập nhật chi tiết hóa đơn:', error.response?.data || error.message);
+        ElMessage.error('Không thể cập nhật chi tiết hóa đơn!');
+        throw error;
+      }
+    },
+    async xoaHoaDon(hd, retryCount = 3) {
+      try {
+        await this.checkAuth();
+        if (hd.idHD) {
+          await axios.delete(`http://localhost:8080/admin/api/hoadon/${hd.idHD}`, {
+            withCredentials: true,
+          });
+          ElMessage.success(`Đã xóa hóa đơn ${hd.maHoaDon}`);
+        }
+        this.timeoutIds.delete(hd.idHD);
+        this.hoaDons = this.hoaDons.filter(item => item.maHoaDon !== hd.maHoaDon);
+        this.tabActive = this.hoaDons.length > 0 ? this.hoaDons[0].maHoaDon : '';
+      } catch (error) {
+        console.error('xoaHoaDon:', error);
+        if (retryCount > 0 && error.response?.status === 401) {
+          await this.checkAuth();
+          return this.xoaHoaDon(hd, retryCount - 1);
+        }
+        ElMessage.error(`Không thể xóa hóa đơn ${hd.maHoaDon}`);
+      }
+    },
+    async onChangeSoLuong(row, hd) {
+      if (row.soLuong > row.soLuongTonKho || isNaN(row.soLuong)) {
         row.soLuong = row.soLuongTonKho;
         ElMessage.error('Vượt quá số lượng tồn kho!');
       } else if (row.soLuong < 1) {
         row.soLuong = 1;
+      } else {
+        await this.capNhatHoaDonChiTiet(row, hd);
       }
-      
-      const validIds = this.getValidVouchers(hd).map(v => v.id);
-      if (hd.selectedVoucherId && !validIds.includes(hd.selectedVoucherId)) {
-        const oldVoucher = hd.selectedVoucher;
-        hd.selectedVoucherId = null;
-        hd.selectedVoucher = null;
-        
-        if (oldVoucher) {
-          const tongTien = this.tinhTienHang(hd);
-          const minAmount = oldVoucher.giaTriDonHangToiThieu;
-          ElMessage.warning(`Voucher "${oldVoucher.tenVoucher}" không còn hợp lệ! Tổng tiền hàng hiện tại: ${tongTien.toLocaleString()} VND, yêu cầu tối thiểu: ${minAmount.toLocaleString()} VND`);
+      if (row.selectedVoucherId) {
+        const validVouchers = this.getValidVouchersForProduct(row);
+        if (!validVouchers.some(v => v.id === row.selectedVoucherId)) {
+          const oldVoucher = row.selectedVoucher;
+          row.selectedVoucherId = null;
+          row.selectedVoucher = null;
+          if (oldVoucher) {
+            const tongTien = row.giaBan * row.soLuong;
+            const minAmount = oldVoucher.giaTriDonHangToiThieu || 0;
+            ElMessage.warning(`Voucher "${oldVoucher.tenVoucher}" không còn hợp lệ cho sản phẩm ${row.tenGiay}! Tổng tiền: ${tongTien.toLocaleString()} VND, yêu cầu tối thiểu: ${minAmount.toLocaleString()} VND`);
+          }
         }
       }
     },
-    // Lấy danh sách danh mục
     async fetchCategories() {
       try {
-        const response = await axios.get('http://localhost:8080/admin/api/danhmuc', {
-          headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+        await this.checkAuth();
+        const response = await axios.get('http://localhost:8080/api/danhmuc', {
+          withCredentials: true,
         });
         this.categories = response.data.map(item => ({
-          value: item.tenDM,
-          label: item.tenDM
+          value: item.idDM,
+          label: item.tenDM,
         }));
       } catch (error) {
-        console.error('Lỗi khi lấy danh mục:', error);
+        console.error('fetchCategories:', error);
         ElMessage.error('Không thể tải danh sách danh mục');
       }
     },
-    // Lấy danh sách thương hiệu
     async fetchBrands() {
       try {
-        const response = await axios.get('http://localhost:8080/admin/api/thuonghieu', {
-          headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+        await this.checkAuth();
+        const response = await axios.get('http://localhost:8080/api/thuonghieu', {
+          withCredentials: true,
         });
         this.brands = response.data.map(item => ({
-          value: item.tenThuongHieu,
-          label: item.tenThuongHieu
+          value: item.idThuongHieu,
+          label: item.tenThuongHieu,
         }));
       } catch (error) {
-        console.error('Lỗi khi lấy thương hiệu:', error);
+        console.error('fetchBrands:', error);
         ElMessage.error('Không thể tải danh sách thương hiệu');
       }
     },
-    // Lấy danh sách màu sắc
     async fetchColors() {
       try {
-        const response = await axios.get('http://localhost:8080/admin/api/mausac', {
-          headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+        await this.checkAuth();
+        const response = await axios.get('http://localhost:8080/api/mausac', {
+          withCredentials: true,
         });
         this.colors = response.data.map(item => ({
           value: item.tenMauSac,
-          label: item.tenMauSac
+          label: item.tenMauSac,
         }));
       } catch (error) {
-        console.error('Lỗi khi lấy màu sắc:', error);
+        console.error('fetchColors:', error);
         ElMessage.error('Không thể tải danh sách màu sắc');
       }
     },
-    // Lấy danh sách chất liệu
     async fetchMaterials() {
       try {
-        const response = await axios.get('http://localhost:8080/admin/api/chatlieu', {
-          headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+        await this.checkAuth();
+        const response = await axios.get('http://localhost:8080/api/chatlieu', {
+          withCredentials: true,
         });
         this.materials = response.data.map(item => ({
-          value: item.tenChatLieu,
-          label: item.tenChatLieu
+          value: item.idChatLieu,
+          label: item.tenChatLieu,
         }));
       } catch (error) {
-        console.error('Lỗi khi lấy chất liệu:', error);
+        console.error('fetchMaterials:', error);
         ElMessage.error('Không thể tải danh sách chất liệu');
       }
     },
-
-    fetchVouchers() {
-      axios.get('/admin/api/khuyenmai').then(res => {
-        this.vouchers = res.data;
-      }).catch(err => {
-        console.error('Lỗi khi lấy danh sách voucher:', err);
-        ElMessage.error('Không thể tải danh sách voucher');
-      });
+    async fetchPhuongThucThanhToan() {
+      try {
+        await this.checkAuth();
+        const response = await axios.get('http://localhost:8080/admin/api/phuongthucthanhtoan', {
+          withCredentials: true,
+        });
+        this.phuongThucThanhToans = response.data;
+      } catch (error) {
+        console.error('fetchPhuongThucThanhToan:', error);
+        ElMessage.error('Không thể tải danh sách phương thức thanh toán');
+      }
     },
-    taiLaiDanhSachSanPham() {
+    async fetchCustomers(page = 0) {
+      this.loadingCustomers = true;
+      try {
+        await this.checkAuth();
+        const response = await axios.get('http://localhost:8080/admin/api/khachhang', {
+          params: {
+            page: page,
+            size: this.pageSizeCustomer,
+            search: this.customerSearch || '',
+          },
+          withCredentials: true,
+        });
+        this.customers = response.data.content.map(item => ({
+          id: item.idKH,
+          tenKH: item.tenKH || 'N/A',
+          sdt: item.sdt || 'N/A',
+          gioiTinh: item.gioiTinh,
+          trangThai: item.trangThai,
+        }));
+        this.totalCustomers = response.data.totalElements;
+        this.currentPageCustomer = page + 1;
+      } catch (error) {
+        console.error('fetchCustomers:', error);
+        ElMessage.error('Không thể tải danh sách khách hàng');
+        this.customers = [];
+        this.totalCustomers = 0;
+      } finally {
+        this.loadingCustomers = false;
+      }
+    },
+    debounceSearchCustomers: _.debounce(function () {
+      this.fetchCustomers(0);
+    }, 300),
+    searchCustomers() {
+      this.debounceSearchCustomers();
+    },
+    async selectCustomer(customer, hd) {
+      try {
+        hd.idKhachHang = customer.id;
+        hd.khachHang = customer.tenKH;
+        hd.idKM = null;
+        await this.capNhatHoaDon(hd, hd.trangThai);
+        await this.fetchApplicableVouchers(customer.id);
+        ElMessage.success(`Đã chọn khách hàng ${customer.tenKH}`);
+        this.modalCustomer = false;
+      } catch (error) {
+        console.error('selectCustomer:', error);
+        ElMessage.error('Không thể cập nhật khách hàng cho hóa đơn');
+      }
+    },
+    showCustomerModal(hd) {
+      this.selectedHoaDon = hd;
+      this.modalCustomer = true;
+      this.customerSearch = '';
+      this.applicableVouchers = []; // Reset danh sách khuyến mãi
+      this.selectedVoucherId = null; // Reset combobox
+      this.fetchCustomers(0);
+    },
+    debouncedSearchProducts: _.debounce(function () {
+      this.fetchSanPhamList();
+    }, 300),
+    async taiLaiDanhSachSanPham() {
       this.productSearchQuery = '';
       this.selectedCategory = '';
       this.selectedBrand = '';
@@ -1145,1399 +1566,437 @@ export default {
       this.selectedMaterial = '';
       this.priceRange = [0, 5000000];
       this.pageSanPham = 1;
-      this.fetchSanPhamList();
+      await this.fetchSanPhamList();
     },
-    onProductPageChange(page) {
+    async onProductPageChange(page) {
       this.pageSanPham = page;
-      this.fetchSanPhamList();
+      await this.fetchSanPhamList();
     },
-    debouncedSearchProducts: _.debounce(function() {
-      console.log('Debounced search triggered'); // Debug
-      this.pageSanPham = 1;
-      this.fetchSanPhamList();
-    }, 300),
-    chonVoucher(hd) {
-      hd.selectedVoucher = this.vouchers.find(v => v.id === hd.selectedVoucherId) || null;
+    async onProductDetailPageChange(page) {
+      this.pageSanPhamChiTiet = page;
+      await this.fetchSanPhamChiTietList(this.selectedSanPham.id);
+    },
+    async xoaSanPham(hd, sp) {
+      try {
+        if (sp.idHDCT) {
+          await axios.delete(`http://localhost:8080/admin/api/hoadonchitiet/${sp.idHDCT}`, {
+            withCredentials: true,
+          });
+          ElMessage.success(`Đã xóa sản phẩm ${sp.tenGiay}`);
+        }
+        hd.sanPhams = hd.sanPhams.filter(item => item.id !== sp.id);
+        this.$forceUpdate();
+      } catch (error) {
+        console.error('xoaSanPham:', error);
+        ElMessage.error(`Không thể xóa sản phẩm ${sp.tenGiay}`);
+      }
+    },
+    async showVoucherModal(hd, sp) {
+      this.selectedHoaDon = hd;
+      this.selectedProduct = sp;
+      this.voucherModal = true;
+      sp.selectedVoucherId = null; // Reset voucher khi mở modal
+      sp.selectedVoucher = null;
+      await this.fetchVouchersForProduct(sp);
+    },
+    async fetchVouchersForProduct(sp) {
+  try {
+    this.voucherLoading = true;
+    const idSPCTs = [sp.id];
+    const response = await axios.post('http://localhost:8080/api/voucher/applicable', idSPCTs, {
+      withCredentials: true,
+      headers: { 'Content-Type': 'application/json' },
+    });
+    console.log('Danh sách voucher áp dụng:', response.data);
+
+    let vouchers = Array.isArray(response.data) ? response.data : response.data.content || [];
+    this.productVouchers = vouchers
+      .filter(voucher => {
+        const now = new Date();
+        const startDate = new Date(voucher.ngayBatDau);
+        const endDate = new Date(voucher.ngayKetThuc);
+        const tongTien = sp.giaBan * sp.soLuong;
+        const minAmount = voucher.giaTriDonHangToiThieu || 0;
+        return voucher.trangThai && now >= startDate && now <= endDate && tongTien >= minAmount;
+      })
+      .map(voucher => ({
+        id: voucher.id,
+        tenVoucher: voucher.tenVoucher,
+        hinhThucGiam: voucher.hinhThucGiam,
+        mucGiam: voucher.mucGiam,
+        giaGiam: voucher.giaGiam,
+        giaTriDonHangToiThieu: voucher.giaTriDonHangToiThieu,
+        soLuong: voucher.soLuong, // Thêm soLuong vào ánh xạ
+      }));
+
+    if (this.productVouchers.length === 0) {
+      ElMessage.warning('Không có voucher áp dụng được cho sản phẩm này.');
+    }
+  } catch (error) {
+    console.error('fetchVouchersForProduct:', error.response?.data || error.message);
+    ElMessage.error('Không thể tải danh sách voucher: ' + (error.response?.data?.error || error.message));
+    this.productVouchers = [];
+  } finally {
+    this.voucherLoading = false;
+  }
+},
+    getValidVouchersForProduct(sp) {
+      return this.productVouchers;
+    },
+    async chonVoucherSanPham(hd, sp, voucherId) {
+  try {
+    const selectedVoucher = this.productVouchers.find(v => v.id === voucherId);
+    if (!selectedVoucher) {
+      ElMessage.error('Voucher được chọn không hợp lệ!');
+      sp.selectedVoucherId = null;
+      sp.selectedVoucher = null;
+      this.voucherModal = false;
+      return;
+    }
+    if (selectedVoucher.soLuong <= 0) {
+      ElMessage.error('Voucher đã hết số lượng!');
+      sp.selectedVoucherId = null;
+      sp.selectedVoucher = null;
+      this.voucherModal = false;
+      return;
+    }
+    sp.selectedVoucherId = selectedVoucher.id;
+    sp.selectedVoucher = {
+      id: selectedVoucher.id,
+      tenVoucher: selectedVoucher.tenVoucher,
+      hinhThucGiam: selectedVoucher.hinhThucGiam,
+      mucGiam: selectedVoucher.mucGiam,
+      giaGiam: selectedVoucher.giaGiam,
+      giaTriDonHangToiThieu: selectedVoucher.giaTriDonHangToiThieu,
+    };
+    await this.capNhatHoaDonChiTiet(sp, hd);
+    // Cập nhật số lượng voucher trên server
+    await axios.put(
+      `http://localhost:8080/api/voucher/${selectedVoucher.id}/quantity`,
+      { soLuong: selectedVoucher.soLuong - 1 },
+      {
+        withCredentials: true,
+        headers: { 'Content-Type': 'application/json' },
+      }
+    );
+    ElMessage.success(`Đã áp dụng voucher ${sp.selectedVoucher.tenVoucher}`);
+    this.voucherModal = false;
+  } catch (error) {
+    console.error('chonVoucherSanPham:', error.response?.data || error.message);
+    ElMessage.error('Không thể áp dụng voucher: ' + (error.response?.data?.error || error.message));
+  }
+},
+    tinhGiamGiaSanPham(sp) {
+      if (!sp.selectedVoucher) return 0;
+      const tongTien = sp.giaBan * sp.soLuong;
+      if (sp.selectedVoucher.hinhThucGiam === '%') {
+        return Math.min(tongTien * (sp.selectedVoucher.mucGiam / 100), sp.selectedVoucher.giaGiam || Infinity);
+      }
+      return sp.selectedVoucher.giaGiam || 0;
     },
     tinhTienHang(hd) {
       return hd.sanPhams.reduce((sum, sp) => sum + (sp.giaBan * sp.soLuong), 0);
     },
-    tinhPhiVanChuyen(hd) {
-      return hd.giaoHang ? 34000 : 0;
-    },
     tinhGiamGia(hd) {
-      if (!hd.selectedVoucher) return 0;
-      if (hd.selectedVoucher.hinhThucGiam === 'PERCENT' || hd.selectedVoucher.hinhThucGiam === 'Phần trăm') {
-        return Math.floor(this.tinhTienHang(hd) * (hd.selectedVoucher.mucGiam / 100));
-      } else {
-        return hd.selectedVoucher.mucGiam;
-      }
+      return hd.sanPhams.reduce((sum, sp) => sum + (sp.selectedVoucher ? this.tinhGiamGiaSanPham(sp) : 0), 0);
     },
     tinhTongTien(hd) {
-      let tong = hd.sanPhams.reduce((sum, sp) => sum + sp.giaBan * sp.soLuong, 0);
-      if (hd.selectedVoucher) {
-        // Kiểm tra điều kiện
-        const v = hd.selectedVoucher;
-        const now = new Date();
-        const start = new Date(v.start_date);
-        const end = new Date(v.end_date);
-        end.setHours(23, 59, 59, 999);
-        if (
-          tong >= v.giaTriDonHangToiThieu &&
-          v.used_count < v.max_uses &&
-          now >= start && now <= end
-        ) {
-          if (v.type === 'percentage') {
-            tong -= tong * (v.value / 100);
-          } else if (v.type === 'fixed') {
-            tong -= v.value;
+      let tongTien = this.tinhTienHang(hd) - this.tinhGiamGia(hd);
+      if (hd.idKM) {
+        const voucher = this.applicableVouchers.find(v => v.id === hd.idKM);
+        if (voucher) {
+          if (tongTien >= (voucher.giaTriDonHangToiThieu || 0)) {
+            if (voucher.hinhThucGiam === 'PERCENTAGE') {
+              const giamGia = Math.min(tongTien * (voucher.mucGiam / 100), voucher.giaGiam || Infinity);
+              tongTien -= giamGia;
+            } else if (voucher.hinhThucGiam === 'FIXED') {
+              tongTien -= voucher.giaGiam || 0;
+            }
+          } else {
+            hd.idKM = null; // Xóa khuyến mãi nếu không đủ điều kiện
+            this.selectedVoucherId = null;
+            ElMessage.warning(`Hóa đơn không đủ điều kiện áp dụng khuyến mãi ${voucher.tenVoucher}. Yêu cầu tối thiểu: ${voucher.giaTriDonHangToiThieu.toLocaleString()} VND`);
           }
         }
       }
-      return tong > 0 ? tong : 0;
+      return Math.max(tongTien, 0); // Đảm bảo tổng tiền không âm
     },
-    async xacNhanDatHang(hd) {
-      try {
-        let idDiaChiKhachHang = null;
-
-        // Handle new delivery address creation
-        if (
-          hd.giaoHang &&
-          hd.customerInfo &&
-          hd.customerInfo.selectedDiaChi &&
-          !hd.customerInfo.selectedDiaChi.id &&
-          hd.customerInfo.diaChiKhachHangs
-        ) {
-          const diaChiDTO = {
-            tenDiaChi: hd.customerInfo.diaChiKhachHangs,
-            ghiChu: hd.ghiChuGiaoHang || '',
-          };
-          const response = await axios.post(`http://localhost:8080/admin/api/khachhang/${hd.idKhachHang}/dia-chi`, diaChiDTO);
-          idDiaChiKhachHang = response.data.id;
-          this.diaChiList.push(response.data);
-          hd.customerInfo.selectedDiaChi = response.data;
-        } else if (
-          hd.giaoHang &&
-          hd.customerInfo &&
-          hd.customerInfo.selectedDiaChi &&
-          hd.customerInfo.selectedDiaChi.id
-        ) {
-          idDiaChiKhachHang = hd.customerInfo.selectedDiaChi.id;
-        }
-
-        // Preparea invoice data according to the new HoaDonDTO
-        const hoaDonData = {
-          maHD: hd.maHoaDon || '',
-          idKhachHang: hd.idKhachHang ? Number(hd.idKhachHang) : null,
-          idNhanVien: Number(hd.idNhanVien) || 1,
-          ngayTao: hd.ngayTao || new Date().toISOString(),
-          ngaySua: new Date().toISOString(),
-          tongTien: this.tinhTongTien(hd),
-          trangThai: true,
-          chiTietSanPham: (hd.sanPhams || []).map(sp => ({
-            idCtSanPham: sp.id,
-            soLuong: sp.soLuong,
-            donGia: sp.giaBan
-          }))
-        };
-
-        console.log('Dữ liệu gửi lên:', hoaDonData);
-
-        // Send POST request to create invoice to the new endpoint
-        const response = await axios.post('http://localhost:8080/admin/api/hoadon', hoaDonData);
-        if (response.data) {
-          // Update inventory for each product
-          for (const sp of hd.sanPhams) {
-            try {
-              await axios.put(`http://localhost:8080/admin/api/sanphamchitiet/${sp.id}`, {
-                soLuong: sp.soLuongTonKho - sp.soLuong
-              });
-            } catch (error) {
-              console.error(`Lỗi khi cập nhật số lượng sản phẩm ${sp.id}:`, error);
-              ElMessage.error(`Không thể cập nhật số lượng cho sản phẩm ${sp.tenGiay}`);
-            }
-          }
-
-          // Update voucher quantity if applicable
-          if (hd.selectedVoucherId) {
-            try {
-              await axios.put(`http://localhost:8080/admin/api/voucher/${hd.selectedVoucherId}`, {
-                soLuong: hd.selectedVoucher.soLuong - 1
-              });
-            } catch (error) {
-              console.error('Lỗi khi cập nhật số lượng voucher:', error);
-              ElMessage.error('Không thể cập nhật số lượng voucher');
-            }
-          }
-
-          // Create invoice details (HoaDonCT)
-          for (const sp of hd.sanPhams) {
-            const hoaDonCTData = {
-              idSP: sp.id,
-              idHD: response.data.idHD,
-              idKM: hd.selectedVoucherId ? Number(hd.selectedVoucherId) : null,
-              soLuong: sp.soLuong,
-              donGia: sp.giaBan,
-              thanhTien: sp.giaBan * sp.soLuong,
-              trangThai: true,
-              ngayTao: new Date().toISOString(),
-              ngaySua: new Date().toISOString(),
-              idPTT: hd.thanhToan && hd.thanhToan.phuongThuc === 'chuyen_khoan' ? 2 : 1 // Assuming 1: Tiền mặt, 2: Chuyển khoản
-            };
-            try {
-              await axios.post('http://localhost:8080/admin/api/hoadonct', hoaDonCTData);
-            } catch (error) {
-              console.error('Lỗi khi tạo chi tiết hóa đơn:', error);
-              ElMessage.error('Không thể tạo chi tiết hóa đơn');
-            }
-          }
-
-          ElMessage.success('Lưu hóa đơn thành công!');
-          this.hoaDonIn = hd;
-          this.modalHoaDon = true;
-          this.resetHoaDon(hd);
-        }
-      } catch (error) {
-        console.error('Lỗi khi lưu hóa đơn:', error);
-        const errorMessage = error.response?.data?.message || 'Có lỗi xảy ra khi lưu hóa đơn!';
-        ElMessage.error(errorMessage);
-      }
-    },
-    inHoaDon() {
-      window.print();
-      ElMessage.success('Đã in hóa đơn thành công');
-    },
-    xoaSanPham(hd, sp) {
-      hd.sanPhams = hd.sanPhams.filter(item => item.id !== sp.id);
-    },
-    getValidVouchers(hd) {
-      const tongTien = this.tinhTienHang(hd);
-      return this.vouchers.filter(v => {
-        if (!v.trangThai) {
-          return false;
-        }
-        if (v.soLuong <= 0) {
-          return false;
-        }
-        if (v.giaTriDonHangToiThieu && tongTien < v.giaTriDonHangToiThieu) {
-          return false;
-        }
-        const now = new Date();
-        const ngayBatDau = new Date(v.ngayBatDau);
-        const ngayKetThuc = new Date(v.ngayKetThuc);
-        return now >= ngayBatDau && now <= ngayKetThuc;
-      });
-    },
-    openThanhToan(hd) {
-      this.modalThanhToan = true;
+    async openThanhToan(hd) {
       this.thanhToanHoaDon = hd;
       this.thanhToanTongTien = this.tinhTongTien(hd);
-      this.thanhToanPhuongThuc = 'chuyen_khoan';
+      this.thanhToanPhuongThuc = 'MOMO';
       this.thanhToanTienKhachDua = 0;
       this.thanhToanMaGiaoDich = '';
-      this.thanhToanLichSu = [];
+      this.momoQrCodeUrl = null;
+      this.momoPayUrl = null;
+      this.momoLoading = false;
+      this.modalThanhToan = true;
     },
-    xoaThanhToan(idx) {
-      this.thanhToanLichSu.splice(idx, 1);
-    },
-    xacNhanThanhToan() {
-      if (this.thanhToanLichSu.length === 0 && this.thanhToanTienKhachDua >= this.tinhTongTien(this.thanhToanHoaDon)) {
-        this.thanhToanLichSu.push({
-          soTien: this.thanhToanTienKhachDua,
-          phuongThuc: this.thanhToanPhuongThuc,
-          maGiaoDich: this.thanhToanMaGiaoDich
-        });
+    validateTienKhachDua() {
+      if (this.thanhToanTienKhachDua < 0) {
+        this.thanhToanTienKhachDua = 0;
       }
-      if (this.thanhToanHoaDon) {
-        const tongSoTien = this.thanhToanLichSu.reduce((sum, t) => sum + (t.soTien || 0), 0);
-        const first = this.thanhToanLichSu[0] || {};
-        this.thanhToanHoaDon.thanhToan = {
-          soTien: tongSoTien,
-          phuongThuc: first.phuongThuc || this.thanhToanPhuongThuc,
-          maGiaoDich: first.maGiaoDich || this.thanhToanMaGiaoDich
+    },
+    async taoMoMoQR() {
+      this.momoLoading = true;
+      try {
+        const orderId = `MOMO${Date.now()}${Math.floor(Math.random() * 1000)}`;
+        const requestBody = {
+          orderId: orderId,
+          amount: this.thanhToanTongTien,
+          orderInfo: `Thanh toán hóa đơn ${this.thanhToanHoaDon.maHoaDon}`,
+          returnUrl: window.location.origin + '/momo-return',
+          notifyUrl: 'http://localhost:8080/api/momo/notify',
         };
-      }
-      this.modalThanhToan = false;
-      ElMessage.success('Thanh toán thành công!');
-    },
-    async fetchCustomers(page = 0, size = 10) {
-      this.loadingCustomers = true;
-      try {
-        const response = await axios.get('http://localhost:8080/admin/api/khachhang', {
-          params: { 
-            page: page,
-            size: size,
-            search: this.customerSearch || '' // Bao gồm tham số tìm kiếm
-          },
-          headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+        console.log('Tạo MoMo QR:', requestBody);
+        const response = await axios.post('http://localhost:8080/api/momo/create', requestBody, {
+          withCredentials: true,
         });
-        console.log('Phản hồi API:', response.data);
-        this.customers = response.data.content.map(customer => ({
-          id: customer.idKH,
-          hoTen: customer.tenKH,
-          email: customer.email || '',
-          ngaySinh: customer.ngaySinh || '',
-          sdt: customer.sdt,
-          gioiTinh: customer.gioiTinh,
-          trangThai: customer.trangThai
-        }));
-        this.totalCustomers = response.data.totalElements;
-        this.currentPageCustomer = page + 1;
+        console.log('Phản hồi từ MoMo:', response.data);
+        this.momoQrCodeUrl = response.data.qrCodeUrl;
+        this.momoPayUrl = response.data.payUrl;
+        this.momoOrderId = orderId;
+        localStorage.setItem('momo_last_order_id', orderId);
+        this.startCheckingMomoStatus();
       } catch (error) {
-        console.error('Lỗi chi tiết:', error.response || error);
-        this.$message.error('Lỗi khi lấy danh sách khách hàng: ' + (error.response?.data?.message || error.message));
+        console.error('taoMoMoQR:', error);
+        ElMessage.error('Không thể tạo mã thanh toán MoMo');
       } finally {
-        this.loadingCustomers = false;
+        this.momoLoading = false;
       }
     },
-    debounceSearchCustomers: _.debounce(function() {
-      this.currentPageCustomer = 1; // Đặt lại về trang đầu khi tìm kiếm
-      this.fetchCustomers(0, this.pageSizeCustomer);
-    }, 300),
-    showCustomerModal(hd) {
-      this.selectedHoaDon = hd;
-      this.customerSearch = '';
-      this.modalCustomer = true;
-      this.fetchCustomers(0, this.pageSizeCustomer);
+    startCheckingMomoStatus() {
+      if (this.momoCheckInterval) {
+        clearInterval(this.momoCheckInterval);
+      }
+      this.momoCheckInterval = setInterval(async () => {
+        try {
+          const response = await axios.get(`http://localhost:8080/api/momo/status/${this.momoOrderId}`, {
+            withCredentials: true,
+          });
+          this.momoTransactionStatus = response.data.resultCode;
+          if (response.data.resultCode === 0) {
+            this.stopCheckingMomoStatus();
+            await this.xacNhanThanhToan();
+          } else if (response.data.resultCode !== 9000) {
+            this.stopCheckingMomoStatus();
+            ElMessage.error('Thanh toán MoMo không thành công');
+          }
+        } catch (error) {
+          console.error('startCheckingMomoStatus:', error);
+          this.stopCheckingMomoStatus();
+          ElMessage.error('Lỗi khi kiểm tra trạng thái thanh toán MoMo');
+        }
+      }, 5000);
     },
-    async selectCustomer(customer, hd) {
-      hd.khachHang = customer.hoTen;
-      hd.idKhachHang = customer.id;
-      hd.customerInfo = { 
-        ...customer,
-        gioiTinh: customer.gioiTinh ? 'Nam' : 'Nữ',
-        trangThai: customer.trangThai ? 'Hoạt động' : 'Ngừng hoạt động',
-        selectedDiaChi: null,
-        diaChiKhachHangs: ''
-      };
-      
+    stopCheckingMomoStatus() {
+      if (this.momoCheckInterval) {
+        clearInterval(this.momoCheckInterval);
+        this.momoCheckInterval = null;
+      }
+    },
+    async handleMoMoReturn(orderId) {
       try {
-        const response = await axios.get(`http://localhost:8080/admin/api/khachhang/${customer.id}/dia-chi`);
-        this.diaChiList = response.data;
-        if (this.diaChiList.length > 0) {
-          hd.customerInfo.selectedDiaChi = this.diaChiList[0];
-          hd.customerInfo.diaChiKhachHangs = this.diaChiList[0].tenDiaChi;
+        const response = await axios.get(`http://localhost:8080/api/momo/status/${orderId}`, {
+          withCredentials: true,
+        });
+        console.log('handleMoMoReturn:', response.data);
+        if (response.data.resultCode === 0) {
+          this.thanhToanMaGiaoDich = response.data.transId;
+          await this.xacNhanThanhToan();
+        } else {
+          ElMessage.error('Thanh toán MoMo không thành công');
         }
       } catch (error) {
-        console.error('Lỗi khi lấy danh sách địa chỉ:', error);
-        this.$message.error('Lỗi khi lấy danh sách địa chỉ: ' + (error.response?.data?.message || error.message));
-      }
-      
-      this.modalCustomer = false;
-    },
-    async searchCustomers() {
-      this.currentPageCustomer = 1; // Đặt lại về trang đầu
-      this.fetchCustomers(0, this.pageSizeCustomer); // Gọi fetchCustomers với từ khóa tìm kiếm
-    },
-    updateDiaChi(hd) {
-      if (hd.customerInfo.selectedDiaChi && hd.customerInfo.selectedDiaChi.id) {
-        hd.customerInfo.diaChiKhachHangs = hd.customerInfo.selectedDiaChi.tenDiaChi;
-      } else {
-        hd.customerInfo.diaChiKhachHangs = '';
+        console.error('handleMoMoReturn:', error);
+        ElMessage.error('Lỗi khi xử lý thanh toán MoMo');
       }
     },
-    async toggleDeliveryInfo(hd) {
-      if (!hd.giaoHang) {
-        hd.customerInfo = null;
-        hd.ghiChuGiaoHang = '';
-        this.diaChiList = [];
-      } else if (!hd.customerInfo && hd.khachHang) {
-        const customer = this.customers.find(c => c.hoTen === hd.khachHang);
-        if (customer) {
-          hd.customerInfo = { 
-            ...customer,
-            gioiTinh: customer.gioiTinh ? 'Nam' : 'Nữ',
-            trangThai: customer.trangThai ? 'Hoạt động' : 'Ngừng hoạt động',
-            selectedDiaChi: null,
-            diaChiKhachHangs: ''
-          };
-          hd.idKhachHang = customer.id;
-          try {
-            const response = await axios.get(`http://localhost:8080/admin/api/khachhang/${customer.id}/dia-chi`);
-            this.diaChiList = response.data;
-            if (this.diaChiList.length > 0) {
-              hd.customerInfo.selectedDiaChi = this.diaChiList[0];
-              hd.customerInfo.diaChiKhachHangs = this.diaChiList[0].tenDiaChi;
-            }
-          } catch (error) {
-            console.error('Lỗi khi lấy danh sách địa chỉ:', error);
-            this.$message.error('Lỗi khi lấy danh sách địa chỉ: ' + (error.response?.data?.message || error.message));
-          }
+    async xacNhanThanhToan() {
+      try {
+        const thanhToanInfo = {
+          phuongThuc: this.thanhToanPhuongThuc,
+          soTien: this.thanhToanPhuongThuc === 'TIỀN MẶT' ? this.thanhToanTienKhachDua : this.thanhToanTongTien,
+          maGiaoDich: this.thanhToanMaGiaoDich || null,
+          ngayThanhToan: new Date().toISOString(),
+        };
+        console.log('Thông tin thanh toán:', thanhToanInfo);
+        this.thanhToanHoaDon.thanhToan = thanhToanInfo;
+        this.thanhToanHoaDon.trangThai = 'HOAN_THANH';
+        this.thanhToanHoaDon.maGiaoDich = thanhToanInfo.maGiaoDich;
+        this.thanhToanHoaDon.idPT = this.phuongThucThanhToans.find(pt => pt.ten === this.thanhToanPhuongThuc)?.id || null;
+        await this.capNhatHoaDon(this.thanhToanHoaDon, 'HOAN_THANH');
+        this.thanhToanLichSu.push(thanhToanInfo);
+        this.modalThanhToan = false;
+        this.hoaDonIn = { ...this.thanhToanHoaDon };
+        this.modalHoaDon = true;
+        this.stopCheckingMomoStatus();
+        localStorage.removeItem('momo_last_order_id');
+        this.hoaDons = this.hoaDons.filter(hd => hd.maHoaDon !== this.thanhToanHoaDon.maHoaDon);
+        this.tabActive = this.hoaDons.length > 0 ? this.hoaDons[0].maHoaDon : '';
+        if (this.hoaDonChon && this.hoaDonChon.maHoaDon === this.thanhToanHoaDon.maHoaDon) {
+          this.hoaDonChon = null;
         }
+        ElMessage.success('Thanh toán thành công!');
+      } catch (error) {
+        console.error('xacNhanThanhToan:', error);
+        ElMessage.error('Không thể xác nhận thanh toán');
       }
     },
-    resetHoaDon(hd) {
-      const ma = 'HD' + (Math.floor(Math.random() * 9000) + 1000);
-      hd.maHoaDon = ma;
-      hd.sanPhams = [];
-      hd.khachHang = '';
-      hd.idKhachHang = null;
-      hd.customerInfo = null;
-      hd.selectedVoucher = null;
-      hd.selectedVoucherId = null;
-      hd.thanhToan = null;
-      hd.trangThai = 'CHO_THANH_TOAN';
-      hd.hinhThucThanhToan = 'TIEN_MAT';
-      hd.ngayTao = new Date().toISOString();
-      hd.idNhanVien = localStorage.getItem('userId') || 1;
-      hd.giaoHang = false;
-      hd.ghiChuGiaoHang = '';
-      
-      setTimeout(() => {
-        this.modalHoaDon = false;
-      }, 2000);
+    closeThanhToanModal() {
+      this.modalThanhToan = false;
+      this.stopCheckingMomoStatus();
+      localStorage.removeItem('momo_last_order_id');
     },
-    taoHoaDonMoiNgay() {
+    formatDate(date) {
+      return new Date(date).toLocaleString('vi-VN', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+      });
+    },
+    async taoHoaDonMoiNgay() {
       this.modalHoaDon = false;
-      this.taoHoaDon();
-      ElMessage.success('Đã tạo hóa đơn mới!');
+      await this.taoHoaDon();
     },
-    
-    
-    
+    inHoaDon() {
+      // Tạo nội dung HTML của hóa đơn
+      const invoiceContent = `
+        <html>
+          <head>
+            <title>Hóa đơn ${this.hoaDonIn.maHoaDon}</title>
+            <style>
+              body { font-family: Arial, sans-serif; margin: 20px; }
+              .invoice { max-width: 800px; margin: auto; }
+              .header { text-align: center; }
+              .table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+              .table th, .table td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+              .table th { background-color: #f2f2f2; }
+            </style>
+          </head>
+          <body>
+            <div class="invoice">
+              <div class="header">
+                <h3>NEXVIBE</h3>
+                <div>SĐT: 0123456789</div>
+                <div>Email: nexvibeweb@gmail.com</div>
+                <div>Địa chỉ: FPT POLYTECHNIC Cơ Sở Trịnh Văn Bô, Nam Từ Liêm, Hà Nội</div>
+              </div>
+              <h4 style="text-align: center; margin-top: 20px;">HÓA ĐƠN BÁN HÀNG</h4>
+              <div>Mã hóa đơn: ${this.hoaDonIn.maHoaDon}</div>
+              <div>Ngày tạo: ${this.formatDate(this.hoaDonIn.ngayTao)}</div>
+              <div>Khách hàng: ${this.hoaDonIn.khachHang || 'Khách lẻ'}</div>
+              <div>Phương thức thanh toán: ${this.hoaDonIn.thanhToan?.phuongThuc || 'N/A'}</div>
+              ${this.hoaDonIn.thanhToan?.maGiaoDich ? `<div>Mã giao dịch: ${this.hoaDonIn.thanhToan.maGiaoDich}</div>` : ''}
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th>Tên sản phẩm</th>
+                    <th>Số lượng</th>
+                    <th>Đơn giá</th>
+                    <th>Thành tiền</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${this.hoaDonIn.sanPhams.map(sp => `
+                    <tr>
+                      <td>${sp.tenGiay}</td>
+                      <td>${sp.soLuong}</td>
+                      <td>${sp.giaBan != null ? sp.giaBan.toLocaleString() : '0'} VND</td>
+                      <td>${sp.giaBan != null ? (sp.giaBan * sp.soLuong - (sp.selectedVoucher ? this.tinhGiamGiaSanPham(sp) : 0)).toLocaleString() : '0'} VND</td>
+                    </tr>
+                  `).join('')}
+                </tbody>
+              </table>
+              <div style="margin-top: 20px;">
+                <div>Tổng tiền hàng: ${this.tinhTienHang(this.hoaDonIn).toLocaleString()} VND</div>
+                <div>Giảm giá: ${this.tinhGiamGia(this.hoaDonIn).toLocaleString()} VND</div>
+                <div><b>Tổng tiền cần thanh toán: ${this.tinhTongTien(this.hoaDonIn).toLocaleString()} VND</b></div>
+                ${this.hoaDonIn.thanhToan && this.hoaDonIn.thanhToan.soTien > this.tinhTongTien(this.hoaDonIn) ? `
+                  <div><b>Tiền thừa trả lại: ${(this.hoaDonIn.thanhToan.soTien - this.tinhTongTien(this.hoaDonIn)).toLocaleString()} VND</b></div>
+                ` : ''}
+              </div>
+            </div>
+          </body>
+        </html>
+      `;
+
+      // Tạo iframe ẩn để in
+      const iframe = document.createElement('iframe');
+      iframe.style.display = 'none';
+      document.body.appendChild(iframe);
+      
+      // Viết nội dung hóa đơn vào iframe
+      const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+      iframeDoc.open();
+      iframeDoc.write(invoiceContent);
+      iframeDoc.close();
+
+      // Tự động lưu file HTML
+      try {
+        const blob = new Blob([invoiceContent], { type: 'text/html' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `${this.hoaDonIn.maHoaDon}.html`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+      } catch (error) {
+        console.error('Lỗi khi lưu hóa đơn:', error);
+        ElMessage.error('Không thể lưu hóa đơn!');
+      }
+
+      // In hóa đơn và đóng modal
+      iframe.onload = () => {
+        try {
+          iframe.contentWindow.print();
+          this.modalHoaDon = false; // Đóng modal sau khi in
+          // Xóa iframe sau khi in
+          setTimeout(() => {
+            document.body.removeChild(iframe);
+          }, 1000);
+        } catch (error) {
+          console.error('Lỗi khi in hóa đơn:', error);
+          ElMessage.error('Không thể in hóa đơn!');
+          this.modalHoaDon = false; // Đóng modal ngay cả khi có lỗi
+          document.body.removeChild(iframe);
+        }
+      };
+    },
   },
 };
 </script>
 
-
 <style scoped>
 .ban-hang-tai-quay {
-  padding: 20px;
+  max-width: 100%;
 }
-
-.header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 20px;
-}
-
-.no-data {
-  text-align: center;
-  margin: 40px 0;
-}
-
-.main-content {
-  display: flex;
-  gap: 20px;
-  height: 600px;
-}
-
-.left-section {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-}
-
-.actions {
-  margin-bottom: 15px;
-  display: flex;
-  gap: 10px;
-}
-
-.product-section {
-  flex: 1;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  padding: 15px;
-  background-color: #fafafa;
-}
-
-.product-section h3 {
-  margin: 0 0 15px 0;
-  font-size: 16px;
-  font-weight: bold;
-}
-
-.product-list {
-  height: 400px;
-  overflow-y: auto;
-}
-.product-list::-webkit-scrollbar-thumb {
-  background-color: #888;
-  border-radius: 4px;
-}
-
-.product-list::-webkit-scrollbar-track {
-  background: #f1f1f1;
-}
-
-/* Hiệu ứng cho nút */
-.animated-btn {
-  position: relative;
-  background-color: #ffffff; /* White background */
-  border: 2px solid #8B4513; /* Brown border */
-  color: #8B4513; /* Brown text/icon */
-  transition: all 0.2s ease;
-  border-radius: 6px; /* Consistent border radius */
-  font-weight: 500;
-  padding: 8px 16px; /* Consistent padding */
-}
-
-.animated-btn:hover {
-  background-color: #8B4513; /* Brown background on hover */
-  color: #ffffff; /* White text/icon on hover */
-  transform: scale(1.05);
-  box-shadow: 0 4px 12px rgba(139, 69, 19, 0.2); /* Brown shadow */
-}
-
-.animated-btn:active {
-  transform: scale(0.95);
-  box-shadow: 0 2px 6px rgba(139, 69, 19, 0.1);
-}
-
-.animated-btn:disabled {
-  background-color: #f9f9f9;
-  border-color: #d3d3d3;
-  color: #d3d3d3;
-  transform: none;
-  box-shadow: none;
-  cursor: not-allowed;
-}
-
-/* Specific button overrides to maintain consistency */
-.btn-primary.animated-btn,
-.btn-success.animated-btn,
-.btn-danger.animated-btn,
-.btn-info.animated-btn,
-.btn-warning.animated-btn,
-.btn-outline-danger.animated-btn,
-.btn-outline-success.animated-btn {
-  background-color: #ffffff;
-  border: 2px solid #8B4513;
-  color: #8B4513;
-}
-
-.btn-primary.animated-btn:hover,
-.btn-success.animated-btn:hover,
-.btn-danger.animated-btn:hover,
-.btn-info.animated-btn:hover,
-.btn-warning.animated-btn:hover,
-.btn-outline-danger.animated-btn:hover,
-.btn-outline-success.animated-btn:hover {
-  background-color: #8B4513;
-  color: #ffffff;
-  border-color: #8B4513;
-}
-
-/* Ensure active state for payment buttons maintains the brown theme */
-.btn-outline-danger.animated-btn.active,
-.btn-outline-success.animated-btn.active {
-  background-color: #8B4513;
-  color: #ffffff;
-  border-color: #8B4513;
-}
-
-/* Hiệu ứng cho tab hóa đơn */
-.nav-tabs .nav-link {
-  transition: all 0.3s ease;
-}
-
-.nav-tabs .nav-link:hover {
-  background-color: #f8f9fa;
-  transform: translateY(-2px);
-}
-
-.tab-content .tab-pane {
-  animation: fadeSlide 0.3s ease-out;
-}
-
-@keyframes fadeSlide {
-  from {
-    opacity: 0;
-    transform: translateX(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
-}
-
-/* Hiệu ứng cho danh sách sản phẩm */
-.animated-item {
-  animation: slideIn 0.3s ease-out;
-}
-
-@keyframes slideIn {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-/* Tùy chỉnh để tích hợp Element UI với Bootstrap */
-.el-input-number {
-  width: 100px;
-}
-
-.el-switch {
-  --el-switch-on-color: #8B4513; /* Brown for switch */
-}
-
-.empty-products {
-  text-align: center;
-  color: #999;
-  margin-top: 50px;
-}
-
-.product-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 10px;
-  margin-bottom: 10px;
-  background: white;
-  border: 1px solid #eee;
-  border-radius: 4px;
-}
-
-.product-info {
-  flex: 1;
-}
-
-.product-name {
-  display: block;
-  font-weight: bold;
-  margin-bottom: 5px;
-}
-
-.product-price {
-  color: #666;
-  font-size: 14px;
-}
-
-.product-quantity {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.product-quantity .el-input-number {
-  width: 100px;
-}
-
-.right-section {
-  width: 350px;
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-}
-
-.customer-section {
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  padding: 15px;
-  background-color: #fafafa;
-}
-
-.customer-info {
-  margin-bottom: 15px;
-}
-
-.customer-info label {
-  display: block;
-  margin-bottom: 5px;
-  font-weight: bold;
-}
-
-.customer-input-group {
-  display: flex;
-  gap: 10px;
-}
-
-.customer-input-group .el-input {
-  flex: 1;
-}
-
-.delivery-section {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 15px;
-}
-
-.delivery-section label {
-  font-weight: bold;
-}
-
-.voucher-section {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.payment-summary {
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  padding: 15px;
-  background-color: #fafafa;
-}
-
-.total-display {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 15px;
-  padding: 10px;
-  background-color: #f0f0f0;
-  border-radius: 4px;
-}
-
-.total-label {
-  font-weight: bold;
-  font-size: 16px;
-}
-
-.total-amount {
-  font-weight: bold;
-  font-size: 18px;
-  color: #e74c3c;
-}
-
-.payment-details {
-  margin-bottom: 15px;
-}
-
-.payment-row {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 8px;
-  font-size: 14px;
-}
-
-.payment-row span:first-child {
-  color: #666;
-}
-
-.final-total {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 10px;
-  background-color: #f0f0f0;
-  border-radius: 4px;
-  margin-bottom: 15px;
-  font-weight: bold;
-}
-
-.final-amount {
-  color: #e74c3c;
-  font-size: 16px;
-}
-
-.confirm-btn {
-  width: 100%;
-  height: 40px;
-  font-size: 16px;
-}
-
-/* Modal chọn sản phẩm - Overlay */
-.chonSP {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0, 0, 0, 0.6);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 9999;
-  backdrop-filter: blur(3px);
-  animation: fadeIn 0.3s ease-out;
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
-
-/* Modal container */
-.chonSP .product-search-modal {
-  background: white;
-  width: 95%;
-  max-width: 1400px;
-  height: 85vh;
-  border-radius: 12px;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  animation: slideIn 0.3s ease-out;
-}
-
-@keyframes slideIn {
-  from {
-    opacity: 0;
-    transform: translateY(-50px) scale(0.95);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-}
-
-/* Modal header */
-.product-search-modal .modal-header {
-  padding: 20px 24px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  border-radius: 12px 12px 0 0;
-}
-
-.modal-header h3 {
-  margin: 0;
-  font-size: 20px;
-  font-weight: 600;
-}
-
-.modal-header .close-btn {
-  position: absolute;
-  top: 15px;
-  right: 20px;
-  background: none;
-  border: none;
-  color: white;
-  font-size: 24px;
-  cursor: pointer;
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: background-color 0.2s;
-}
-
-.modal-header .close-btn:hover {
-  background-color: rgba(255, 255, 255, 0.2);
-}
-
-/* Modal body */
-.product-search-modal .modal-body {
-  flex: 1;
-  padding: 24px;
-  overflow-y: auto;
-  display: flex;
-  flex-direction: column;
-}
-
-/* Search section */
-.search-section {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 24px;
-  padding: 20px;
-  background: #f8fafc;
-  border-radius: 10px;
-  border: 1px solid #e2e8f0;
-}
-
-.search-input .el-input {
-  width: 350px;
-}
-
-.search-input .el-input__inner {
-  height: 42px;
-  border-radius: 8px;
-  border: 2px solid #e2e8f0;
-  padding-left: 45px;
-  transition: all 0.3s ease;
-}
-
-.search-input .el-input__inner:focus {
-  border-color: #8B4513; /* Brown border on focus */
-  box-shadow: 0 0 0 3px rgba(139, 69, 19, 0.1);
-}
-
-.search-input .el-input__icon {
-  line-height: 42px;
-}
-
-.price-range {
-  display: flex;
-  align-items: center;
-  font-size: 14px;
-  color: #64748b;
-  font-weight: 500;
-}
-
-.price-range .el-slider {
-  margin: 0 20px;
-  width: 200px;
-}
-
-/* Filter section */
-.filter-section {
-  margin-bottom: 24px;
-  padding: 20px;
-  background: #f8fafc;
-  border-radius: 10px;
-  border: 1px solid #e2e8f0;
-}
-
-.filter-row {
-  display: flex;
-  align-items: center;
-  gap: 15px;
-  flex-wrap: nowrap;
-}
-
-.filter-label {
-  font-size: 14px;
-  color: #374151;
-  font-weight: 600;
-  min-width: 80px;
-  flex-shrink: 0;
-}
-
-.filter-row select {
-  padding: 8px 12px;
-  border: 2px solid #e2e8f0;
-  border-radius: 6px;
-  font-size: 14px;
-  color: #374151;
-  background: white;
-  flex: 1;
-  min-width: 120px;
-  transition: all 0.2s ease;
-}
-
-.filter-row select:focus {
-  outline: none;
-  border-color: #8B4513; /* Brown border on focus */
-  box-shadow: 0 0 0 3px rgba(139, 69, 19, 0.1);
-}
-
-.filter-row .reset-button {
-  padding: 8px 16px;
-  background-color: #ffffff;
-  border: 2px solid #8B4513;
-  color: #8B4513;
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 14px;
-  font-weight: 500;
-  transition: all 0.2s ease;
-  flex-shrink: 0;
-  white-space: nowrap;
-}
-
-.filter-row .reset-button:hover {
-  background-color: #8B4513;
-  color: #ffffff;
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(139, 69, 19, 0.4);
-}
-
-/* Responsive for filter section */
-@media (max-width: 1200px) {
-  .filter-row {
-    flex-wrap: wrap;
-    gap: 10px;
-  }
-
-  .filter-row select {
-    min-width: 100px;
-  }
-
-  .filter-label {
-    min-width: 70px;
-  }
-}
-
-@media (max-width: 768px) {
-  .filter-row {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .filter-label {
-    min-width: auto;
-    margin-bottom: 5px;
-  }
-
-  .filter-row select,
-  .filter-row .reset-button {
-    width: 100%;
-  }
-}
-
-/* Product table container */
-.product-table {
-  flex: 1;
-  background: white;
-  border-radius: 10px;
-  overflow: hidden;
-  border: 1px solid #e2e8f0;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  max-height: 500px;
-  overflow-y: auto;
-  position: relative;
-}
-
-/* Table styles */
-.product-table table {
-  width: 100%;
-  border-collapse: collapse;
-  background: white;
-}
-
-.product-table thead {
-  position: sticky;
-  top: 0;
-  z-index: 10;
-  background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
-}
-
-.product-table thead th {
-  padding: 16px 12px;
-  border: 1px solid #e2e8f0;
-  font-weight: 600;
-  font-size: 14px;
-  color: #374151;
-  text-align: left;
-}
-
-.product-table tbody td {
-  padding: 16px 12px;
-  border: 1px solid #f1f5f9;
-  font-size: 14px;
-  color: #374151;
-  vertical-align: middle;
-}
-
-.product-table tbody tr {
-  transition: all 0.2s ease;
-}
-
-.product-table tbody tr:hover {
-  background-color: #f8fafc;
-  transform: translateY(-1px);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-}
-
-/* Product image */
-.product-table img {
-  width: 60px;
-  height: 60px;
-  object-fit: cover;
-  border-radius: 8px;
-  border: 2px solid #e2e8f0;
-  transition: all 0.2s ease;
-}
-
-.product-table img:hover {
-  transform: scale(1.1);
-  border-color: #8B4513; /* Brown border on hover */
-}
-
-/* Price styling */
-.product-table .price-cell {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-}
-
-.product-table .original-price {
-  text-decoration: line-through;
-  color: #9ca3af;
-  font-size: 12px;
-  margin-bottom: 2px;
-}
-
-.product-table .current-price {
-  color: #dc2626;
-  font-weight: 700;
-  font-size: 14px;
-}
-
-/* Action button in product table */
-.product-table .action-btn {
-  background-color: #ffffff;
-  border: 2px solid #8B4513;
-  color: #8B4513;
-  padding: 8px 16px;
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 12px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  transition: all 0.2s ease;
-}
-
-.product-table .action-btn:hover {
-  background-color: #8B4513;
-  color: #ffffff;
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(139, 69, 19, 0.4);
-}
-
-/* Loading and empty states */
-.loading-state, .empty-state {
-  text-align: center;
-  padding: 60px 20px;
-  color: #6b7280;
-}
-
-.loading-state {
-  background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
-}
-
-.loading-state::before {
-  content: '';
-  display: inline-block;
-  width: 40px;
-  height: 40px;
-  border: 4px solid #e5e7eb;
-  border-top: 4px solid #8B4513; /* Brown loading spinner */
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-  margin-bottom: 16px;
-}
-
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
-
-.empty-state {
-  background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
+.card {
   border-radius: 8px;
 }
-
-/* Pagination */
-.pagination-section {
-  text-align: center;
-  margin-top: 24px;
-  padding: 20px;
-  background: #f8fafc;
-  border-radius: 10px;
-  border: 1px solid #e2e8f0;
+.table-responsive {
+  overflow-x: auto;
 }
-
-/* .pagination-section > div {
-  display: inline-flex;
-  align-items: center;
-🙈  gap: 16px;
-  background: white;
-  padding: 12px 20px;
-  border-radius: 8px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-} */
-
-.pagination-section span {
-  font-size: 14px;
-  color: #374151;
-  font-weight: 500;
-}
-
-.pagination-section button {
-  padding: 8px 16px;
-  border: 2px solid #8B4513; /* Brown border */
-  background: #ffffff;
-  color: #8B4513;
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 14px;
-  font-weight: 500;
-  transition: all 0.2s ease;
-}
-
-.pagination-section button:not(:disabled):hover {
-  background-color: #8B4513;
-  color: #ffffff;
-  border-color: #8B4513;
-  transform: translateY(-1px);
-}
-
-.pagination-section button:disabled {
-  background: #f9fafb;
-  color: #9ca3af;
-  border-color: #d3d3d3;
-  cursor: not-allowed;
-}
-
-/* Modal footer */
-.dialog-footer {
-  padding: 20px 24px;
-  background: #f8fafc;
-  border-top: 1px solid #e2e8f0;
-  display: flex;
-  justify-content: flex-end;
-  gap: 12px;
-}
-
-.dialog-footer .el-button {
-  min-width: 100px;
-  height: 40px;
-  border-radius: 8px;
-  font-weight: 500;
-  background-color: #ffffff;
-  border: 2px solid #8B4513;
-  color: #8B4513;
-}
-
-.dialog-footer .el-button:hover {
-  background-color: #8B4513;
-  color: #ffffff;
-  border-color: #8B4513;
-}
-
-.dialog-footer .el-button[type="primary"] {
-  background-color: #ffffff;
-  border: 2px solid #8B4513;
-  color: #8B4513;
-}
-
-.dialog-footer .el-button[type="primary"]:hover {
-  background-color: #8B4513;
-  color: #ffffff;
-}
-
-/* Style cho modal phương thức thanh toán */
-.modal-lg .modal-header {
-  background-color: #8B4513; /* Brown header */
-  border-bottom: none;
-}
-
-.modal-lg .modal-title {
-  font-size: 1.25rem;
-  color: #ffffff;
-}
-
-.modal-lg .modal-body {
-  padding: 20px;
-  text-align: center;
-}
-
-.modal-lg .modal-body h6 {
-  margin-bottom: 0.5rem;
-}
-
-.modal-lg .modal-body .btn {
-  padding: 8px 20px;
-  border-radius: 20px;
-  font-weight: bold;
-}
-
-.modal-lg .btn-outline-danger {
-  background-color: #ffffff;
-  border: 2px solid #8B4513;
-  color: #8B4513;
-}
-
-.modal-lg .btn-outline-danger:hover,
-.modal-lg .btn-outline-danger.active {
-  background-color: #8B4513;
-  color: #ffffff;
-  border-color: #8B4513;
-}
-
-.modal-lg .btn-outline-success {
-  background-color: #ffffff;
-  border: 2px solid #8B4513;
-  color: #8B4513;
-}
-
-.modal-lg .btn-outline-success:hover,
-.modal-lg .btn-outline-success.active {
-  background-color: #8B4513;
-  color: #ffffff;
-  border-color: #8B4513;
-}
-
-.modal-lg .form-floating > .form-control:focus ~ label,
-.modal-lg .form-floating > .form-control:not(:placeholder-shown) ~ label {
-  transform: scale(0.85) translateY(-0.5rem) translateX(0.15rem);
-  opacity: 1;
-}
-
-.modal-lg .form-floating > label {
-  position: absolute;
-  top: 0;
-  left: 0;
-  height: 100%;
-  padding: 1rem 0.75rem;
-  pointer-events: none;
-  border: 1px solid transparent;
-  transform-origin: 0 0;
-  transition: opacity 0.1s ease-in-out, transform 0.1s ease-in-out;
-  opacity: 0.65;
-}
-
-.modal-lg .form-floating > .form-control {
-  padding-top: 1.625rem;
-  padding-bottom: 0.625rem;
-}
-
-.modal-lg .input-group {
-  margin-bottom: 0.5rem;
-}
-
-.modal-lg .input-group-text {
-  background-color: #8B4513;
-  color: #ffffff;
-  border: none;
-}
-
-.modal-lg .form-control {
-  border-color: #8B4513;
-}
-
-.modal-lg .form-control:focus {
-  border-color: #8B4513;
-  box-shadow: 0 0 0 0.2rem rgba(139, 69, 19, 0.25);
-}
-
-.modal-lg .modal-footer .btn-success {
-  background-color: #ffffff;
-  border: 2px solid #8B4513;
-  color: #8B4513;
-}
-
-.modal-lg .modal-footer .btn-success:hover {
-  background-color: #8B4513;
-  color: #ffffff;
-  border-color: #8B4513;
-}
-
-.modal-lg .table {
-  margin-top: 1rem;
-  width: 100%;
-}
-
-.modal-lg .table th,
-.modal-lg .table td {
-  text-align: center;
-  vertical-align: middle;
-}
-
-.modal-lg .table th {
-  background-color: #f8f9fa;
-  font-weight: bold;
-}
-
-/* Style cho modal chọn khách hàng */
-.modal.show {
-  display: flex !important;
-  align-items: center;
-  justify-content: center;
-}
-
 .modal-dialog {
-  margin: 0 !important;
+  max-width: 90%;
 }
-
-/* Responsive cho màn hình nhỏ */
-@media (max-width: 768px) {
-  .modal-dialog {
-    width: 95% !important;
-    max-width: 95% !important;
-  }
-
-  .modal-content {
-    max-height: 95vh !important;
-  }
-}
-
-/* Cải thiện giao diện bảng */
-.custom-table {
-  margin-bottom: 0;
-}
-
-.custom-table th {
-  border-top: none;
-  font-weight: 600;
-  font-size: 0.9rem;
-}
-
-.table-row:hover {
-  background-color: rgba(139, 69, 19, 0.1) !important;
-}
-
-/* Cải thiện nút đóng */
-.btn-close-white {
-  filter: invert(1) grayscale(100%) brightness(200%);
-}
-
-.delivery-switch {
-  transform: scale(1.2);
-}
-
-.delivery-info {
-  animation: slideDown 0.3s ease-in-out;
-}
-
-@keyframes slideDown {
-  from {
-    opacity: 0;
-    transform: translateY(-10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.form-control:focus {
-  border-color: #8B4513;
-  box-shadow: 0 0 0 0.2rem rgba(139, 69, 19, 0.25);
-}
-
-.info-item {
-  display: flex;
-  align-items: center;
-  padding: 0.5rem 0;
-}
-.dialog-content-wrapper {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-/* sản phẩm */
-.dialog-content-wrapper {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-
-.search-bar-wrapper {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-
-.filter-wrapper {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-
-.table-wrapper {
-  flex: 1;
-  overflow-y: auto;
-}
-
-.pagination-wrapper {
-  margin-top: 1rem;
-  text-align: center;
-}
-
-.product-image {
-  width: 60px;
-  height: 60px;
-  object-fit: cover;
+.modal-content {
   border-radius: 8px;
+}
+.btn-sm {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.875rem;
+}
+.form-control-sm {
+  height: calc(1.5em + 0.5rem + 2px);
+}
+.badge {
+  font-size: 0.75rem;
 }
 </style>
+```

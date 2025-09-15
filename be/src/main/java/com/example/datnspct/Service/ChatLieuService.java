@@ -11,8 +11,15 @@ import java.util.stream.Collectors;
 
 @Service
 public class ChatLieuService {
+
     @Autowired
     private ChatLieuRepository repository;
+
+    // Sinh mã chất liệu tự động
+    private String generateMaChatLieu() {
+        long count = repository.count();
+        return String.format("CL%03d", count + 1); // Ví dụ: CL001, CL002
+    }
 
     // Entity -> DTO
     private ChatLieuDTO toDTO(ChatLieu entity) {
@@ -28,7 +35,6 @@ public class ChatLieuService {
     private ChatLieu toEntity(ChatLieuDTO dto) {
         ChatLieu entity = new ChatLieu();
         entity.setIdChatLieu(dto.getIdChatLieu());
-        entity.setMaChatLieu(dto.getMaChatLieu());
         entity.setTenChatLieu(dto.getTenChatLieu());
         entity.setTrangThai(dto.getTrangThai());
         return entity;
@@ -37,6 +43,8 @@ public class ChatLieuService {
     // Tạo mới
     public ChatLieuDTO create(ChatLieuDTO dto) {
         ChatLieu entity = toEntity(dto);
+        entity.setMaChatLieu(generateMaChatLieu()); // Tự động sinh mã
+        entity.setTrangThai(true);
         ChatLieu saved = repository.save(entity);
         return toDTO(saved);
     }
@@ -57,8 +65,7 @@ public class ChatLieuService {
     public ChatLieuDTO update(Integer id, ChatLieuDTO dto) {
         ChatLieu entity = repository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy chất liệu"));
-        entity.setMaChatLieu(dto.getMaChatLieu());
-        entity.setTenChatLieu(dto.getTenChatLieu());
+        entity.setTenChatLieu(dto.getTenChatLieu()); // Chỉ cập nhật tên
         entity.setTrangThai(dto.getTrangThai());
         ChatLieu updated = repository.save(entity);
         return toDTO(updated);
@@ -70,4 +77,4 @@ public class ChatLieuService {
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy chất liệu"));
         repository.delete(entity);
     }
-} 
+}

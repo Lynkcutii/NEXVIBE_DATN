@@ -10,6 +10,7 @@ import com.example.datnspct.Repository.login.TaiKhoanRepository;
 import com.example.datnspct.dto.GioHangCTDTO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -30,7 +31,7 @@ public class GioHangCTService {
         GioHangCTDTO dto = new GioHangCTDTO();
         dto.setIdGHCT(entity.getIdGHCT());
         dto.setIdGH(entity.getGioHang() != null ? entity.getGioHang().getIdGH() : null);
-        dto.setIdSPCT(entity.getSanPhamChiTiet() != null ? entity.getSanPhamChiTiet().getId() : null); // Sửa: dùng IdSPCT
+        dto.setIdSPCT(entity.getSanPhamChiTiet() != null ? entity.getSanPhamChiTiet().getId() : null);
         dto.setSoLuong(entity.getSoLuong());
         dto.setDonGia(entity.getDonGia());
         return dto;
@@ -99,9 +100,23 @@ public class GioHangCTService {
     }
 
     // Xóa
+    @Transactional
     public void delete(Integer id) {
-        GioHangCT entity = gioHangCTRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy chi tiết giỏ hàng"));
-        gioHangCTRepository.delete(entity);
+        System.out.println("delete: Attempting to delete GioHangCT with idGHCT=" + id);
+        if (!gioHangCTRepository.existsByIdCustom(id)) {
+            System.out.println("delete: GioHangCT with idGHCT=" + id + " not found");
+            throw new RuntimeException("Không tìm thấy chi tiết giỏ hàng với ID: " + id);
+        }
+        try {
+            gioHangCTRepository.deleteByIdCustom(id);
+            if (gioHangCTRepository.existsByIdCustom(id)) {
+                System.err.println("delete: Failed to delete GioHangCT with idGHCT=" + id + ", record still exists");
+                throw new RuntimeException("Không thể xóa chi tiết giỏ hàng với ID: " + id + " do ràng buộc cơ sở dữ liệu");
+            }
+            System.out.println("delete: Successfully deleted GioHangCT with idGHCT=" + id);
+        } catch (Exception e) {
+            System.err.println("delete: Error deleting idGHCT=" + id + " - " + e.getMessage());
+            throw new RuntimeException("Không thể xóa chi tiết giỏ hàng với ID: " + id + ": " + e.getMessage());
+        }
     }
 }

@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
@@ -37,9 +38,11 @@ public class NhanVienController {
 
     // Lấy tất cả
     @GetMapping
-    public ResponseEntity<List<NhanVienDTO>> getAll() {
-        List<NhanVienDTO> list = nhanVienService.getAll();
-        return ResponseEntity.ok(list);
+    public ResponseEntity<List<NhanVienDTO>> getAll(
+            @RequestParam(required = false) Boolean trangThai,
+            @RequestParam(required = false) String keyword) {
+        List<NhanVienDTO> nhanViens = nhanVienService.getAll(trangThai, keyword);
+        return ResponseEntity.ok(nhanViens);
     }
 
     // Cập nhật
@@ -49,11 +52,11 @@ public class NhanVienController {
         return ResponseEntity.ok(updated);
     }
 
-    // Xóa
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable Integer id) {
-        nhanVienService.delete(id);
-        return ResponseEntity.noContent().build();
+    // Chuyển đổi trạng thái
+    @PutMapping("/{id}/toggle-status")
+    public ResponseEntity<NhanVienDTO> toggleStatus(@PathVariable Integer id) {
+        NhanVienDTO updated = nhanVienService.toggleStatus(id);
+        return ResponseEntity.ok(updated);
     }
 }
 

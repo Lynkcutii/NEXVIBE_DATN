@@ -2,6 +2,7 @@ package com.example.datnspct.Service;
 
 import com.example.datnspct.Model.GioHang;
 import com.example.datnspct.Model.GioHangCT;
+import com.example.datnspct.Model.Img;
 import com.example.datnspct.Model.KhachHang;
 import com.example.datnspct.Model.MauSac;
 import com.example.datnspct.Model.SanPham;
@@ -10,6 +11,7 @@ import com.example.datnspct.Model.Size;
 import com.example.datnspct.Model.TaiKhoan;
 import com.example.datnspct.Repository.GioHangCTRepository;
 import com.example.datnspct.Repository.GioHangRepository;
+import com.example.datnspct.Repository.ImgRepository;
 import com.example.datnspct.Repository.KhachHangRepository;
 import com.example.datnspct.Repository.MauSacRepository;
 import com.example.datnspct.Repository.SanPhamChiTietRepository;
@@ -21,6 +23,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -41,6 +44,8 @@ public class GioHangService {
     private MauSacRepository mauSacRepository;
     @Autowired
     private SizeRepository sizeRepository;
+    @Autowired
+    private ImgRepository imgRepository;
 
     private GioHang toEntity(GioHangDTO dto) {
         GioHang entity = new GioHang();
@@ -92,27 +97,45 @@ public class GioHangService {
     private GioHangCTDTO toGioHangCTDTO(GioHangCT chiTiet) {
         GioHangCTDTO dto = new GioHangCTDTO();
         dto.setIdGHCT(chiTiet.getIdGHCT());
-        dto.setIdGH(chiTiet.getGioHang().getIdGH());
+        dto.setIdGH(chiTiet.getGioHang() != null ? chiTiet.getGioHang().getIdGH() : null);
         SanPhamChiTiet spct = chiTiet.getSanPhamChiTiet();
+
         if (spct == null) {
             System.out.println("toGioHangCTDTO: SanPhamChiTiet is null for idGHCT=" + chiTiet.getIdGHCT());
-            throw new RuntimeException("SanPhamChiTiet is null");
+            dto.setTenSP("Sản phẩm không xác định");
+            dto.setLink("https://placehold.co/150");
+            dto.setMauSac("Mặc định");
+            dto.setKichThuoc("M");
+            dto.setSoLuong(chiTiet.getSoLuong());
+            dto.setDonGia(chiTiet.getDonGia() != null ? chiTiet.getDonGia() : BigDecimal.valueOf(0));
+            dto.setSanPhamCTSoLuong(0); // Gán mặc định nếu spct null
+            return dto;
         }
+
         dto.setIdSPCT(spct.getId());
         SanPham sanPham = spct.getSanPham();
+
         if (sanPham == null) {
             System.out.println("toGioHangCTDTO: SanPham is null for idSPCT=" + spct.getId());
-            throw new RuntimeException("SanPham is null");
+            dto.setTenSP("Sản phẩm không xác định");
+        } else {
+            dto.setTenSP(sanPham.getTenSP());
         }
-        dto.setTenSP(sanPham.getTenSP());
-//        dto.setLink(spct.getImgs() != null && !spct.getImgs().isEmpty() ? spct.getImgs().get(0).getLink() : "https://via.placeholder.com/150");
+
+        Img firstImage = imgRepository.findFirstBySanPhamChiTietId(spct.getId());
+        dto.setLink(firstImage != null ? firstImage.getLink() : "https://placehold.co/150");
+
         MauSac mauSac = spct.getMauSac();
         dto.setMauSac(mauSac != null ? mauSac.getTenMauSac() : "Mặc định");
+
         Size size = spct.getSize();
         dto.setKichThuoc(size != null ? size.getTenSize() : "M");
+
         dto.setSoLuong(chiTiet.getSoLuong());
-        dto.setDonGia(chiTiet.getDonGia());
-        System.out.println("toGioHangCTDTO: Converted idGHCT=" + dto.getIdGHCT() + ", tenSP=" + dto.getTenSP());
+        dto.setDonGia(chiTiet.getDonGia() != null ? chiTiet.getDonGia() : BigDecimal.valueOf(0));
+        dto.setSanPhamCTSoLuong(spct.getSoLuong()); // Thêm số lượng tồn kho
+
+        System.out.println("toGioHangCTDTO: Converted idGHCT=" + dto.getIdGHCT() + ", tenSP=" + dto.getTenSP() + ", link=" + dto.getLink() + ", sanPhamCTSoLuong=" + dto.getSanPhamCTSoLuong());
         return dto;
     }
 
@@ -134,11 +157,10 @@ public class GioHangService {
                 });
 
         GioHangDTO dto = toDTO(gioHang);
-        System.out.println("getByTaiKhoanId: Returning GioHangDTO with id=" + dto.getIdGH());
+        System.out.println("getByTaiKhoanId: Returning GioHangDTO with id=" + dto.getIdGH() + ", chiTiets count=" + dto.getChiTiets().size());
         return dto;
     }
 
-    // Các phương thức khác giữ nguyên
     public GioHangDTO getOrCreateByTaiKhoan(String taiKhoan) {
         System.out.println("getOrCreateByTaiKhoan: Starting for taiKhoan=" + taiKhoan);
         TaiKhoan tk = taiKhoanRepository.findByTaiKhoan(taiKhoan)
@@ -155,7 +177,6 @@ public class GioHangService {
                     newKhachHang.setMaKH("KH-" + taiKhoan + "-" + System.currentTimeMillis());
                     newKhachHang.setTenKH("Khách Hàng " + taiKhoan);
                     newKhachHang.setSdt("0123456789");
-                    newKhachHang.setDiaChi("Địa chỉ mặc định");
                     newKhachHang.setTaiKhoan(tk);
                     newKhachHang.setTrangThai(true);
                     KhachHang saved = khachHangRepository.save(newKhachHang);
@@ -206,7 +227,6 @@ public class GioHangService {
                     newKhachHang.setMaKH("KH-" + taiKhoan + "-" + System.currentTimeMillis());
                     newKhachHang.setTenKH("Khách Hàng " + taiKhoan);
                     newKhachHang.setSdt("0123456789");
-                    newKhachHang.setDiaChi("Địa chỉ mặc định");
                     newKhachHang.setTaiKhoan(tk);
                     newKhachHang.setTrangThai(true);
                     KhachHang saved = khachHangRepository.save(newKhachHang);

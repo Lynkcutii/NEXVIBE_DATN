@@ -1,5 +1,6 @@
 package com.example.datnspct.dto;
 
+import com.example.datnspct.Model.TaiKhoan;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -20,4 +21,5 @@ public class NhanVienDTO {
     private String diaChi;
     private Integer idTK;
     private Boolean trangThai;
+    private TaiKhoan taiKhoan;
 } 

@@ -6,17 +6,24 @@ import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 import java.util.Date;
+import java.util.List;
 
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 public class VoucherDTO {
-    private Integer id; // IdVoucher
-    private String code; // MaVoucher
-    private String name; // TenVoucher
-    private String description; // Mô tả ngắn
-    private String type; // "percentage" hoặc "fixed"
-    private BigDecimal value; // Giá trị giảm (MucGiam hoặc GiaGiam)
-    private BigDecimal minOrder; // Giá trị đơn hàng tối thiểu
-    private Date endDate; // NgayKetThuc
+    private Integer id;
+    private String maVoucher;
+    private String tenVoucher;
+    private String hinhThucGiam; // "%" hoặc "VND"
+    private BigDecimal mucGiam;
+    private BigDecimal giamToiDa;
+    private BigDecimal donGiaKhiGiam;
+    private BigDecimal giaGiam;
+    private BigDecimal giaTriDonHangToiThieu;
+    private Integer soLuong;
+    private Date ngayBatDau;
+    private Date ngayKetThuc;
+    private Boolean trangThai;
+    private List<Integer> applicableProductIds; // Danh sách idSPCT từ Voucher_SP
 }

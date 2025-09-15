@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 
 @RestController
-@RequestMapping("/admin/api/phuongtt")
+@RequestMapping("/api/phuongtt")
 public class PhuongTTController {
     @Autowired
     private PhuongTTService service;
@@ -37,9 +37,9 @@ public class PhuongTTController {
 
     // Lấy tất cả
     @GetMapping
-    public ResponseEntity<List<PhuongTTDTO>> getAll() {
-        List<PhuongTTDTO> list = service.getAll();
-        return ResponseEntity.ok(list);
+    public ResponseEntity<List<PhuongTTDTO>> getAllPhuongThucThanhToan() {
+        List<PhuongTTDTO> methods = service.getAll();
+        return ResponseEntity.ok(methods);
     }
 
     // Cập nhật

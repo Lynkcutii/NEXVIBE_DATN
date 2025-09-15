@@ -11,8 +11,15 @@ import java.util.stream.Collectors;
 
 @Service
 public class ThuongHieuService {
+
     @Autowired
     private ThuongHieuRepository repository;
+
+    // Sinh mã thương hiệu tự động
+    private String generateMaThuongHieu() {
+        long count = repository.count();
+        return String.format("TH%03d", count + 1); // Ví dụ: TH001, TH002
+    }
 
     // Entity -> DTO
     private ThuongHieuDTO toDTO(ThuongHieu entity) {
@@ -28,7 +35,6 @@ public class ThuongHieuService {
     private ThuongHieu toEntity(ThuongHieuDTO dto) {
         ThuongHieu entity = new ThuongHieu();
         entity.setIdThuongHieu(dto.getIdThuongHieu());
-        entity.setMaThuongHieu(dto.getMaThuongHieu());
         entity.setTenThuongHieu(dto.getTenThuongHieu());
         entity.setTrangThai(dto.getTrangThai());
         return entity;
@@ -37,6 +43,8 @@ public class ThuongHieuService {
     // Tạo mới
     public ThuongHieuDTO create(ThuongHieuDTO dto) {
         ThuongHieu entity = toEntity(dto);
+        entity.setMaThuongHieu(generateMaThuongHieu()); // Tự động sinh mã
+        entity.setTrangThai(true);
         ThuongHieu saved = repository.save(entity);
         return toDTO(saved);
     }
@@ -57,8 +65,7 @@ public class ThuongHieuService {
     public ThuongHieuDTO update(Integer id, ThuongHieuDTO dto) {
         ThuongHieu entity = repository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy thương hiệu"));
-        entity.setMaThuongHieu(dto.getMaThuongHieu());
-        entity.setTenThuongHieu(dto.getTenThuongHieu());
+        entity.setTenThuongHieu(dto.getTenThuongHieu()); // Chỉ cập nhật tên
         entity.setTrangThai(dto.getTrangThai());
         ThuongHieu updated = repository.save(entity);
         return toDTO(updated);
@@ -70,4 +77,4 @@ public class ThuongHieuService {
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy thương hiệu"));
         repository.delete(entity);
     }
-} 
+}
