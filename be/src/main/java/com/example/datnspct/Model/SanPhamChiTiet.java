@@ -1,17 +1,11 @@
 package com.example.datnspct.Model;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 @Entity
 @Table(name = "SanPhamCT")
@@ -61,5 +55,7 @@ public class SanPhamChiTiet {
     @ManyToOne
     @JoinColumn(name = "IdSize")
     private Size size;
+    @OneToMany(mappedBy = "sanPhamChiTiet", fetch = FetchType.LAZY)
+    private List<Img> images;
 
 }

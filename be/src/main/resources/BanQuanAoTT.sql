@@ -197,7 +197,7 @@ CREATE TABLE HoaDon (
                         MaHD VARCHAR(50) NOT NULL,
                         IdKH INT,
                         IdNV INT,
-                        IdKH INT,
+                        IdKM INT,
                         NgayTao DATETIME NOT NULL,
                         NgaySua DATETIME,
                         TongTien DECIMAL(18,2) NOT NULL,

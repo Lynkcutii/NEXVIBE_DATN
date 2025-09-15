@@ -38,6 +38,6 @@ public class DiaChiKhachHang {
     private String ghiChu;
 
     @Column(name = "TrangThai")
-    private Boolean trangThai = true;
+    private Integer trangThai;
 
 }

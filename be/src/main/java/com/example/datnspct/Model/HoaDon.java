@@ -1,13 +1,6 @@
 package com.example.datnspct.Model;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -25,7 +18,8 @@ import java.time.LocalDateTime;
 public class HoaDon {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer IdHD;
+    @Column(name = "IdHD")
+    private Integer idHD;
 
     @Column(name = "MaHD", length = 50)
     private String maHD;
@@ -49,6 +43,7 @@ public class HoaDon {
     private BigDecimal tongTien;
 
     @Column(name = "TrangThai")
+
     private String trangThai;
 
     @ManyToOne
@@ -62,5 +57,8 @@ public class HoaDon {
     @ManyToOne
     @JoinColumn(name = "IdNV", referencedColumnName = "IdNV", insertable = false, updatable = false)
     private NhanVien nhanVien;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "IdDiaChiGiao")
+    private DiaChiKhachHang diaChiGiao;
 
 }

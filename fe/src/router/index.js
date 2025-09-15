@@ -49,7 +49,12 @@ const routes = [
       { path: 'register', name: 'register', component: RegisterPage },
       { path: 'profile', name: 'profile', component: ProfilePage, meta: { requiresAuth: true } },
       { path: 'order-history', name: 'order.history', component: OrderHistoryPage, meta: { requiresAuth: true } },
-      { path: 'orders/:id', name: 'order.detail', component: OrderDetailPage, props: true, meta: { requiresAuth: true } },
+{
+  path: '/order-detail/:idHD', 
+  name: 'order.detail',
+  component: OrderDetailPage,
+  props: true 
+},
       { path: 'about', name: 'about', component: AboutPage },
       { path: 'blog', name: 'blog', component: BlogPage },
       { path: 'contact', name: 'contact', component: ContactPage },
@@ -69,7 +74,7 @@ const routes = [
       { path: 'products/create', name: 'admin.products.create', component: ProductForm },
       { path: 'products/:id/edit', name: 'admin.products.edit', component: ProductForm },
       { path: 'orders', name: 'admin.orders.list', component: Orders },
-      { path: 'orders/:id', name: 'admin.orders.detail', component: OrderDetail },
+      { path: 'orders/:id', name: 'admin.orders.detail', component: OrderDetail, props: true },
       { path: 'attributes', name: 'admin.attributes', component: Attributes },
       { path: 'staff', name: 'admin.staff.list', component: Staff },
       { path: 'staff/create', name: 'admin.staff.create', component: AccountForm },

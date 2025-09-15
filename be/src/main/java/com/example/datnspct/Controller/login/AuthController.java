@@ -179,7 +179,7 @@ public class AuthController {
             diaChi.setPhuongXa(registerRequestKhachHang.getPhuongXa());
             diaChi.setSoDienThoai(registerRequestKhachHang.getSoDienThoai());
             diaChi.setGhiChu(registerRequestKhachHang.getGhiChu());
-            diaChi.setTrangThai(true);
+            diaChi.setTrangThai(1);
             diaChiKhachHangRepository.save(diaChi);
 
             Map<String, Object> response = new HashMap<>();

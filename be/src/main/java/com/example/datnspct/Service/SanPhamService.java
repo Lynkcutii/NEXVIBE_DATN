@@ -10,6 +10,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
+import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -21,6 +23,13 @@ public class SanPhamService {
 
     @Autowired
     private SanPhamChiTietRepository sanPhamChiTietRepository;
+    public List<SanPhamDTO> searchProductsByKeyword(String keyword) {
+        List<SanPham> products = sanPhamRepository.findTop3ByTenSPContainingIgnoreCase(keyword);
+
+        return products.stream()
+                .map(this::chuyenSangDTO)
+                .collect(Collectors.toList());
+    }
 
     // Ánh xạ thủ công: Từ Entity sang DTO
     private SanPhamDTO chuyenSangDTO(SanPham sanPham) {
@@ -35,6 +44,28 @@ public class SanPhamService {
                 .mapToInt(SanPhamChiTiet::getSoLuong)
                 .sum();
         dto.setTongSoLuongSanPham(tongSoLuong);
+        List<SanPhamChiTiet> chiTiets = sanPhamChiTietRepository.findBySanPhamId(sanPham.getId());
+
+        // --- LOGIC MỚI ĐỂ TÍNH KHOẢNG GIÁ ---
+        if (chiTiets != null && !chiTiets.isEmpty()) {
+            // Tìm giá thấp nhất
+            BigDecimal minPrice = chiTiets.stream()
+                    .map(SanPhamChiTiet::getGia)
+                    .min(Comparator.naturalOrder())
+                    .orElse(BigDecimal.ZERO);
+
+            // Tìm giá cao nhất
+            BigDecimal maxPrice = chiTiets.stream()
+                    .map(SanPhamChiTiet::getGia)
+                    .max(Comparator.naturalOrder())
+                    .orElse(BigDecimal.ZERO);
+
+            dto.setMinPrice(minPrice);
+            dto.setMaxPrice(maxPrice);
+        } else {
+            dto.setMinPrice(BigDecimal.ZERO);
+            dto.setMaxPrice(BigDecimal.ZERO);
+        }
         return dto;
     }
 

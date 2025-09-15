@@ -8,6 +8,8 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
+
 @Repository
 public interface SanPhamRepository extends JpaRepository<SanPham, Integer> {
     @Query("SELECT sp FROM SanPham sp " +
@@ -20,4 +22,5 @@ public interface SanPhamRepository extends JpaRepository<SanPham, Integer> {
 
     @Query("SELECT s FROM SanPham s WHERE (:tenSP IS NULL OR s.tenSP LIKE %:tenSP%) AND (:status IS NULL OR s.trangThai = :status)")
     Page<SanPham> findByTenSPContainingAndTrangThai(@Param("tenSP") String tenSP, @Param("status") Boolean status, Pageable pageable);
+    List<SanPham> findTop3ByTenSPContainingIgnoreCase(String keyword);
 }

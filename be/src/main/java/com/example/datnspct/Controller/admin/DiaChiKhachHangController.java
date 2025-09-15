@@ -44,7 +44,7 @@ public class DiaChiKhachHangController {
             diaChi.setPhuongXa(dto.getPhuongXa());
             diaChi.setSoDienThoai(dto.getSoDienThoai());
             diaChi.setGhiChu(dto.getGhiChu());
-            diaChi.setTrangThai(dto.getTrangThai() != null ? dto.getTrangThai() : true);
+            diaChi.setTrangThai(dto.getTrangThai() != null ? dto.getTrangThai() : 0);
 
             DiaChiKhachHang savedDiaChi = diaChiKhachHangRepository.save(diaChi);
             return ResponseEntity.ok(convertToDTO(savedDiaChi));
@@ -79,7 +79,7 @@ public class DiaChiKhachHangController {
             diaChi.setPhuongXa(dto.getPhuongXa());
             diaChi.setSoDienThoai(dto.getSoDienThoai());
             diaChi.setGhiChu(dto.getGhiChu());
-            diaChi.setTrangThai(dto.getTrangThai() != null ? dto.getTrangThai() : true);
+            diaChi.setTrangThai(dto.getTrangThai() != null ? dto.getTrangThai() : 0);
 
             DiaChiKhachHang updatedDiaChi = diaChiKhachHangRepository.save(diaChi);
             return ResponseEntity.ok(convertToDTO(updatedDiaChi));

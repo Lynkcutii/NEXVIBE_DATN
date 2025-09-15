@@ -1,25 +1,16 @@
 package com.example.datnspct.Service;
 
-import com.example.datnspct.Model.HoaDon;
-import com.example.datnspct.Model.HoaDonChiTiet;
-import com.example.datnspct.Model.KhachHang;
-import com.example.datnspct.Model.KhuyenMai;
-import com.example.datnspct.Model.PhuongTT;
-import com.example.datnspct.Model.SanPhamChiTiet;
-import com.example.datnspct.Model.Voucher;
-import com.example.datnspct.Repository.GioHangCTRepository;
-import com.example.datnspct.Repository.HoaDonChiTietRepository;
-import com.example.datnspct.Repository.HoaDonRepository;
-import com.example.datnspct.Repository.KhachHangRepository;
-import com.example.datnspct.Repository.KhuyenMaiRepository;
-import com.example.datnspct.Repository.PhuongThucThanhToanRepository;
-import com.example.datnspct.Repository.SanPhamChiTietRepository;
-import com.example.datnspct.Repository.VoucherRepository;
+import com.example.datnspct.Model.*;
+import com.example.datnspct.Repository.*;
+import com.example.datnspct.dto.HoaDonChiTietDTO;
 import com.example.datnspct.dto.HoaDonDTO;
 import com.example.datnspct.dto.OrderRequestDTO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.example.datnspct.dto.OrderDetailResponseDTO;
+import jakarta.persistence.EntityNotFoundException;
+
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -55,11 +46,12 @@ public class HoaDonService {
 
     @Autowired
     private VoucherRepository voucherRepository;
+    @Autowired private DiaChiKhachHangRepository diaChiKhachHangRepository;
 
     // Phương thức xóa sản phẩm chi tiết giỏ hàng sau khi thanh toán thành công
     private void deleteCartItemsAfterOrder(List<OrderRequestDTO.OrderItemDTO> items) {
         System.out.println("deleteCartItemsAfterOrder: Starting to delete " + items.size() + " cart items");
-        
+
         for (OrderRequestDTO.OrderItemDTO item : items) {
             try {
                 if (item.getIdGHCT() != null) {
@@ -79,12 +71,13 @@ public class HoaDonService {
                 // Chỉ log lỗi và tiếp tục xử lý
             }
         }
-        
+
         System.out.println("deleteCartItemsAfterOrder: Completed");
     }
 
     // Manual mapping: Entity to DTO
     private HoaDonDTO convertToDTO(HoaDon hoaDon) {
+        if (hoaDon == null) return null;
         HoaDonDTO dto = new HoaDonDTO();
         dto.setIdHD(hoaDon.getIdHD());
         dto.setMaHD(hoaDon.getMaHD());
@@ -94,7 +87,22 @@ public class HoaDonService {
         dto.setNgayTao(hoaDon.getNgayTao());
         dto.setNgaySua(hoaDon.getNgaySua());
         dto.setTongTien(hoaDon.getTongTien());
+        dto.setNgaySua(hoaDon.getNgaySua());
         dto.setTrangThai(hoaDon.getTrangThai());
+        if (hoaDon.getKhachHang() != null) {
+            dto.setTenKH(hoaDon.getKhachHang().getTenKH());
+        }
+
+        if (hoaDon.getDiaChiGiao() != null) {
+            DiaChiKhachHang diaChi = hoaDon.getDiaChiGiao();
+            dto.setSdt(diaChi.getSoDienThoai());
+            String fullAddress = String.join(", ",
+                    diaChi.getDiaChiCuThe(), diaChi.getPhuongXa(), diaChi.getTinhThanh());
+            dto.setDiaChiGiao(fullAddress);
+        } else {
+            dto.setSdt("N/A");
+            dto.setDiaChiGiao("Chưa có địa chỉ");
+        }
         return dto;
     }
 
@@ -184,6 +192,10 @@ public class HoaDonService {
         // Lấy thông tin khách hàng và phương thức thanh toán
         KhachHang khachHang = khachHangOpt.get();
         PhuongTT phuongTT = phuongTTOpt.get();
+        // Tìm địa chỉ giao hàng mà khách đã chọn
+        Integer idDiaChiDaChon = request.getShippingInfo().getAddressId();
+        DiaChiKhachHang diaChiGiaoHang = diaChiKhachHangRepository.findById(idDiaChiDaChon)
+                .orElseThrow(() -> new RuntimeException("Địa chỉ không hợp lệ"));
 
         // Tạo hóa đơn
         HoaDon hoaDon = new HoaDon();
@@ -194,6 +206,7 @@ public class HoaDonService {
         hoaDon.setNgaySua(LocalDateTime.now());
         hoaDon.setTongTien(calculatedTotal);
         hoaDon.setTrangThai("CHO_XAC_NHAN");
+        hoaDon.setDiaChiGiao(diaChiGiaoHang);
         if (request.getIdKM() != null) {
             hoaDon.setIdKM(request.getIdKM());
         }
@@ -319,5 +332,136 @@ public class HoaDonService {
         hoaDon.setTongTien(dto.getTongTien());
         hoaDon.setTrangThai(dto.getTrangThai());
         return hoaDon;
+    }
+    public List<HoaDonDTO> findByKhachHangId(Integer idKH) {
+
+        List<HoaDon> hoaDons = hoaDonRepository.findByIdKhachHang(idKH);
+
+        return hoaDons.stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
+    }
+    public OrderDetailResponseDTO getHoaDonDetail(Integer idHD) {
+        // Lấy thông tin Hóa Đơn
+        HoaDon hoaDon = hoaDonRepository.findById(idHD)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy hóa đơn"));
+        HoaDonDTO hoaDonDTO = convertToDTO(hoaDon);
+
+        // --- DÒNG CODE BỊ LỖI CỦA BẠN ĐƯỢC ĐẶT ĐÚNG VỊ TRÍ Ở ĐÂY ---
+        List<HoaDonChiTiet> chiTietList = hoaDonChiTietRepository.findByHoaDon_IdHD(idHD);
+        List<HoaDonChiTietDTO> chiTietDTOList = chiTietList.stream()
+                .map(this::convertChiTietToDto)
+                .collect(Collectors.toList());
+
+        // Đóng gói vào DTO và trả về
+        OrderDetailResponseDTO response = new OrderDetailResponseDTO();
+        response.setHoaDon(hoaDonDTO);
+        response.setChiTiet(chiTietDTOList);
+
+        return response;
+    }
+    private HoaDonChiTietDTO convertChiTietToDto(HoaDonChiTiet chiTiet) {
+        if (chiTiet == null) return null;
+        HoaDonChiTietDTO dto = new HoaDonChiTietDTO();
+
+        dto.setIdHDCT(chiTiet.getIdHDCT());
+        dto.setSoLuong(chiTiet.getSoLuong());
+        dto.setDonGia(chiTiet.getDonGia());
+
+        SanPhamChiTiet spct = chiTiet.getSanPhamct();
+
+        // Đặt giá trị mặc định để tránh null
+        dto.setTenSanPham("Sản phẩm không có tên");
+        dto.setHinhAnh("https://placehold.co/100");
+        dto.setTenMauSac("N/A");
+        dto.setTenSize("N/A");
+
+        if (spct != null) {
+            // KIỂM TRA KỸ HƠN
+            if (spct.getSanPham() != null && spct.getSanPham().getTenSP() != null) {
+                dto.setTenSanPham(spct.getSanPham().getTenSP());
+            }
+
+            if (spct.getMauSac() != null) {
+                dto.setTenMauSac(spct.getMauSac().getTenMauSac());
+            }
+
+            if (spct.getSize() != null) {
+                dto.setTenSize(spct.getSize().getTenSize());
+            }
+
+            try {
+                if (spct.getImages() != null && !spct.getImages().isEmpty()) {
+                    dto.setHinhAnh(spct.getImages().get(0).getLink());
+                }
+            } catch (Exception e) {
+                System.err.println("Lỗi Lazy Loading khi lấy ảnh cho SPCT ID: " + spct.getId());
+            }
+        }
+
+        return dto;
+    }
+    @Transactional
+    public void cancelOrder(Integer idHD) {
+        // 1. Tìm hóa đơn
+        // Dùng EntityNotFoundException cho ngữ nghĩa rõ ràng hơn
+        HoaDon hoaDon = hoaDonRepository.findById(idHD)
+                .orElseThrow(() -> new EntityNotFoundException("Không tìm thấy hóa đơn với ID: " + idHD));
+
+        // 2. Kiểm tra trạng thái
+        // Dùng IllegalArgumentException cho lỗi dữ liệu đầu vào/trạng thái không hợp lệ
+        if (!"CHO_XAC_NHAN".equalsIgnoreCase(hoaDon.getTrangThai())) {
+            throw new IllegalArgumentException("Không thể hủy đơn hàng ở trạng thái: " + hoaDon.getTrangThai());
+        }
+
+
+        // 3. Cập nhật trạng thái hóa đơn bằng String
+        hoaDon.setTrangThai("DA_HUY");
+        hoaDon.setNgaySua(LocalDateTime.now());
+        hoaDonRepository.save(hoaDon);
+
+        // 4. Hoàn trả lại số lượng sản phẩm vào kho (Giữ nguyên logic này)
+        List<HoaDonChiTiet> chiTietList = hoaDonChiTietRepository.findByHoaDon_IdHD(idHD);
+        for (HoaDonChiTiet chiTiet : chiTietList) {
+            SanPhamChiTiet spct = chiTiet.getSanPhamct();
+            if (spct != null && chiTiet.getSoLuong() != null) {
+                int currentStock = spct.getSoLuong();
+                int returnedQuantity = chiTiet.getSoLuong();
+                spct.setSoLuong(currentStock + returnedQuantity);
+                sanPhamChiTietRepository.save(spct);
+            }
+        }
+    }
+    // === PHƯƠNG THỨC MỚI ĐỂ THAY ĐỔI ĐỊA CHỈ ĐƠN HÀNG ===
+    // =======================================================
+
+    @Transactional
+    public void changeOrderAddress(Integer idHD, Integer newAddressId) {
+        // 1. Tìm hóa đơn
+        HoaDon hoaDon = hoaDonRepository.findById(idHD)
+                // SỬA LẠI: Dùng EntityNotFoundException
+                .orElseThrow(() -> new EntityNotFoundException("Không tìm thấy hóa đơn với ID: " + idHD));
+
+        // 2. Kiểm tra xem đơn hàng có được phép thay đổi địa chỉ không
+        if (!"CHO_XAC_NHAN".equalsIgnoreCase(hoaDon.getTrangThai())) {
+            // SỬA LẠI: Dùng IllegalArgumentException cho lỗi trạng thái
+            throw new IllegalArgumentException("Không thể thay đổi địa chỉ cho đơn hàng ở trạng thái: " + hoaDon.getTrangThai());
+        }
+
+        // 3. Tìm địa chỉ mới
+        DiaChiKhachHang newAddress = diaChiKhachHangRepository.findById(newAddressId)
+                // SỬA LẠI: Dùng EntityNotFoundException
+                .orElseThrow(() -> new EntityNotFoundException("Không tìm thấy địa chỉ với ID: " + newAddressId));
+
+        // 4. (Tùy chọn) Kiểm tra xem địa chỉ mới có thuộc về đúng khách hàng không
+        if (!newAddress.getKhachHang().getIdKH().equals(hoaDon.getKhachHang().getIdKH())) {
+            // SỬA LẠI: Dùng IllegalArgumentException cho lỗi logic nghiệp vụ
+            throw new IllegalArgumentException("Địa chỉ mới không thuộc về khách hàng của đơn hàng này.");
+        }
+
+        // 5. Cập nhật hóa đơn với địa chỉ mới
+        hoaDon.setDiaChiGiao(newAddress);
+        hoaDon.setNgaySua(LocalDateTime.now());
+        hoaDonRepository.save(hoaDon);
     }
 }

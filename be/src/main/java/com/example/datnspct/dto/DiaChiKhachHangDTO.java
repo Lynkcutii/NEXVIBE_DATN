@@ -11,5 +11,5 @@ public class DiaChiKhachHangDTO {
     private String phuongXa;
     private String soDienThoai;
     private String ghiChu;
-    private Boolean trangThai;
+    private Integer trangThai;
 }

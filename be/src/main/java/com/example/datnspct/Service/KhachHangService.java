@@ -8,6 +8,7 @@ import com.example.datnspct.Repository.KhachHangRepository;
 import com.example.datnspct.Repository.login.TaiKhoanRepository;
 import com.example.datnspct.dto.DiaChiKhachHangDTO;
 import com.example.datnspct.dto.KhachHangDTO;
+import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -93,7 +94,7 @@ public class KhachHangService {
         diaChi.setPhuongXa(dto.getPhuongXa());
         diaChi.setSoDienThoai(dto.getSoDienThoai());
         diaChi.setGhiChu(dto.getGhiChu());
-        diaChi.setTrangThai(dto.getTrangThai() != null ? dto.getTrangThai() : true);
+        diaChi.setTrangThai(dto.getTrangThai() != null ? dto.getTrangThai() : 0);
         return diaChi;
     }
 
@@ -112,20 +113,61 @@ public class KhachHangService {
         return chuyenSangDTO(khachHangDaLuu);
     }
 
-    // Lấy khách hàng theo ID
-    public KhachHangDTO layKhachHangTheoId(Integer id) {
-        KhachHang khachHang = khachHangRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Khách hàng không tìm thấy"));
-        return chuyenSangDTO(khachHang);
+    // HÀM HELPER DUY NHẤT ĐỂ CONVERT
+    private KhachHangDTO convertToDto(KhachHang khachHang) {
+        if (khachHang == null) return null;
+
+        KhachHangDTO dto = new KhachHangDTO();
+        dto.setIdKH(khachHang.getIdKH());
+        dto.setMaKH(khachHang.getMaKH());
+        dto.setTenKH(khachHang.getTenKH());
+        dto.setGioiTinh(khachHang.getGioiTinh());
+        dto.setNgaySinh(khachHang.getNgaySinh());
+        dto.setEmail(khachHang.getEmail());
+        dto.setSdt(khachHang.getSdt());
+        dto.setTrangThai(khachHang.getTrangThai());
+
+        if (khachHang.getTaiKhoan() != null) {
+            TaiKhoan taiKhoan = khachHang.getTaiKhoan();
+            dto.setIdTK(taiKhoan.getIdTK());
+            dto.setTaiKhoan(taiKhoan.getTaiKhoan());
+            dto.setChucVu(taiKhoan.getChucVu());
+        }
+
+        return dto;
     }
 
-    // Lấy khách hàng theo IdTK
+    // LẤY KHÁCH HÀNG THEO ID
+    @Transactional(readOnly = true)
+    public KhachHangDTO layKhachHangTheoId(Integer idKH) {
+        KhachHang khachHang = khachHangRepository.findById(idKH)
+                .orElseThrow(() -> new EntityNotFoundException("Không tìm thấy khách hàng với ID: " + idKH));
+        return convertToDto(khachHang);
+    }
+
+    // LẤY KHÁCH HÀNG THEO ID TÀI KHOẢN
+    @Transactional(readOnly = true)
     public KhachHangDTO layKhachHangTheoTaiKhoanId(Integer idTK) {
         KhachHang khachHang = khachHangRepository.findByTaiKhoanIdTK(idTK)
-                .orElseThrow(() -> new RuntimeException("Khách hàng không tìm thấy với idTK=" + idTK));
-        return chuyenSangDTO(khachHang);
+                .orElseThrow(() -> new EntityNotFoundException("Không tìm thấy khách hàng với ID tài khoản: " + idTK));
+        return convertToDto(khachHang);
     }
 
+    // CẬP NHẬT THÔNG TIN CÁ NHÂN CỦA KHÁCH HÀNG
+    @Transactional
+    public KhachHangDTO capNhatKhachHang(Integer idKH, KhachHangDTO dto) {
+        KhachHang khachHang = khachHangRepository.findById(idKH)
+                .orElseThrow(() -> new EntityNotFoundException("Không tìm thấy khách hàng để cập nhật"));
+
+        khachHang.setTenKH(dto.getTenKH());
+        khachHang.setSdt(dto.getSdt());
+        khachHang.setGioiTinh(dto.getGioiTinh());
+        khachHang.setNgaySinh(dto.getNgaySinh());
+        khachHang.setEmail(dto.getEmail());
+
+        KhachHang updatedKhachHang = khachHangRepository.save(khachHang);
+        return convertToDto(updatedKhachHang);
+    }
     // Lấy tất cả khách hàng
     public Page<KhachHangDTO> layTatCaKhachHang(Pageable pageable) {
         return khachHangRepository.findAll(pageable).map(this::chuyenSangDTO);
@@ -136,40 +178,6 @@ public class KhachHangService {
         return khachHangRepository.findByTenKHContainingIgnoreCaseOrSdtContaining(keyword, keyword, pageable)
                 .map(this::chuyenSangDTO);
     }
-
-    // Cập nhật khách hàng
-    @Transactional
-    public KhachHangDTO capNhatKhachHang(Integer id, KhachHangDTO dto) {
-        KhachHang khachHang = khachHangRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Khách hàng không tồn tại"));
-        khachHang.setMaKH(dto.getMaKH());
-        khachHang.setTenKH(dto.getTenKH());
-        khachHang.setGioiTinh(dto.getGioiTinh());
-        khachHang.setNgaySinh(dto.getNgaySinh());
-        khachHang.setEmail(dto.getEmail());
-        khachHang.setSdt(dto.getSdt());
-        if (dto.getIdTK() != null) {
-            TaiKhoan taiKhoan = taiKhoanRepository.findById(dto.getIdTK())
-                    .orElseThrow(() -> new RuntimeException("Tài khoản không tồn tại"));
-            khachHang.setTaiKhoan(taiKhoan);
-        } else {
-            khachHang.setTaiKhoan(null);
-        }
-        khachHang.setTrangThai(dto.getTrangThai());
-        KhachHang khachHangDaCapNhat = khachHangRepository.save(khachHang);
-        // Cập nhật danh sách địa chỉ
-        if (dto.getDiaChiList() != null) {
-            // Xóa các địa chỉ cũ
-            diaChiKhachHangRepository.deleteByKhachHangIdKH(id);
-            // Thêm các địa chỉ mới
-            for (DiaChiKhachHangDTO diaChiDTO : dto.getDiaChiList()) {
-                DiaChiKhachHang diaChi = chuyenDiaChiSangEntity(diaChiDTO, khachHangDaCapNhat);
-                diaChiKhachHangRepository.save(diaChi);
-            }
-        }
-        return chuyenSangDTO(khachHangDaCapNhat);
-    }
-
     // Xóa khách hàng
     @Transactional
     public void xoaKhachHang(Integer id) {
@@ -203,7 +211,7 @@ public class KhachHangService {
         diaChi.setPhuongXa(diaChiDTO.getPhuongXa());
         diaChi.setSoDienThoai(diaChiDTO.getSoDienThoai());
         diaChi.setGhiChu(diaChiDTO.getGhiChu());
-        diaChi.setTrangThai(diaChiDTO.getTrangThai() != null ? diaChiDTO.getTrangThai() : true);
+        diaChi.setTrangThai(diaChiDTO.getTrangThai() != null ? diaChiDTO.getTrangThai() : 0);
         DiaChiKhachHang diaChiDaCapNhat = diaChiKhachHangRepository.save(diaChi);
         return chuyenDiaChiSangDTO(diaChiDaCapNhat);
     }
@@ -223,4 +231,7 @@ public class KhachHangService {
                 .map(this::chuyenDiaChiSangDTO)
                 .collect(Collectors.toList());
     }
+
+
+
 }
