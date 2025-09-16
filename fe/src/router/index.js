@@ -58,9 +58,8 @@ const routes = [
       { path: 'about', name: 'about', component: AboutPage },
       { path: 'blog', name: 'blog', component: BlogPage },
       { path: 'contact', name: 'contact', component: ContactPage },
-    ]
+    ],
   },
-
   // --- NHÁNH ROUTE CHO TRANG QUẢN TRỊ (ADMIN) ---
   {
     path: '/admin',
@@ -88,13 +87,27 @@ const routes = [
       { path: 'posts/create', name: 'admin.posts.create', component: PostForm },
       { path: 'posts/:id/edit', name: 'admin.posts.edit', component: PostForm },
       { path: 'reviews', name: 'admin.reviews.list', component: Reviews },
-    ]
+    ],
+  },
+  // Route xử lý trả về từ MoMo
+  {
+    path: '/momo-return',
+    name: 'momo.return',
+    beforeEnter: (to, from, next) => {
+      // Lưu orderId vào localStorage để trang chính xử lý
+      const orderId = to.query.orderId;
+      if (orderId) {
+        localStorage.setItem('momo_last_order_id', orderId);
+      }
+      // Đóng tab MoMo
+      window.close();
+    },
   },
   // Catch-all route
   {
     path: '/:pathMatch(.*)*',
-    redirect: '/'
-  }
+    redirect: '/',
+  },
 ];
 
 const router = createRouter({
@@ -106,7 +119,7 @@ const router = createRouter({
     } else {
       return { top: 0 };
     }
-  }
+  },
 });
 
 // Middleware kiểm tra xác thực và vai trò

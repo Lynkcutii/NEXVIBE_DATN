@@ -7,7 +7,6 @@ import lombok.NoArgsConstructor;
 import java.math.BigDecimal;
 import java.util.Date;
 
-
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -20,4 +19,10 @@ public class SanPhamDTO {
     private Boolean trangThai; // Trạng Thái
     private BigDecimal minPrice; // Giá thấp nhất
     private BigDecimal maxPrice; // Giá cao nhất
+    private String imageLink;
+    private String moTa;
+    private BigDecimal gia;
+    private Integer idDanhMuc;
+    private Integer idThuongHieu;
+    private Integer idChatLieu;
 }

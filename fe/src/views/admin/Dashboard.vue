@@ -21,23 +21,132 @@
   
   <!-- Hàng các thẻ thống kê nhanh -->
   <div class="row" v-loading="loadingStats">
+    <!-- Thẻ Tổng Doanh Thu -->
     <div class="col-xl-3 col-md-6 mb-4">
-      <div class="card border-start-primary shadow h-100 py-2">
+      <div class="card border-start-success shadow h-100 py-2">
         <div class="card-body">
           <div class="row g-0 align-items-center">
             <div class="col">
-              <div class="text-xs fw-bold text-primary text-uppercase mb-1">Doanh thu</div>
-              <div class="h5 mb-0 fw-bold text-gray-800">{{ formatCurrency(stats.revenue) }}</div>
+              <div class="text-xs fw-bold text-success text-uppercase mb-1">Tổng Doanh Thu</div>
+              <div class="h5 mb-0 fw-bold text-gray-800">{{ formatCurrency(dashboardStats.tongQuanDoanhThu?.tongTatCa || 0) }}</div>
+              <div class="text-xs text-success">Hôm nay: {{ formatCurrency(dashboardStats.tongQuanDoanhThu?.homNay || 0) }}</div>
             </div>
             <div class="col-auto"><i class="fas fa-dollar-sign fa-2x text-gray-300"></i></div>
           </div>
         </div>
       </div>
     </div>
-    <!-- ... các thẻ thống kê khác ... -->
-    <div class="col-xl-3 col-md-6 mb-4"><div class="card border-start-success shadow h-100 py-2"><div class="card-body"><div class="row g-0 align-items-center"><div class="col"><div class="text-xs fw-bold text-success text-uppercase mb-1">Đơn hàng mới</div><div class="h5 mb-0 fw-bold text-gray-800">{{ stats.newOrders }}</div></div><div class="col-auto"><i class="fas fa-box fa-2x text-gray-300"></i></div></div></div></div></div>
-    <div class="col-xl-3 col-md-6 mb-4"><div class="card border-start-info shadow h-100 py-2"><div class="card-body"><div class="row g-0 align-items-center"><div class="col"><div class="text-xs fw-bold text-info text-uppercase mb-1">Khách hàng mới</div><div class="h5 mb-0 fw-bold text-gray-800">{{ stats.newCustomers }}</div></div><div class="col-auto"><i class="fas fa-users fa-2x text-gray-300"></i></div></div></div></div></div>
-    <div class="col-xl-3 col-md-6 mb-4"><div class="card border-start-warning shadow h-100 py-2"><div class="card-body"><div class="row g-0 align-items-center"><div class="col"><div class="text-xs fw-bold text-warning text-uppercase mb-1">Sản phẩm sắp hết</div><div class="h5 mb-0 fw-bold text-gray-800">{{ stats.lowStockProducts }}</div></div><div class="col-auto"><i class="fas fa-exclamation-triangle fa-2x text-gray-300"></i></div></div></div></div></div>
+
+    <!-- Thẻ Tổng Hóa Đơn -->
+    <div class="col-xl-3 col-md-6 mb-4">
+      <div class="card border-start-primary shadow h-100 py-2">
+        <div class="card-body">
+          <div class="row g-0 align-items-center">
+            <div class="col">
+              <div class="text-xs fw-bold text-primary text-uppercase mb-1">Tổng Hóa Đơn</div>
+              <div class="h5 mb-0 fw-bold text-gray-800">{{ dashboardStats.tongQuanHoaDon?.tongSo || 0 }}</div>
+              <div class="text-xs text-muted">Hôm nay: {{ dashboardStats.tongQuanHoaDon?.homNay || 0 }}</div>
+            </div>
+            <div class="col-auto"><i class="fas fa-receipt fa-2x text-gray-300"></i></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Thẻ Khách Hàng -->
+    <div class="col-xl-3 col-md-6 mb-4">
+      <div class="card border-start-info shadow h-100 py-2">
+        <div class="card-body">
+          <div class="row g-0 align-items-center">
+            <div class="col">
+              <div class="text-xs fw-bold text-info text-uppercase mb-1">Khách Hàng</div>
+              <div class="h5 mb-0 fw-bold text-gray-800">{{ dashboardStats.tongQuanKhachHang?.tongSo || 0 }}</div>
+              <div class="text-xs text-info">Hoạt động: {{ dashboardStats.tongQuanKhachHang?.hoatDong || 0 }}</div>
+            </div>
+            <div class="col-auto"><i class="fas fa-users fa-2x text-gray-300"></i></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Thẻ Sản Phẩm Sắp Hết -->
+    <div class="col-xl-3 col-md-6 mb-4">
+      <div class="card border-start-warning shadow h-100 py-2">
+        <div class="card-body">
+          <div class="row g-0 align-items-center">
+            <div class="col">
+              <div class="text-xs fw-bold text-warning text-uppercase mb-1">Sắp Hết Hàng</div>
+              <div class="h5 mb-0 fw-bold text-gray-800">{{ dashboardStats.tongQuanSanPham?.sapHetHang || 0 }}</div>
+              <div class="text-xs text-danger">Hết hàng: {{ dashboardStats.tongQuanSanPham?.hetHang || 0 }}</div>
+            </div>
+            <div class="col-auto"><i class="fas fa-exclamation-triangle fa-2x text-gray-300"></i></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Hàng thứ hai - Thông tin chi tiết sản phẩm -->
+  <div class="row" v-loading="loadingStats">
+    <div class="col-xl-3 col-md-6 mb-4">
+      <div class="card border-start-info shadow h-100 py-2">
+        <div class="card-body">
+          <div class="row g-0 align-items-center">
+            <div class="col">
+              <div class="text-xs fw-bold text-info text-uppercase mb-1">Tổng Sản Phẩm</div>
+              <div class="h5 mb-0 fw-bold text-gray-800">{{ dashboardStats.tongQuanSanPham?.tongSo || 0 }}</div>
+              <div class="text-xs text-info">Còn hàng: {{ dashboardStats.tongQuanSanPham?.conHang || 0 }}</div>
+            </div>
+            <div class="col-auto"><i class="fas fa-box fa-2x text-gray-300"></i></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+      <div class="card border-start-secondary shadow h-100 py-2">
+        <div class="card-body">
+          <div class="row g-0 align-items-center">
+            <div class="col">
+              <div class="text-xs fw-bold text-secondary text-uppercase mb-1">Doanh Thu Tháng</div>
+              <div class="h5 mb-0 fw-bold text-gray-800">{{ formatCurrency(dashboardStats.tongQuanDoanhThu?.trongThang || 0) }}</div>
+              <div class="text-xs text-muted">Tháng hiện tại</div>
+            </div>
+            <div class="col-auto"><i class="fas fa-chart-line fa-2x text-gray-300"></i></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+      <div class="card border-start-dark shadow h-100 py-2">
+        <div class="card-body">
+          <div class="row g-0 align-items-center">
+            <div class="col">
+              <div class="text-xs fw-bold text-dark text-uppercase mb-1">Hóa Đơn Tháng</div>
+              <div class="h5 mb-0 fw-bold text-gray-800">{{ dashboardStats.tongQuanHoaDon?.trongThang || 0 }}</div>
+              <div class="text-xs text-muted">Tháng hiện tại</div>
+            </div>
+            <div class="col-auto"><i class="fas fa-file-invoice fa-2x text-gray-300"></i></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+      <div class="card border-start-light shadow h-100 py-2" style="border-left-color: #6c757d !important;">
+        <div class="card-body">
+          <div class="row g-0 align-items-center">
+            <div class="col">
+              <div class="text-xs fw-bold text-muted text-uppercase mb-1">Khách Hàng Mới</div>
+              <div class="h5 mb-0 fw-bold text-gray-800">{{ dashboardStats.khachHangMoi?.length || 0 }}</div>
+              <div class="text-xs text-muted">Đăng ký gần đây</div>
+            </div>
+            <div class="col-auto"><i class="fas fa-user-plus fa-2x text-gray-300"></i></div>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 
   <!-- Hàng chứa Biểu đồ và danh sách -->
@@ -61,12 +170,201 @@
           <h6 class="m-0 fw-bold text-primary">Sản phẩm Bán chạy</h6>
         </div>
         <div class="card-body">
-          <ul class="list-group list-group-flush">
-            <li v-for="product in topSellingProducts" :key="product.id" class="list-group-item d-flex justify-content-between align-items-center">
-              {{ product.name }}
-              <span class="badge bg-primary rounded-pill">{{ product.sold }}</span>
+          <div v-if="!dashboardStats.topSanPhamBanChay || dashboardStats.topSanPhamBanChay.length === 0" class="text-center text-muted py-4">
+            <i class="fas fa-box-open fa-3x mb-3"></i>
+            <p>Chưa có dữ liệu sản phẩm bán chạy</p>
+          </div>
+          <ul v-else class="list-group list-group-flush">
+            <li v-for="(product, index) in dashboardStats.topSanPhamBanChay" :key="index" class="list-group-item d-flex justify-content-between align-items-center">
+              <div>
+                <strong>{{ product.tenSanPham }}</strong>
+                <small class="text-muted d-block">{{ formatCurrency(product.doanhThu) }}</small>
+              </div>
+              <span class="badge bg-primary rounded-pill">{{ Math.round(product.soLuongBan) }}</span>
             </li>
           </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Thống kê chi tiết với tabs -->
+  <div class="row">
+    <div class="col-12">
+      <div class="card shadow">
+        <div class="card-header">
+          <ul class="nav nav-tabs card-header-tabs" id="statsTab" role="tablist">
+            <li class="nav-item" role="presentation">
+              <button class="nav-link active" id="san-pham-tab" data-bs-toggle="tab" data-bs-target="#san-pham" type="button" role="tab">
+                <i class="fas fa-box me-2"></i>Thống kê Sản phẩm
+              </button>
+            </li>
+            <li class="nav-item" role="presentation">
+              <button class="nav-link" id="khach-hang-tab" data-bs-toggle="tab" data-bs-target="#khach-hang" type="button" role="tab">
+                <i class="fas fa-users me-2"></i>Thống kê Khách hàng
+              </button>
+            </li>
+            <li class="nav-item" role="presentation">
+              <button class="nav-link" id="ton-kho-tab" data-bs-toggle="tab" data-bs-target="#ton-kho" type="button" role="tab">
+                <i class="fas fa-warehouse me-2"></i>Tồn kho
+              </button>
+            </li>
+          </ul>
+        </div>
+        <div class="card-body">
+          <div class="tab-content" id="statsTabContent">
+            <!-- Tab Sản phẩm -->
+            <div class="tab-pane fade show active" id="san-pham" role="tabpanel">
+              <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5>Thống kê Sản phẩm</h5>
+                <button @click="fetchThongKeSanPham" class="btn btn-primary btn-sm" :disabled="loadingProductStats">
+                  <i class="fas fa-sync-alt me-1"></i>Làm mới
+                </button>
+              </div>
+              <div v-loading="loadingProductStats">
+                <div class="row">
+                  <div class="col-md-8">
+                    <h6>Top 10 sản phẩm bán chạy (30 ngày qua)</h6>
+                    <div class="table-responsive">
+                      <table class="table table-striped">
+                        <thead>
+                          <tr>
+                            <th>#</th>
+                            <th>Tên sản phẩm</th>
+                            <th>Số lượng bán</th>
+                            <th>Doanh thu</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <tr v-for="(item, index) in productStats.sanPhamBanChay" :key="index">
+                            <td>{{ index + 1 }}</td>
+                            <td>{{ item.tenSanPham }}</td>
+                            <td>{{ Math.round(item.soLuongBan) }}</td>
+                            <td>{{ formatCurrency(item.doanhThu) }}</td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                  <div class="col-md-4">
+                    <h6>Thống kê theo danh mục</h6>
+                    <div v-if="!productStats.theoDanhMuc || productStats.theoDanhMuc.length === 0" class="text-muted text-center py-4">
+                      Chưa có dữ liệu
+                    </div>
+                    <div v-else>
+                      <div v-for="category in productStats.theoDanhMuc" :key="category.tenDanhMuc" class="mb-2">
+                        <div class="d-flex justify-content-between">
+                          <span>{{ category.tenDanhMuc }}</span>
+                          <span class="fw-bold">{{ category.soLuong }}</span>
+                        </div>
+                        <div class="progress" style="height: 8px;">
+                          <div class="progress-bar" :style="{width: (category.soLuong / Math.max(...productStats.theoDanhMuc.map(c => c.soLuong)) * 100) + '%'}"></div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Tab Khách hàng -->
+            <div class="tab-pane fade" id="khach-hang" role="tabpanel">
+              <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5>Thống kê Khách hàng</h5>
+                <button @click="fetchThongKeKhachHang" class="btn btn-primary btn-sm" :disabled="loadingCustomerStats">
+                  <i class="fas fa-sync-alt me-1"></i>Làm mới
+                </button>
+              </div>
+              <div v-loading="loadingCustomerStats">
+                <div class="row">
+                  <div class="col-md-6">
+                    <h6>Khách hàng mới (30 ngày qua)</h6>
+                    <div class="table-responsive">
+                      <table class="table table-striped">
+                        <thead>
+                          <tr>
+                            <th>Tên khách hàng</th>
+                            <th>Email</th>
+                            <th>Ngày đăng ký</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <tr v-for="customer in customerStats.khachHangMoi" :key="customer.id">
+                            <td>{{ customer.hoTen }}</td>
+                            <td>{{ customer.email }}</td>
+                            <td>{{ formatDate(customer.ngayTao) }}</td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                  <div class="col-md-6">
+                    <h6>Khách hàng VIP</h6>
+                    <div class="table-responsive">
+                      <table class="table table-striped">
+                        <thead>
+                          <tr>
+                            <th>Tên khách hàng</th>
+                            <th>Số đơn hàng</th>
+                            <th>Tổng chi tiêu</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <tr v-for="customer in customerStats.khachHangVIP" :key="customer.id">
+                            <td>{{ customer.hoTen }}</td>
+                            <td>{{ customer.soDonHang }}</td>
+                            <td>{{ formatCurrency(customer.tongChiTieu) }}</td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Tab Tồn kho -->
+            <div class="tab-pane fade" id="ton-kho" role="tabpanel">
+              <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5>Báo cáo Tồn kho</h5>
+                <button @click="fetchThongKeTonKho" class="btn btn-primary btn-sm" :disabled="loadingInventoryStats">
+                  <i class="fas fa-sync-alt me-1"></i>Làm mới
+                </button>
+              </div>
+              <div v-loading="loadingInventoryStats">
+                <div class="table-responsive">
+                  <table class="table table-striped">
+                    <thead>
+                      <tr>
+                        <th>Tên sản phẩm</th>
+                        <th>Mã sản phẩm</th>
+                        <th>Số lượng tồn</th>
+                        <th>Giá trị tồn kho</th>
+                        <th>Trạng thái</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr v-for="item in inventoryStats" :key="item.maSanPham">
+                        <td>{{ item.tenSanPham }}</td>
+                        <td>{{ item.maSanPham }}</td>
+                        <td>{{ item.soLuongTon }}</td>
+                        <td>{{ formatCurrency(item.giaTriTonKho) }}</td>
+                        <td>
+                          <span class="badge" :class="{
+                            'bg-danger': item.trangThai === 'Hết hàng',
+                            'bg-warning': item.trangThai === 'Sắp hết',
+                            'bg-success': item.trangThai === 'Còn hàng'
+                          }">
+                            {{ item.trangThai }}
+                          </span>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -83,23 +381,63 @@ import axios from 'axios'; // Import axios
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend);
 
 // --- TRẠNG THÁI VÀ DỮ LIỆU ---
-const stats = ref({ revenue: 0, newOrders: 0, newCustomers: 0, lowStockProducts: 0 });
-const topSellingProducts = ref([]);
-const chartData = ref({ labels: [], datasets: 
-  [{ label: 'Doanh thu',
-   borderColor: 'rgba(78, 115, 223, 1)',
-      backgroundColor: 'rgba(78, 115, 223, 0.1)',
-      pointBackgroundColor: 'rgba(78, 115, 223, 1)',
-      pointBorderColor: '#fff',
-      pointHoverBackgroundColor: '#fff',
-      pointHoverBorderColor: 'rgba(78, 115, 223, 1)', data: [] ,
-     fill: true,
-      tension: 0.4}] });
-const chartOptions = ref({ responsive: true, maintainAspectRatio: false });
+const dashboardStats = ref({});
+const chartData = ref({ 
+  labels: [], 
+  datasets: [{
+    label: 'Doanh thu',
+    borderColor: 'rgba(78, 115, 223, 1)',
+    backgroundColor: 'rgba(78, 115, 223, 0.1)',
+    pointBackgroundColor: 'rgba(78, 115, 223, 1)',
+    pointBorderColor: '#fff',
+    pointHoverBackgroundColor: '#fff',
+    pointHoverBorderColor: 'rgba(78, 115, 223, 1)',
+    data: [],
+    fill: true,
+    tension: 0.4
+  }]
+});
+const chartOptions = ref({ 
+  responsive: true, 
+  maintainAspectRatio: false,
+  plugins: {
+    legend: {
+      display: true,
+      position: 'top'
+    },
+    title: {
+      display: true,
+      text: 'Doanh thu theo tháng'
+    }
+  },
+  scales: {
+    y: {
+      beginAtZero: true,
+      ticks: {
+        callback: function(value) {
+          return new Intl.NumberFormat('vi-VN', { 
+            style: 'currency', 
+            currency: 'VND',
+            minimumFractionDigits: 0
+          }).format(value);
+        }
+      }
+    }
+  }
+});
 
 const loadingStats = ref(true);
 const loadingChart = ref(true);
 const chartLoaded = ref(false);
+
+// Thống kê chi tiết
+const productStats = ref({ sanPhamBanChay: [], theoDanhMuc: [], tonKho: [] });
+const customerStats = ref({ tongQuan: {}, khachHangMoi: [], khachHangVIP: [], theoThang: [] });
+const inventoryStats = ref([]);
+
+const loadingProductStats = ref(false);
+const loadingCustomerStats = ref(false);
+const loadingInventoryStats = ref(false);
 
 // --- LOGIC BỘ LỌC NGÀY THÁNG ---
 const dateRange = ref([]); // Dùng mảng cho el-date-picker type="daterange"
@@ -133,33 +471,58 @@ const fetchDashboardData = async () => {
     loadingStats.value = true;
     loadingChart.value = true;
     chartLoaded.value = false;
+    
     try {
-        const params = {
-            from: dateRange.value[0],
-            to: dateRange.value[1]
-        };
-
-        const [statsResponse, chartResponse, topProductsResponse] = await Promise.all([
-            // Thay thế bằng lời gọi API thật của bạn
-            // axios.get('/api/dashboard/stats', { params }),
-            // axios.get('/api/dashboard/revenue-chart', { params }),
-            // axios.get('/api/dashboard/top-selling', { params }),
-
-            // --- Dữ liệu giả lập ---
-            Promise.resolve({ data: { revenue: Math.random() * 100000000, newOrders: Math.floor(Math.random() * 50), newCustomers: 30, lowStockProducts: 5 } }),
-            Promise.resolve({ data: { labels: ['Tuần 1', 'Tuần 2', 'Tuần 3', 'Tuần 4'], data: Array.from({length: 4}, () => Math.random() * 20000000) } }),
-            Promise.resolve({ data: [ { id: 1, name: 'Áo Thun Năng Động', sold: 140 }, { id: 2, name: 'Quần Jogger Pro', sold: 98 } ] })
-        ]);
-
-        stats.value = statsResponse.data;
-        topSellingProducts.value = topProductsResponse.data;
-        chartData.value.labels = chartResponse.data.labels;
-        chartData.value.datasets[0].data = chartResponse.data.data;
+        console.log('[Dashboard] Đang tải dữ liệu thống kê...');
+        
+        // Gọi API thống kê dashboard với bộ lọc ngày tháng
+        const params = {};
+        if (dateRange.value && dateRange.value.length === 2) {
+            params.startDate = dateRange.value[0];
+            params.endDate = dateRange.value[1];
+        }
+        
+        const response = await axios.get('http://localhost:8080/admin/api/thongke/dashboard', {
+            withCredentials: true,
+            headers: { 'Content-Type': 'application/json' },
+            params: params
+        });
+        
+        console.log('[Dashboard] Dữ liệu thống kê:', response.data);
+        dashboardStats.value = response.data;
+        
+        // Cập nhật biểu đồ doanh thu theo tháng
+        if (response.data.doanhThuTheoThang && response.data.doanhThuTheoThang.length > 0) {
+            const chartLabels = response.data.doanhThuTheoThang.map(item => `${item.thang}/${item.nam}`);
+            const chartDataValues = response.data.doanhThuTheoThang.map(item => item.doanhThu);
+            
+            chartData.value.labels = chartLabels;
+            chartData.value.datasets[0].data = chartDataValues;
+        } else {
+            // Fallback data nếu không có dữ liệu
+            chartData.value.labels = ['Tháng 1', 'Tháng 2', 'Tháng 3', 'Tháng 4'];
+            chartData.value.datasets[0].data = [0, 0, 0, 0];
+        }
+        
         chartLoaded.value = true;
-
+        
     } catch (error) {
-        console.error("Lỗi khi tải dữ liệu dashboard:", error);
-        ElMessage.error('Không thể tải dữ liệu dashboard.');
+        console.error('[Dashboard] Lỗi khi tải dữ liệu:', error);
+        ElMessage.error('Không thể tải dữ liệu dashboard: ' + (error.response?.data?.error || error.message));
+        
+        // Hiển thị dữ liệu trống khi có lỗi
+        dashboardStats.value = {
+            tongQuanHoaDon: { tongSo: 0, homNay: 0 },
+            tongQuanKhachHang: { tongSo: 0, hoatDong: 0 },
+            tongQuanSanPham: { tongSo: 0, conHang: 0, hetHang: 0, sapHetHang: 0 },
+            topSanPhamBanChay: [],
+            doanhThuTheoThang: []
+        };
+        
+        chartData.value.labels = [];
+        chartData.value.datasets[0].data = [];
+        chartLoaded.value = true;
+        
     } finally {
         loadingStats.value = false;
         loadingChart.value = false;
@@ -171,9 +534,71 @@ const formatCurrency = (value) => {
   return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(value);
 };
 
+const formatDate = (dateString) => {
+  if (!dateString) return '';
+  return new Date(dateString).toLocaleDateString('vi-VN');
+};
+
+// Hàm fetch thống kê sản phẩm chi tiết
+const fetchThongKeSanPham = async () => {
+  loadingProductStats.value = true;
+  try {
+    const response = await axios.get('http://localhost:8080/admin/api/thongke/san-pham', {
+      withCredentials: true,
+      params: { soNgay: 30 }
+    });
+    productStats.value = response.data;
+    console.log('[Dashboard] Thống kê sản phẩm:', response.data);
+  } catch (error) {
+    console.error('[Dashboard] Lỗi thống kê sản phẩm:', error);
+    ElMessage.error('Không thể tải thống kê sản phẩm');
+  } finally {
+    loadingProductStats.value = false;
+  }
+};
+
+// Hàm fetch thống kê khách hàng chi tiết
+const fetchThongKeKhachHang = async () => {
+  loadingCustomerStats.value = true;
+  try {
+    const response = await axios.get('http://localhost:8080/admin/api/thongke/khach-hang', {
+      withCredentials: true,
+      params: { soNgay: 30 }
+    });
+    customerStats.value = response.data;
+    console.log('[Dashboard] Thống kê khách hàng:', response.data);
+  } catch (error) {
+    console.error('[Dashboard] Lỗi thống kê khách hàng:', error);
+    ElMessage.error('Không thể tải thống kê khách hàng');
+  } finally {
+    loadingCustomerStats.value = false;
+  }
+};
+
+// Hàm fetch thống kê tồn kho
+const fetchThongKeTonKho = async () => {
+  loadingInventoryStats.value = true;
+  try {
+    const response = await axios.get('http://localhost:8080/admin/api/thongke/san-pham', {
+      withCredentials: true
+    });
+    inventoryStats.value = response.data.tonKho || [];
+    console.log('[Dashboard] Thống kê tồn kho:', response.data.tonKho);
+  } catch (error) {
+    console.error('[Dashboard] Lỗi thống kê tồn kho:', error);
+    ElMessage.error('Không thể tải thống kê tồn kho');
+  } finally {
+    loadingInventoryStats.value = false;
+  }
+};
+
 onMounted(() => {
     setDefaultDateRange();
     fetchDashboardData();
+    // Tải thống kê chi tiết ban đầu
+    fetchThongKeSanPham();
+    fetchThongKeKhachHang();
+    fetchThongKeTonKho();
 });
 </script>
 
@@ -183,5 +608,8 @@ onMounted(() => {
 .card .border-start-success { border-left: .25rem solid #1cc88a!important; }
 .card .border-start-info { border-left: .25rem solid #36b9cc!important; }
 .card .border-start-warning { border-left: .25rem solid #f6c23e!important; }
+.card .border-start-secondary { border-left: .25rem solid #6c757d!important; }
+.card .border-start-dark { border-left: .25rem solid #343a40!important; }
+.card .border-start-light { border-left: .25rem solid #6c757d!important; }
 .text-gray-300 { color: #6f7594!important; }
 </style>

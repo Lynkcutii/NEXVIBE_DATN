@@ -1,6 +1,7 @@
 package com.example.datnspct.dto;
 
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -10,12 +11,17 @@ import java.time.LocalDateTime;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
 public class HoaDonChiTietDTO {
     private Integer idHDCT;
-    private Integer idSP;
     private Integer idHD;
-    private Integer idKM;
-    private Integer idPT;
+    private Integer idCtSanPham;
+    private Integer idSP;
+    private String maSPCT;
+    private String tenThuongHieu;
+    private String tenChatLieu;
+    private String anhGiay;
+    private Integer soLuongTonKho;
     private Integer soLuong;
     private BigDecimal donGia;
     private BigDecimal thanhTien;
@@ -26,4 +32,5 @@ public class HoaDonChiTietDTO {
     private String hinhAnh;
     private String tenMauSac;
     private String tenSize;
+    private Integer idVoucher;
 }

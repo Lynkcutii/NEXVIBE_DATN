@@ -197,6 +197,7 @@ const addressForm = reactive({
 let addUpdateAddressModalInstance = null;
 let addressModalInstance = null;
 
+// --- COMPUTED ---
 const isEditingAddress = computed(() => !!addressForm.idDiaChi);
 const subTotal = computed(() => selectedItems.value.reduce((total, item) => total + item.donGia * item.soLuong, 0));
 const totalDisplay = computed(() => subTotal.value);
@@ -212,6 +213,8 @@ const selectedAddress = computed(() => {
 });
 const canPlaceOrder = computed(() => selectedItems.value.length > 0 && !isSubmitting.value && selectedPaymentMethod.value && selectedAddress.value);
 
+
+// --- LOGIC ---
 const loadCustomerInfo = async () => {
   if (!auth.isAuthenticated || !auth.user?.idKH) return;
   try {
@@ -219,14 +222,14 @@ const loadCustomerInfo = async () => {
     customerInfo.name = response.data.tenKH;
     customerInfo.email = response.data.email;
   } catch (err) {
-    console.error("Lỗi khi tải thông tin khách hàng:", err);
     toast.error("Không thể tải thông tin khách hàng.");
   }
 };
 
 const loadAddresses = async () => {
   if (!auth.isAuthenticated || !auth.user?.idKH) {
-    isAddressesLoading.value = false; return;
+    isAddressesLoading.value = false;
+    return;
   }
   try {
     isAddressesLoading.value = true;
@@ -246,6 +249,7 @@ const loadAddresses = async () => {
 
 const confirmAddressSelection = () => {
   selectedAddressId.value = selectedAddressIdInModal.value;
+  if(addressModalInstance) addressModalInstance.hide();
   toast.success("Đã cập nhật địa chỉ giao hàng.");
 };
 
@@ -271,7 +275,6 @@ const placeOrder = async () => {
         address: selectedAddress.value.fullAddress
       },
       paymentMethod: selectedPaymentMethod.value,
-      total: totalDisplay.value,
       items: selectedItems.value.map(item => ({
         idGHCT: item.idGHCT,
         idSPCT: item.idSPCT,
@@ -381,6 +384,7 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
+/* Mã CSS đã được kiểm tra và sửa lỗi cú pháp */
 .checkout-page { background-color: #f5f5f5; padding-bottom: 120px; }
 .card { border-radius: 0.25rem; border: none; }
 .shipping-address-box { padding: 1rem 0; }
@@ -392,7 +396,7 @@ onUnmounted(() => {
   justify-content: space-between;
   margin-bottom: 1rem;
   color: #6c757d;
-  align-items: center; /* Đảm bảo dòng này đã được sửa đúng */
+  align-items: center;
 }
 .payment-summary .total {
   font-weight: bold;

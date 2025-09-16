@@ -1,13 +1,7 @@
 package com.example.datnspct.Model;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.Table;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -22,18 +16,19 @@ import lombok.Setter;
 public class Img {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "IdImg")
     private Integer idImg;
 
-    @ManyToOne
-    @JoinColumn(name = "IdSPCT", referencedColumnName = "IdSPCT")
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "IdSPCT")
+    @JsonIgnore
     private SanPhamChiTiet sanPhamChiTiet;
 
     @Column(name = "link")
     private String link;
 
-    @Column(name = "name")
-    private String name;
-
-    @Column(name = "size")
-    private String size;
-} 
+    // ----- CÁC TRƯỜNG BỊ LOẠI BỎ VÌ KHÔNG CÓ TRONG CSDL -----
+    // private String name;
+    // private String size;
+    // --------------------------------------------------------
+}

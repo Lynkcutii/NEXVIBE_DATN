@@ -36,10 +36,6 @@ public class HoaDonChiTiet {
     @JoinColumn(name = "IdHD", referencedColumnName = "IdHD")
     private HoaDon hoaDon;
 
-    @ManyToOne
-    @JoinColumn(name = "IdPT", referencedColumnName = "IdPT")
-    private PhuongTT phuongThucThanhToan;
-
     @Column(name = "SoLuong")
     private Integer soLuong;
 
@@ -54,4 +50,11 @@ public class HoaDonChiTiet {
 
     @Column(name = "ThanhTien", nullable = false)
     private BigDecimal thanhTien;
+
+    @Column(name = "idVoucher") // Thêm cột này
+    private Integer idVoucher; // ID của voucher cho sản phẩm chi tiết
+
+    @ManyToOne
+    @JoinColumn(name = "idVoucher", insertable = false, updatable = false)
+    private Voucher voucher; // Quan hệ với Voucher (nếu cần)
 }

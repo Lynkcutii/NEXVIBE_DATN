@@ -21,6 +21,7 @@
     "vue": "^3.5.17",
     "vue-chartjs": "^5.3.2",
     "vue-toastification": "^2.0.0-rc.5",
+    "xlsx": "^0.18.5",
     "yup": "^1.6.1"
   },
   "devDependencies": {

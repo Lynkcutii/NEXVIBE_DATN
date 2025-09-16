@@ -1,6 +1,7 @@
 package com.example.datnspct.Model;
 
 import jakarta.persistence.*;
+import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -11,6 +12,8 @@ import java.util.List;
 @Table(name = "SanPhamCT")
 @Getter
 @Setter
+@Data // Lưu ý: Dùng @Getter @Setter rồi thì @Data là không cần thiết, nhưng để cũng
+      // không sao
 public class SanPhamChiTiet {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -24,18 +27,11 @@ public class SanPhamChiTiet {
     @JoinColumn(name = "IdSP")
     private SanPham sanPham;
 
-    @ManyToOne
-    @JoinColumn(name = "IdDM")
-    private DanhMuc danhMuc;
-
     @Column(name = "Gia")
     private BigDecimal gia;
 
     @Column(name = "SoLuong")
     private Integer soLuong;
-
-    @Column(name = "MoTa")
-    private String moTa;
 
     @Column(name = "TrangThai")
     private Boolean trangThai;
@@ -55,7 +51,8 @@ public class SanPhamChiTiet {
     @ManyToOne
     @JoinColumn(name = "IdSize")
     private Size size;
-    @OneToMany(mappedBy = "sanPhamChiTiet", fetch = FetchType.LAZY)
-    private List<Img> images;
 
+    // Chỉ giữ lại một khai báo duy nhất và kết hợp các thuộc tính
+    @OneToMany(mappedBy = "sanPhamChiTiet", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    private List<Img> images;
 }
