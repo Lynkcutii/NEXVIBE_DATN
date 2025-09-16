@@ -11,10 +11,12 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/client/api/taikhoan")
+@CrossOrigin(origins = {"http://localhost:5175", "http://127.0.0.1:5175"})
 public class TaiKhoanController {
 
     @Autowired
     private TaiKhoanService taiKhoanService;
+
 
     @PutMapping("/{idTK}/change-password")
     public ResponseEntity<?> changePassword(
@@ -23,8 +25,12 @@ public class TaiKhoanController {
         try {
             taiKhoanService.changePassword(idTK, request);
             return ResponseEntity.ok(Map.of("message", "Đổi mật khẩu thành công."));
-        } catch (IllegalArgumentException | EntityNotFoundException e) {
+        } catch (IllegalArgumentException e) {
+            // Lỗi do logic (sai mật khẩu, mật khẩu không hợp lệ)
             return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
+        } catch (EntityNotFoundException e) {
+            // Lỗi không tìm thấy tài nguyên
+            return ResponseEntity.status(404).body(Map.of("message", e.getMessage()));
         }
     }
 }

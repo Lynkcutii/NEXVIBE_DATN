@@ -2,7 +2,7 @@
   <div class="checkout-page bg-light">
     <div class="container py-4">
       
-      <!-- 1. ĐỊA CHỈ NHẬN HÀNG -->
+      <!-- PHẦN 1: ĐỊA CHỈ NHẬN HÀNG -->
       <div class="card shadow-sm mb-3">
         <div class="card-body p-4">
           <div class="shipping-address-box">
@@ -10,10 +10,12 @@
               <i class="fas fa-map-marker-alt fa-lg me-2"></i>
               <h5 class="mb-0 fw-bold">Địa Chỉ Nhận Hàng</h5>
             </div>
+            <!-- Hiển thị khi đang tải -->
             <div v-if="isAddressesLoading" class="text-muted">Đang tải địa chỉ...</div>
+            <!-- Hiển thị khi đã có địa chỉ được chọn -->
             <div v-else-if="selectedAddress" class="d-flex justify-content-between align-items-center">
               <div>
-                <span class="fw-bold me-3">{{ selectedAddress.customerName }} | (+84) {{ selectedAddress.phone }}</span>
+                <span class="fw-bold me-3">{{ customerInfo.name }} | (+84) {{ selectedAddress.soDienThoai.substring(1) }}</span>
                 <span class="text-muted">{{ selectedAddress.fullAddress }}</span>
                 <span v-if="selectedAddress.isDefault" class="badge bg-light text-danger border border-danger ms-2">Mặc Định</span>
               </div>
@@ -21,12 +23,15 @@
                 Thay Đổi
               </button>
             </div>
-            <div v-else class="text-muted">Vui lòng chọn hoặc thêm địa chỉ giao hàng.</div>
+            <!-- Hiển thị khi chưa có địa chỉ nào -->
+            <div v-else class="alert alert-warning">
+              Vui lòng <a href="#" @click.prevent="openAddAddressModal" class="alert-link">thêm địa chỉ</a> để tiếp tục.
+            </div>
           </div>
         </div>
       </div>
 
-      <!-- 2. DANH SÁCH SẢN PHẨM -->
+      <!-- PHẦN 2: DANH SÁCH SẢN PHẨM -->
       <div class="card shadow-sm mb-3">
         <div class="card-header bg-white py-3">
           <div class="row fw-bold text-muted">
@@ -37,7 +42,7 @@
           </div>
         </div>
         <div class="card-body">
-          <div v-for="item in selectedItems" :key="item.idGHCT" class="row align-items-center py-3 border-bottom">
+          <div v-if="selectedItems.length > 0" v-for="item in selectedItems" :key="item.idGHCT" class="row align-items-center py-3 border-bottom">
             <div class="col-md-6 d-flex align-items-center">
               <img :src="item.imageUrl || 'https://placehold.co/150'" class="cart-product-img me-3" :alt="item.name">
               <div>
@@ -49,10 +54,11 @@
             <div class="col-md-2 text-center text-muted">{{ item.soLuong }}</div>
             <div class="col-md-2 text-end fw-bold">{{ (item.donGia * item.soLuong).toLocaleString('vi-VN') }}đ</div>
           </div>
+           <div v-else class="text-center p-4 text-muted">Không có sản phẩm nào được chọn để thanh toán.</div>
         </div>
       </div>
 
-      <!-- 3. HÌNH THỨC THANH TOÁN VÀ TỔNG KẾT -->
+      <!-- PHẦN 3: HÌNH THỨC THANH TOÁN VÀ TỔNG KẾT -->
       <div class="card shadow-sm">
         <div class="card-body">
           <div class="row align-items-end">
@@ -78,10 +84,9 @@
           </div>
         </div>
       </div>
-      
     </div>
 
-    <!-- NÚT ĐẶT HÀNG (FOOTER) -->
+    <!-- PHẦN 4: NÚT ĐẶT HÀNG (FOOTER) -->
     <div class="checkout-footer">
       <div class="container d-flex justify-content-end align-items-center">
         <div class="d-flex align-items-center">
@@ -97,7 +102,7 @@
       </div>
     </div>
 
-    <!-- MODAL CHỌN ĐỊA CHỈ -->
+    <!-- PHẦN 5: MODAL CHỌN ĐỊA CHỈ -->
     <div class="modal fade" id="addressModal" tabindex="-1">
       <div class="modal-dialog modal-dialog-centered modal-lg">
         <div class="modal-content">
@@ -108,9 +113,9 @@
                 <div class="d-flex align-items-start">
                   <input class="form-check-input me-3 mt-1" type="radio" name="modalAddress" :value="addr.idDiaChi" v-model="selectedAddressIdInModal">
                   <div>
-                    <span class="fw-bold me-2">{{ customerInfo.name }}</span><span>(+84) {{ addr.soDienThoai }}</span>
+                    <span class="fw-bold me-2">{{ customerInfo.name }}</span><span>(+84) {{ addr.soDienThoai.substring(1) }}</span>
                     <p class="mb-1 text-muted small">{{ addr.diaChiCuThe }}</p>
-                    <p class="mb-0 text-muted small">{{ [addr.phuongXa, addr.tinhThanh].filter(Boolean).join(', ') }}</p>
+                    <p class="mb-0 text-muted small">{{ [addr.phuongXa, addr.quanHuyen, addr.tinhThanh].filter(Boolean).join(', ') }}</p>
                   </div>
                 </div>
                 <button class="btn btn-link text-decoration-none" @click.prevent="openUpdateAddressModal(addr)">Cập nhật</button>
@@ -128,7 +133,7 @@
       </div>
     </div>
     
-    <!-- MODAL THÊM/SỬA ĐỊA CHỈ -->
+    <!-- PHẦN 6: MODAL THÊM/SỬA ĐỊA CHỈ -->
     <div class="modal fade" id="addUpdateAddressModal" tabindex="-1">
       <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
@@ -140,6 +145,7 @@
             <form @submit.prevent="saveAddress">
               <div class="mb-3"><label class="form-label">Địa chỉ cụ thể</label><input type="text" class="form-control" v-model="addressForm.diaChiCuThe" required></div>
               <div class="mb-3"><label class="form-label">Phường/Xã</label><input type="text" class="form-control" v-model="addressForm.phuongXa" required></div>
+              <div class="mb-3"><label class="form-label">Quận/Huyện</label><input type="text" class="form-control" v-model="addressForm.quanHuyen" required></div>
               <div class="mb-3"><label class="form-label">Tỉnh/Thành phố</label><input type="text" class="form-control" v-model="addressForm.tinhThanh" required></div>
               <div class="mb-3"><label class="form-label">Số điện thoại</label><input type="text" class="form-control" v-model="addressForm.soDienThoai" required></div>
               <div class="form-check">
@@ -173,62 +179,45 @@ const API_BASE_URL = 'http://localhost:8080';
 
 // --- STATE ---
 const selectedItems = ref([]);
-const paymentMethods = ref([]);
-const selectedPaymentMethod = ref(null);
+const paymentMethods = ref([
+    { id: 'COD', description: 'Thanh toán khi nhận hàng (COD)' },
+    { id: 'VNPAY', description: 'Thanh toán qua VNPAY' }
+]);
+const selectedPaymentMethod = ref('COD');
 const isSubmitting = ref(false);
 const addresses = ref([]);
 const selectedAddressId = ref(null);
 const selectedAddressIdInModal = ref(null);
 const isAddressesLoading = ref(true);
 const customerInfo = reactive({ name: '', email: '' });
-const isEditingAddress = computed(() => !!addressForm.idDiaChi);
 const addressForm = reactive({
-  idDiaChi: null, diaChiCuThe: '', phuongXa: '', tinhThanh: '', soDienThoai: '', isDefault: false,
+  idDiaChi: null, diaChiCuThe: '', phuongXa: '', quanHuyen: '', tinhThanh: '', soDienThoai: '', isDefault: false,
 });
 
 let addUpdateAddressModalInstance = null;
 let addressModalInstance = null;
 
-// --- COMPUTED ---
+const isEditingAddress = computed(() => !!addressForm.idDiaChi);
 const subTotal = computed(() => selectedItems.value.reduce((total, item) => total + item.donGia * item.soLuong, 0));
-const totalDisplay = computed(() => subTotal.value > 0 ? subTotal.value : 0);
-const canPlaceOrder = computed(() => selectedItems.value.length > 0 && !isSubmitting.value && selectedPaymentMethod.value && selectedAddressId.value);
+const totalDisplay = computed(() => subTotal.value);
 const selectedAddress = computed(() => {
   if (!selectedAddressId.value || !addresses.value.length) return null;
   const addr = addresses.value.find(a => a.idDiaChi === selectedAddressId.value);
   if (!addr) return null;
   return {
     ...addr,
-    customerName: customerInfo.name,
-    phone: addr.soDienThoai,
-    fullAddress: [addr.diaChiCuThe, addr.phuongXa, addr.tinhThanh].filter(Boolean).join(', '),
+    fullAddress: [addr.diaChiCuThe, addr.phuongXa, addr.quanHuyen, addr.tinhThanh].filter(Boolean).join(', '),
     isDefault: addr.trangThai === 1
   };
 });
-
-// --- API & LOGIC ---
-const loadPaymentMethods = async () => {
-  try {
-    const response = await axios.get(`${API_BASE_URL}/api/phuongtt`);
-    paymentMethods.value = response.data.map(method => ({
-      id: method.idPTT,
-      description: method.ten === 'THANH TOAN KHI NHAN HANG' ? 'Thanh toán khi nhận hàng' : 'Thanh toán Online'
-    }));
-    if (paymentMethods.value.length > 0) selectedPaymentMethod.value = paymentMethods.value[0].id;
-  } catch (err) { toast.error('Lỗi khi tải phương thức thanh toán.'); }
-};
+const canPlaceOrder = computed(() => selectedItems.value.length > 0 && !isSubmitting.value && selectedPaymentMethod.value && selectedAddress.value);
 
 const loadCustomerInfo = async () => {
-  // Kiểm tra idTK thay vì idKH
-  if (!auth.isAuthenticated || !auth.user?.idTK) return;
-  
+  if (!auth.isAuthenticated || !auth.user?.idKH) return;
   try {
-    // GỌI ĐÚNG API THEO idTK
-    const response = await axios.get(`${API_BASE_URL}/client/api/khachhang/byTaiKhoanId/${auth.user.idTK}`);
-    
-    const customer = response.data;
-    customerInfo.name = customer.tenKH;
-    customerInfo.phone = customer.sdt;
+    const response = await axios.get(`${API_BASE_URL}/client/api/khachhang/${auth.user.idKH}`);
+    customerInfo.name = response.data.tenKH;
+    customerInfo.email = response.data.email;
   } catch (err) {
     console.error("Lỗi khi tải thông tin khách hàng:", err);
     toast.error("Không thể tải thông tin khách hàng.");
@@ -262,46 +251,66 @@ const confirmAddressSelection = () => {
 
 const placeOrder = async () => {
   if (!canPlaceOrder.value) {
-    toast.error('Vui lòng chọn đầy đủ thông tin.'); return;
+    if (!selectedAddress.value) toast.error('Vui lòng chọn địa chỉ giao hàng.');
+    else toast.error('Vui lòng điền đầy đủ thông tin để đặt hàng.');
+    return;
   }
   isSubmitting.value = true;
+
   try {
-    const currentAddress = selectedAddress.value;
-    const orderData = {
+    const nameParts = customerInfo.name ? customerInfo.name.split(' ') : [''];
+    const lastName = nameParts.pop() || '';
+    const firstName = nameParts.join(' ');
+    
+    const payload = {
       idTK: auth.user.idTK,
-      shippingInfo: { 
-        addressId: currentAddress.idDiaChi,
-        firstName: customerInfo.name.split(' ')[0] || '',
-        lastName: customerInfo.name.split(' ').slice(1).join(' ') || '',
-        phone: currentAddress.phone,
-        address: currentAddress.fullAddress,
-        email: customerInfo.email
+      shippingInfo: {
+        firstName: firstName,
+        lastName: lastName,
+        phone: selectedAddress.value.soDienThoai,
+        address: selectedAddress.value.fullAddress
       },
       paymentMethod: selectedPaymentMethod.value,
       total: totalDisplay.value,
       items: selectedItems.value.map(item => ({
-        idGHCT: item.idGHCT, idSPCT: item.idSPCT,
-        soLuong: item.soLuong, donGia: Number(item.donGia)
-      }))
+        idGHCT: item.idGHCT,
+        idSPCT: item.idSPCT,
+        soLuong: item.soLuong,
+        donGia: item.donGia
+      })),
+      total: totalDisplay.value
     };
-    await axios.post(`${API_BASE_URL}/client/api/hoadon`, orderData);
+
+    console.log("Dữ liệu gửi đi:", JSON.stringify(payload, null, 2));
+
+    const response = await axios.post(`${API_BASE_URL}/client/api/hoadon`, payload);
+    
     toast.success('Đặt hàng thành công!');
     sessionStorage.removeItem('selectedCheckoutItems');
-    router.push('/order-success');
+    router.push({ name: 'order.history' });
+  
   } catch (err) {
-    const errorMessage = err.response?.data?.message || 'Lỗi khi đặt hàng';
-    toast.error(errorMessage);
+    console.error("Lỗi khi đặt hàng:", err.response);
+    if (err.response && err.response.data) {
+        const errorData = err.response.data;
+        const errorMessage = errorData.details ? errorData.details.join('\n') : errorData.message;
+        toast.error(`Lỗi: ${errorMessage || 'Không thể đặt hàng.'}`, { timeout: 7000 });
+    } else {
+        toast.error('Lỗi kết nối hoặc lỗi không xác định. Vui lòng thử lại.');
+    }
   } finally {
     isSubmitting.value = false;
   }
 };
 
 const openAddAddressModal = () => {
+  if (addressModalInstance) addressModalInstance.hide();
   Object.assign(addressForm, { idDiaChi: null, diaChiCuThe: '', phuongXa: '', quanHuyen: '', tinhThanh: '', soDienThoai: '', isDefault: false });
   if (addUpdateAddressModalInstance) addUpdateAddressModalInstance.show();
 };
 
 const openUpdateAddressModal = (address) => {
+  if (addressModalInstance) addressModalInstance.hide();
   Object.assign(addressForm, { ...address, isDefault: address.trangThai === 1 });
   if (addUpdateAddressModalInstance) addUpdateAddressModalInstance.show();
 };
@@ -346,12 +355,23 @@ onMounted(async () => {
   if (storedItems) {
     try {
       selectedItems.value = JSON.parse(storedItems);
-    } catch (e) { router.push('/cart'); return; }
+    } catch (e) { 
+      toast.error('Lỗi dữ liệu thanh toán. Vui lòng quay lại giỏ hàng.');
+      router.push('/cart'); 
+      return; 
+    }
   } else {
-    router.push('/cart'); return;
+    toast.info('Không có sản phẩm nào để thanh toán.');
+    router.push('/cart'); 
+    return;
   }
   
-  await Promise.all([loadPaymentMethods(), loadCustomerInfo(), loadAddresses()]);
+  if(auth.isAuthenticated) {
+    await Promise.all([loadCustomerInfo(), loadAddresses()]);
+  } else {
+    toast.error('Vui lòng đăng nhập để tiếp tục.');
+    router.push('/login');
+  }
 });
 
 onUnmounted(() => {
@@ -361,16 +381,38 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
-/* Style của bạn giữ nguyên */
 .checkout-page { background-color: #f5f5f5; padding-bottom: 120px; }
 .card { border-radius: 0.25rem; border: none; }
 .shipping-address-box { padding: 1rem 0; }
 .cart-product-img { width: 50px; height: 50px; object-fit: cover; border-radius: 0.25rem; }
 .payment-option { padding: 0.75rem 1rem; border: 1px solid #e9ecef; border-radius: 0.5rem; cursor: pointer; transition: all 0.2s; }
 .payment-option.active { border-color: var(--bs-primary); background-color: #e7f1ff; }
-.payment-summary .summary-row { display: flex; justify-content: space-between; margin-bottom: 1rem; color: #6c757d; align-items: center; }
-.payment-summary .total { font-weight: bold; font-size: 1.2rem; color: #212529; border-top: 1px solid #e9ecef; padding-top: 1rem; margin-top: 0.5rem; }
-.checkout-footer { background: #fff; border-top: 1px solid #e9ecef; padding: 1rem; position: fixed; bottom: 0; left: 0; width: 100%; z-index: 1000; box-shadow: 0 -2px 10px rgba(0,0,0,0.05); }
+.payment-summary .summary-row {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+  color: #6c757d;
+  align-items: center; /* Đảm bảo dòng này đã được sửa đúng */
+}
+.payment-summary .total {
+  font-weight: bold;
+  font-size: 1.2rem;
+  color: #212529;
+  border-top: 1px solid #e9ecef;
+  padding-top: 1rem;
+  margin-top: 0.5rem;
+}
+.checkout-footer {
+  background: #fff;
+  border-top: 1px solid #e9ecef;
+  padding: 1rem;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  z-index: 1000;
+  box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
+}
 .list-group-item { cursor: pointer; }
 .address-modal-body { max-height: 60vh; overflow-y: auto; }
 </style>
