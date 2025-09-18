@@ -26,16 +26,16 @@ public interface SanPhamChiTietRepository extends JpaRepository<SanPhamChiTiet, 
 
     @Query("SELECT spct FROM SanPhamChiTiet spct " +
             "LEFT JOIN spct.sanPham sp " +
-            "LEFT JOIN spct.danhMuc dm " +
-            "LEFT JOIN spct.thuongHieu th " +
+            "LEFT JOIN sp.danhMuc dm " +
+            "LEFT JOIN sp.thuongHieu th " +
+            "LEFT JOIN sp.chatLieu cl " +
             "LEFT JOIN spct.mauSac ms " +
-            "LEFT JOIN spct.chatLieu cl " +
             "LEFT JOIN spct.size s " +
             "WHERE (:keyword IS NULL OR LOWER(sp.tenSP) LIKE LOWER(CONCAT('%', :keyword, '%')) OR LOWER(spct.maSPCT) LIKE LOWER(CONCAT('%', :keyword, '%'))) " +
-            "AND (:danhMucIds IS NULL OR spct.danhMuc.idDM IN :danhMucIds) " +
+            "AND (:danhMucIds IS NULL OR dm.idDM IN :danhMucIds) " +
             "AND (:thuongHieu IS NULL OR LOWER(th.tenThuongHieu) = LOWER(:thuongHieu)) " +
-            "AND (:mauSac IS NULL OR LOWER(ms.tenMauSac) = LOWER(:mauSac)) " +
             "AND (:chatLieu IS NULL OR LOWER(cl.tenChatLieu) = LOWER(:chatLieu)) " +
+            "AND (:mauSac IS NULL OR LOWER(ms.tenMauSac) = LOWER(:mauSac)) " +
             "AND (:size IS NULL OR LOWER(s.tenSize) = LOWER(:size)) " +
             "AND (:minPrice IS NULL OR spct.gia >= :minPrice) " +
             "AND (:maxPrice IS NULL OR spct.gia <= :maxPrice)")

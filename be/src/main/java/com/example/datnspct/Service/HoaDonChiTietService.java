@@ -167,4 +167,16 @@ public class HoaDonChiTietService {
             return dto;
         }).collect(Collectors.toList());
     }
+
+    // Trừ tồn kho cho tất cả chi tiết khi hoàn thành hóa đơn
+    public void truTonKhoKhiHoanThanhHoaDon(Integer idHD) {
+        List<HoaDonChiTiet> list = hoaDonChiTietRepository.findByHoaDonId(idHD);
+        for (HoaDonChiTiet ct : list) {
+            SanPhamChiTiet spct = ct.getSanPhamct();
+            if (spct != null && ct.getSoLuong() != null) {
+                spct.setSoLuong(Math.max(0, spct.getSoLuong() - ct.getSoLuong()));
+                sanPhamChiTietRepository.save(spct);
+            }
+        }
+    }
 }

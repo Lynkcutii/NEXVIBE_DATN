@@ -41,11 +41,12 @@ public interface HoaDonChiTietRepository extends JpaRepository<HoaDonChiTiet, In
     List<Object[]> findSanPhamBanChayTrongKhoang(@Param("fromDate") LocalDateTime fromDate, 
                                                  @Param("toDate") LocalDateTime toDate);
     
-    // Thống kê theo danh mục
+    // Thống kê theo danh mục (join qua SanPham vì SanPhamChiTiet không trực tiếp có danhMuc)
     @Query("SELECT dm.tenDM, SUM(hdct.soLuong), SUM(hdct.thanhTien) " +
            "FROM HoaDonChiTiet hdct " +
            "JOIN hdct.sanPhamct spct " +
-           "JOIN spct.danhMuc dm " +
+           "JOIN spct.sanPham sp " +
+           "JOIN sp.danhMuc dm " +
            "JOIN hdct.hoaDon hd " +
            "WHERE hd.trangThai = 'Hoàn thành' " +
            "AND hd.ngayTao BETWEEN :fromDate AND :toDate " +
