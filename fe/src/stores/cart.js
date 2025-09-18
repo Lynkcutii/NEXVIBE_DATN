@@ -38,7 +38,7 @@ export const useCartStore = defineStore('cart', {
 
     async addToCart(product, quantity, variant) {
       try {
-        const variantsResponse = await fetch(`${this.API_BASE_URL}/sanphamchitiet/bySanPham/${product.idSP}`, {
+        const variantsResponse = await fetch(`http://localhost:8080/api/sanphamchitiet/bySanPham/${product.idSP}`, {
           headers: {
             'Content-Type': 'application/json',
           },

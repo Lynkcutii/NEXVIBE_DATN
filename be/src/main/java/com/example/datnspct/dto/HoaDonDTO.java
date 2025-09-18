@@ -1,15 +1,13 @@
 package com.example.datnspct.dto;
 
-import lombok.Builder;
 import lombok.Data;
 import lombok.Getter;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.List;
 
 @Data
-//@Builder
+@Getter
 public class HoaDonDTO {
     private Integer idHD;
     private String maHD;
@@ -22,8 +20,4 @@ public class HoaDonDTO {
     private String trangThai;
     private String loaiHoaDon;
     private int totalProducts;
-    private Integer idKM;
-    private Integer idPT;
-    private String maGiaoDich;
-    private List<HoaDonChiTietDTO> chiTietSanPham;
 }

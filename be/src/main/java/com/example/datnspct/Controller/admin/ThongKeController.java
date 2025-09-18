@@ -22,29 +22,29 @@ public class ThongKeController {
             @RequestParam(required = false) String endDate) {
         try {
             Map<String, Object> stats = new HashMap<>();
-
+            
             // Chuyển đổi ngày tháng nếu có
             LocalDateTime startDateTime = null;
             LocalDateTime endDateTime = null;
-
+            
             if (startDate != null && endDate != null) {
                 startDateTime = LocalDate.parse(startDate).atStartOfDay();
                 endDateTime = LocalDate.parse(endDate).atTime(23, 59, 59);
             }
-
+            
             // Thống kê tổng quan với bộ lọc ngày tháng
             stats.put("tongQuanHoaDon", thongKeService.getTongQuanHoaDon(startDateTime, endDateTime));
             stats.put("tongQuanKhachHang", thongKeService.getTongQuanKhachHang(startDateTime, endDateTime));
             stats.put("tongQuanSanPham", thongKeService.getTongQuanSanPham());
             stats.put("tongQuanDoanhThu", thongKeService.getTongQuanDoanhThu(startDateTime, endDateTime));
             stats.put("doanhThuTheoThang", thongKeService.getDoanhThuTheoThang(startDateTime, endDateTime));
-
+            
             // Top sản phẩm bán chạy
             stats.put("topSanPhamBanChay", thongKeService.getTopSanPhamBanChay(5));
-
+            
             // Khách hàng mới
             stats.put("khachHangMoi", thongKeService.getKhachHangMoi(30));
-
+            
             return ResponseEntity.ok(stats);
         } catch (Exception e) {
             Map<String, String> error = new HashMap<>();
@@ -59,11 +59,11 @@ public class ThongKeController {
             @RequestParam(defaultValue = "30") int soNgay) {
         try {
             Map<String, Object> stats = new HashMap<>();
-
+            
             stats.put("sanPhamBanChay", thongKeService.getSanPhamBanChayChiTiet(soNgay));
             stats.put("tonKho", thongKeService.getThongKeTonKho());
-//            stats.put("theoDanhMuc", thongKeService.getThongKeTheoDanhMuc(soNgay));
-
+            stats.put("theoDanhMuc", thongKeService.getThongKeTheoDanhMuc(soNgay));
+            
             return ResponseEntity.ok(stats);
         } catch (Exception e) {
             Map<String, String> error = new HashMap<>();
@@ -78,12 +78,12 @@ public class ThongKeController {
             @RequestParam(defaultValue = "30") int soNgay) {
         try {
             Map<String, Object> stats = new HashMap<>();
-
+            
             stats.put("tongQuan", thongKeService.getTongQuanKhachHang(null, null));
             stats.put("khachHangMoi", thongKeService.getKhachHangMoi(soNgay));
             stats.put("khachHangVIP", thongKeService.getKhachHangVIP());
             stats.put("theoThang", new ArrayList<>()); // Placeholder
-
+            
             return ResponseEntity.ok(stats);
         } catch (Exception e) {
             Map<String, String> error = new HashMap<>();

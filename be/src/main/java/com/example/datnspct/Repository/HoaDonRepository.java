@@ -12,10 +12,10 @@ import java.time.LocalDateTime;
 @Repository
 public interface HoaDonRepository extends JpaRepository<HoaDon, Integer> {
     boolean existsByMaHD(String maHD);
-
+    
     // Đếm hóa đơn theo khoảng thời gian
     long countByNgayTaoBetween(LocalDateTime startDate, LocalDateTime endDate);
-
+    
     // Tính tổng doanh thu theo khoảng thời gian
     @Query("SELECT COALESCE(SUM(h.tongTien), 0) FROM HoaDon h WHERE h.ngayTao BETWEEN :startDate AND :endDate AND h.trangThai = 'Hoàn thành'")
     BigDecimal sumTongTienByNgayTaoBetween(@Param("startDate") LocalDateTime startDate, @Param("endDate") LocalDateTime endDate);

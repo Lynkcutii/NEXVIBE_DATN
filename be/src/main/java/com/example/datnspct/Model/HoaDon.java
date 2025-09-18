@@ -40,6 +40,9 @@ public class HoaDon {
     @Column(name = "LoaiHoaDon")
     private String loaiHoaDon;
 
+    @Column(name = "LoaiHoaDon")
+    private String loaiHoaDon;
+
     @Column(name = "NgayTao")
     private LocalDateTime ngayTao;
 

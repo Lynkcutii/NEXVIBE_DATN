@@ -49,7 +49,7 @@ public class MoMoPaymentService {
             System.out.println("=== MoMo Payment Request ===");
             System.out.println("Amount: " + request.getAmount());
             System.out.println("OrderId: " + request.getOrderId());
-
+            
             String requestId = UUID.randomUUID().toString();
             String orderId = request.getOrderId();
             String orderInfo = request.getOrderInfo();
@@ -58,7 +58,7 @@ public class MoMoPaymentService {
             String amount = String.valueOf(request.getAmount().longValue()); // Chuyển về long để tránh lỗi decimal
             String extraData = request.getExtraData() != null ? request.getExtraData() : "";
             String requestType = "captureWallet";
-
+            
             System.out.println("Processing amount as: " + amount);
 
             // Tạo raw signature
@@ -95,7 +95,7 @@ public class MoMoPaymentService {
             System.out.println("Request body: " + objectMapper.writeValueAsString(requestBody));
             System.out.println("Signature: " + signature);
             System.out.println("Raw signature: " + rawSignature);
-
+            
             // Gửi request tới MoMo
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
@@ -103,9 +103,9 @@ public class MoMoPaymentService {
 
             System.out.println("Sending request to: " + endpoint);
             ResponseEntity<String> response = restTemplate.postForEntity(endpoint, entity, String.class);
-
+            
             System.out.println("MoMo response: " + response.getBody());
-
+            
             // Parse response
             MoMoPaymentResponse momoResponse = objectMapper.readValue(response.getBody(), MoMoPaymentResponse.class);
 
@@ -202,7 +202,7 @@ public class MoMoPaymentService {
         SecretKeySpec secretKeySpec = new SecretKeySpec(key.getBytes(StandardCharsets.UTF_8), "HmacSHA256");
         mac.init(secretKeySpec);
         byte[] hash = mac.doFinal(data.getBytes(StandardCharsets.UTF_8));
-
+        
         StringBuilder result = new StringBuilder();
         for (byte b : hash) {
             result.append(String.format("%02x", b));
@@ -213,7 +213,7 @@ public class MoMoPaymentService {
     public void saveTransactionFromPOS(Map<String, Object> transactionData) {
         try {
             MoMoTransaction transaction = new MoMoTransaction();
-
+            
             // Lấy dữ liệu từ Map
             transaction.setIdHD(Integer.valueOf(transactionData.get("idHD").toString()));
             transaction.setOrderId(transactionData.get("orderId").toString());
@@ -227,10 +227,10 @@ public class MoMoPaymentService {
             transaction.setPayType("QR");
             transaction.setNgayTao(LocalDateTime.now());
             transaction.setNgayCapNhat(LocalDateTime.now());
-
+            
             moMoTransactionRepository.save(transaction);
             System.out.println("Đã lưu MoMo transaction thành công với orderId: " + transaction.getOrderId());
-
+            
         } catch (Exception e) {
             System.err.println("Lỗi khi lưu MoMo transaction: " + e.getMessage());
             e.printStackTrace();

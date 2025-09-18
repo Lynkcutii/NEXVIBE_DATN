@@ -18,6 +18,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -28,8 +30,6 @@ public class HoaDonController {
 
     @Autowired
     private HoaDonService hoaDonService;
-    @Autowired
-    private HoaDonChiTietService hoaDonCTService;
 
     // Create
     @PostMapping
@@ -65,6 +65,22 @@ public class HoaDonController {
             System.err.println("Lỗi khi lấy danh sách hóa đơn: " + e.getMessage());
             return ResponseEntity.badRequest().body(null);
         }
+    }
+
+    // API filter/phân trang/tìm kiếm hóa đơn
+    @GetMapping("/filter")
+    public ResponseEntity<Page<HoaDonDTO>> filterHoaDon(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) String type,
+            @RequestParam(required = false) String dateFrom,
+            @RequestParam(required = false) String dateTo
+    ) {
+        PageRequest pageable = PageRequest.of(page, size);
+        Page<HoaDonDTO> result = hoaDonService.filterHoaDon(keyword, status, type, dateFrom, dateTo, pageable);
+        return ResponseEntity.ok(result);
     }
 
     // Update
@@ -122,7 +138,8 @@ public class HoaDonController {
         return ResponseEntity.noContent().build();
     }
 
-    // API filter/phân trang/tìm kiếm hóa đơn
+<<<<<<< HEAD
+    // API filter/phân trang/tìm kiếm hóa đơn (giữ đầy đủ)
     @GetMapping("/filter")
     public ResponseEntity<Page<HoaDonDTO>> filterHoaDon(
             @RequestParam(defaultValue = "0") int page,
@@ -138,7 +155,10 @@ public class HoaDonController {
         return ResponseEntity.ok(result);
     }
 
-    //update status
+    // Update status
+=======
+    // Update status
+>>>>>>> huyy
     @PutMapping("/updateStatus")
     public ResponseEntity<String> updateOrderStatus(@RequestBody UpdateStatusRequest request) {
         try {
@@ -149,7 +169,6 @@ public class HoaDonController {
             if (request.getTrangThai() == null || request.getTrangThai().trim().isEmpty()) {
                 return ResponseEntity.badRequest().body("Trạng thái không được để trống");
             }
-
             hoaDonService.updateOrderStatus(request.getIdHD(), request.getTrangThai(), request.getGhiChu());
             return ResponseEntity.ok("Cập nhật trạng thái thành công");
         } catch (RuntimeException e) {

@@ -24,18 +24,18 @@ public class MoMoPaymentController {
             System.out.println("=== RECEIVED MOMO REQUEST ===");
             System.out.println("OrderId: " + request.getOrderId());
             System.out.println("Amount: " + request.getAmount());
-
+            
             // Gọi MoMo API thật
             MoMoPaymentResponse response = moMoPaymentService.createPayment(request);
-
+            
             System.out.println("=== RETURNING RESPONSE ===");
             return ResponseEntity.ok(response);
-
+            
         } catch (Exception e) {
             System.err.println("=== ERROR ===");
             System.err.println("Error: " + e.getMessage());
             e.printStackTrace();
-
+            
             Map<String, String> errorResponse = new HashMap<>();
             errorResponse.put("error", "Lỗi: " + e.getMessage());
             return ResponseEntity.status(500).body(errorResponse);
@@ -88,9 +88,9 @@ public class MoMoPaymentController {
         try {
             System.out.println("=== SAVE MOMO TRANSACTION ===");
             System.out.println("Data: " + transactionData);
-
+            
             moMoPaymentService.saveTransactionFromPOS(transactionData);
-
+            
             return ResponseEntity.ok(Map.of("message", "Lưu thông tin giao dịch thành công"));
         } catch (Exception e) {
             System.err.println("Lỗi khi lưu giao dịch MoMo: " + e.getMessage());

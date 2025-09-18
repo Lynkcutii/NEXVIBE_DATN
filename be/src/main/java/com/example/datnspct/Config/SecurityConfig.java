@@ -40,9 +40,12 @@ public class SecurityConfig {
                         .requestMatchers("/api/auth/**", "/css/**", "/js/**", "/api/sanphamchitiet/bySanPham/**").permitAll()
                         // Cho phép tất cả các request GET phía client (danh mục, sản phẩm, filter ...) không cần đăng nhập
                         .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/**").permitAll()
-                        // Phân quyền dựa trên ChucVu
+                        // Phân quyền rõ ràng cho các API admin cụ thể
+                        .requestMatchers("/admin/api/momo/**").hasRole("ADMIN")
+                        .requestMatchers("/admin/api/hoadonchitiet/**").hasRole("ADMIN")
+                        .requestMatchers("/admin/api/thongke/**").hasRole("ADMIN")
+                        // Phân quyền tổng quát
                         .requestMatchers("/admin/**").hasRole("ADMIN")
-                        // Các phương thức khác (POST/PUT/DELETE ...) của client yêu cầu đăng nhập KHACH_HANG
                         .requestMatchers("/client/api/**").hasAnyRole("KHACH_HANG", "ADMIN")
                         // Tất cả các request khác cần xác thực
                         .anyRequest().authenticated()
