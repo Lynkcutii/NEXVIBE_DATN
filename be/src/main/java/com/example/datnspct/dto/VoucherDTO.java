@@ -26,4 +26,6 @@ public class VoucherDTO {
     private Date ngayKetThuc;
     private Boolean trangThai;
     private List<Integer> applicableProductIds; // Danh sách idSPCT từ Voucher_SP
+
+    private List<String> applicableProductCodes;
 }

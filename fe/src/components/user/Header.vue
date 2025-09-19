@@ -39,7 +39,7 @@
             </a>
             <ul class="dropdown-menu text-small">
               <template v-if="auth.isAuthenticated">
-                <li><span class="dropdown-item-text">Chào, <strong>{{ auth.userFullName }}</strong></span></li>
+                <li><span class="dropdown-item-text">Chào, <strong>{{ auth.user?.userFullName }}</strong></span></li>
                 <li><hr class="dropdown-divider"></li>
                 <li><router-link class="dropdown-item" to="/order-history">Đơn hàng của tôi</router-link></li>
                 <li><router-link class="dropdown-item" to="/profile">Tài khoản</router-link></li>

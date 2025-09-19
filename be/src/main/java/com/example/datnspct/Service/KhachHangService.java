@@ -14,6 +14,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -86,7 +88,7 @@ public class KhachHangService {
     // Ánh xạ DiaChiKhachHangDTO sang DiaChiKhachHang
     private DiaChiKhachHang chuyenDiaChiSangEntity(DiaChiKhachHangDTO dto, KhachHang khachHang) {
         DiaChiKhachHang diaChi = new DiaChiKhachHang();
-        diaChi.setIdDiaChi(dto.getIdDiaChi());
+        // Không set idDiaChi để Hibernate tự sinh
         diaChi.setKhachHang(khachHang);
         diaChi.setDiaChiCuThe(dto.getDiaChiCuThe());
         diaChi.setTinhThanh(dto.getTinhThanh());
@@ -100,16 +102,64 @@ public class KhachHangService {
     // Tạo mới khách hàng
     @Transactional
     public KhachHangDTO taoKhachHang(KhachHangDTO dto) {
-        KhachHang khachHang = chuyenSangEntity(dto);
+        // Validation bắt buộc
+        if (dto.getTenKH() == null || dto.getTenKH().trim().isEmpty()) {
+            throw new IllegalArgumentException("Họ tên là bắt buộc");
+        }
+        if (dto.getSdt() == null || dto.getSdt().trim().isEmpty()) {
+            throw new IllegalArgumentException("Số điện thoại là bắt buộc");
+        }
+
+        // Tự sinh mã KH nếu không có hoặc rỗng
+        if (dto.getMaKH() == null || dto.getMaKH().trim().isEmpty()) {
+            String maKH = generateMaKH();
+            dto.setMaKH(maKH);
+        }
+
+        // Set trạng thái mặc định là Hoạt động nếu null
+        if (dto.getTrangThai() == null) {
+            dto.setTrangThai(true);
+        }
+
+        // Lưu khách hàng
+        KhachHang khachHang = new KhachHang();
+        khachHang.setMaKH(dto.getMaKH());
+        khachHang.setTenKH(dto.getTenKH());
+        khachHang.setGioiTinh(dto.getGioiTinh());
+        khachHang.setNgaySinh(dto.getNgaySinh());
+        khachHang.setEmail(dto.getEmail());
+        khachHang.setSdt(dto.getSdt());
+        khachHang.setTrangThai(dto.getTrangThai());
+
         KhachHang khachHangDaLuu = khachHangRepository.save(khachHang);
+
         // Lưu danh sách địa chỉ nếu có
         if (dto.getDiaChiList() != null && !dto.getDiaChiList().isEmpty()) {
             for (DiaChiKhachHangDTO diaChiDTO : dto.getDiaChiList()) {
+                // Validation các trường bắt buộc của địa chỉ
+                if (diaChiDTO.getDiaChiCuThe() == null || diaChiDTO.getDiaChiCuThe().trim().isEmpty()) {
+                    throw new IllegalArgumentException("Địa chỉ cụ thể là bắt buộc");
+                }
+                if (diaChiDTO.getTinhThanh() == null || diaChiDTO.getTinhThanh().trim().isEmpty()) {
+                    throw new IllegalArgumentException("Tỉnh/Thành là bắt buộc");
+                }
+                if (diaChiDTO.getPhuongXa() == null || diaChiDTO.getPhuongXa().trim().isEmpty()) {
+                    throw new IllegalArgumentException("Phường/Xã là bắt buộc");
+                }
                 DiaChiKhachHang diaChi = chuyenDiaChiSangEntity(diaChiDTO, khachHangDaLuu);
                 diaChiKhachHangRepository.save(diaChi);
             }
         }
+
         return chuyenSangDTO(khachHangDaLuu);
+    }
+    // Phương thức tự sinh mã KH (KH + YYYYMMDD + số thứ tự)
+    private String generateMaKH() {
+        LocalDate today = LocalDate.now();
+        String dateStr = today.format(DateTimeFormatter.ofPattern("yyyyMMdd"));
+        long countToday = khachHangRepository.countByMaKHStartingWith("KH" + dateStr);
+        int serial = (int) (countToday + 1);
+        return "KH" + dateStr + String.format("%02d", serial);  // Ví dụ: KH2025091801
     }
 
     // Lấy khách hàng theo ID
@@ -131,9 +181,9 @@ public class KhachHangService {
         return khachHangRepository.findAll(pageable).map(this::chuyenSangDTO);
     }
 
-    // Tìm kiếm khách hàng
-    public Page<KhachHangDTO> searchKhachHang(String keyword, Pageable pageable) {
-        return khachHangRepository.findByTenKHContainingIgnoreCaseOrSdtContaining(keyword, keyword, pageable)
+    // Tìm kiếm khách hàng với trạng thái
+    public Page<KhachHangDTO> searchKhachHang(String keyword, Boolean trangThai, Pageable pageable) {
+        return khachHangRepository.findByTenKHContainingIgnoreCaseOrSdtContainingAndTrangThai(keyword, trangThai, pageable)
                 .map(this::chuyenSangDTO);
     }
 

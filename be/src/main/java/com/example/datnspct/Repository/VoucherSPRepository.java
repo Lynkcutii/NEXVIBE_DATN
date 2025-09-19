@@ -9,4 +9,7 @@ import java.util.List;
 @Repository
 public interface VoucherSPRepository extends JpaRepository<VoucherSP, Integer> {
     List<VoucherSP> findByVoucherIdVoucherAndTrangThai(Integer idVoucher, Byte trangThai);
+
+    // Xóa tất cả VoucherSP theo idVoucher
+    void deleteByVoucherIdVoucher(Integer idVoucher);
 }

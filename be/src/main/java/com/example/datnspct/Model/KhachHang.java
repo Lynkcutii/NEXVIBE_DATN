@@ -36,7 +36,7 @@ public class KhachHang {
     @Column(name = "GioiTinh", length = 10, nullable = false)
     private String gioiTinh;
 
-    @Column(name = "NgaySinh", nullable = false)
+    @Column(name = "NgaySinh")
     private LocalDate ngaySinh;
 
     @Column(name = "Email", length = 100, nullable = false)
