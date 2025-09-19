@@ -67,5 +67,5 @@ public interface KhachHangRepository extends JpaRepository<KhachHang, Integer> {
 
     @Query("SELECT COUNT(kh) FROM KhachHang kh WHERE kh.maKH LIKE :prefix%")
 
-    long countByMaKHStartingWith(@Param("prefix") String prefix);>>>>>>>origin/dungmain
+    long countByMaKHStartingWith(@Param("prefix") String prefix);
 }
