@@ -131,12 +131,12 @@ CREATE TABLE NhanVien (
                           IdNV INT IDENTITY(1,1) PRIMARY KEY,
                           MaNV VARCHAR(50) NOT NULL,
                           TenNV NVARCHAR(100) NOT NULL,
-                          GioiTinh NVARCHAR(10) NOT NULL,
-                          NgaySinh DATE NOT NULL,
+                          GioiTinh NVARCHAR(10) ,
+                          NgaySinh DATE ,
                           SDT VARCHAR(20) NOT NULL,
-                          Email NVARCHAR(100) NOT NULL,
-                          DiaChi NVARCHAR(255) NOT NULL,
-                          IdTK INT NOT NULL,
+                          Email NVARCHAR(100) ,
+                          DiaChi NVARCHAR(255) ,
+                          IdTK INT ,
                           TrangThai BIT DEFAULT 1,
                           FOREIGN KEY (IdTK) REFERENCES TaiKhoan(IdTK)
 );
@@ -342,7 +342,8 @@ INSERT INTO Img (IdSPCT, link) VALUES
 INSERT INTO TaiKhoan (TaiKhoan, MatKhau, ChucVu, TrangThai) VALUES
                                                                 ('admin', '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'ADMIN', 1),
                                                                 ('customer1', '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'KHACH_HANG', 1),
-                                                                ('customer2', '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'KHACH_HANG', 1);
+                                                                ('customer2', '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'KHACH_HANG', 1),
+                                                                ('admin2', '$2y$10$d2tN83RdDo/p54rFv7WSjOFQveBGzHNq2mJbW6Y.c7wzof.QNNxn6', 'ADMIN', 1);
 
 -- Nhân viên
 INSERT INTO NhanVien (MaNV, TenNV, GioiTinh, NgaySinh, SDT, Email, DiaChi, IdTK, TrangThai) VALUES
@@ -376,6 +377,81 @@ INSERT INTO Voucher (MaVoucher, TenVoucher, NgayBatDau, NgayKetThuc, SoLuong, Hi
 
 -- Voucher sản phẩm
 INSERT INTO Voucher_SP (IdVoucher, IdSPCT, TrangThai) VALUES
-                                                          (1, 1, 1),
+
                                                           (2, 2, 1),
-                                                          (3, 3, 1);
+
+                                                          (1, 2, 1),
+                                                          (2, 3, 1);
+
+-- Giỏ hàng
+INSERT INTO GioHang (MaGH, IdKH, TrangThai, NgayTao, NgaySua, IdTK) VALUES
+                                                                        ('GH001', 1, 1, GETDATE(), GETDATE(), 2),
+                                                                        ('GH002', 2, 1, GETDATE(), GETDATE(), 3);
+
+-- Chi tiết giỏ hàng
+INSERT INTO GioHangCT (IdGH, IdSPCT, SoLuong, DonGia) VALUES
+                                                          (1, 1, 2, 199000),
+                                                          (1, 2, 1, 299000),
+                                                          (2, 3, 1, 399000);
+
+-- Hóa đơn
+INSERT INTO HoaDon (MaHD, IdKH, IdNV, IdKM, IdPT, NgayTao, NgaySua, TongTien, LoaiHoaDon, TrangThai) VALUES
+                                                                                                         ('HD001', 1, 1, NULL, 1, GETDATE(), GETDATE(), 597000, N'Tại quầy', N'Đã thanh toán'),
+                                                                                                         ('HD002', 2, 1, NULL, 2, GETDATE(), GETDATE(), 399000, N'Tại quầy', N'Đã thanh toán'),
+                                                                                                         ('HD003', 1, 1, NULL, 1, DATEADD(DAY, -10, GETDATE()), DATEADD(DAY, -10, GETDATE()), 1200000, N'Trực tuyến', N'Chờ xác nhận'),
+                                                                                                         ('HD004', 2, 1, NULL, 2, DATEADD(DAY, -8, GETDATE()), DATEADD(DAY, -8, GETDATE()), 800000, N'Tại quầy', N'Đang vận chuyển'),
+                                                                                                         ('HD005', 1, 1, NULL, 3, DATEADD(DAY, -6, GETDATE()), DATEADD(DAY, -6, GETDATE()), 500000, N'Trực tuyến', N'Đã giao hàng'),
+                                                                                                         ('HD006', 2, 1, NULL, 1, DATEADD(DAY, -4, GETDATE()), DATEADD(DAY, -4, GETDATE()), 1500000, N'Tại quầy', N'Đã hủy'),
+                                                                                                         ('HD007', 1, 1, NULL, 2, DATEADD(DAY, -2, GETDATE()), DATEADD(DAY, -2, GETDATE()), 2000000, N'Trực tuyến', N'Chờ thanh toán'),
+                                                                                                         ('HD008', 2, 1, NULL, 3, DATEADD(DAY, -1, GETDATE()), DATEADD(DAY, -1, GETDATE()), 300000, N'Tại quầy', N'Hoàn thành');
+
+-- Chi tiết hóa đơn
+INSERT INTO HoaDonCT (IdSPCT, IdHD, SoLuong, DonGia, ThanhTien, NgayTao, NgaySua) VALUES
+                                                                                      (1, 1, 2, 199000, 398000, GETDATE(), GETDATE()),
+                                                                                      (2, 1, 1, 299000, 299000, GETDATE(), GETDATE()),
+                                                                                      (3, 2, 1, 399000, 399000, GETDATE(), GETDATE()),
+                                                                                      (1, 3, 4, 199000, 796000, DATEADD(DAY, -10, GETDATE()), DATEADD(DAY, -10, GETDATE())),
+                                                                                      (2, 3, 2, 299000, 598000, DATEADD(DAY, -10, GETDATE()), DATEADD(DAY, -10, GETDATE())),
+                                                                                      (3, 4, 2, 399000, 798000, DATEADD(DAY, -8, GETDATE()), DATEADD(DAY, -8, GETDATE())),
+                                                                                      (1, 5, 1, 199000, 199000, DATEADD(DAY, -6, GETDATE()), DATEADD(DAY, -6, GETDATE())),
+                                                                                      (2, 5, 1, 299000, 299000, DATEADD(DAY, -6, GETDATE()), DATEADD(DAY, -6, GETDATE())),
+                                                                                      (3, 5, 1, 399000, 399000, DATEADD(DAY, -6, GETDATE()), DATEADD(DAY, -6, GETDATE())),
+                                                                                      (1, 6, 2, 199000, 398000, DATEADD(DAY, -4, GETDATE()), DATEADD(DAY, -4, GETDATE())),
+                                                                                      (2, 6, 1, 299000, 299000, DATEADD(DAY, -4, GETDATE()), DATEADD(DAY, -4, GETDATE())),
+                                                                                      (3, 7, 5, 399000, 1995000, DATEADD(DAY, -2, GETDATE()), DATEADD(DAY, -2, GETDATE())),
+                                                                                      (1, 8, 1, 199000, 199000, DATEADD(DAY, -1, GETDATE()), DATEADD(DAY, -1, GETDATE()));
+
+
+PRINT 'Đã tạo CSDL và import dữ liệu thành công!';
+PRINT 'Tài khoản đăng nhập:';
+PRINT 'Admin: admin / 123456';
+PRINT 'Customer1: customer1 / 123456';
+PRINT 'Customer2: customer2 / 123456';
+
+-- Thêm cột IdPT cho HoaDonCT nếu còn thiếu
+-- 1) Thêm cột + FK (nếu chưa có)
+IF COL_LENGTH('HoaDonCT', 'IdPT') IS NULL
+    ALTER TABLE HoaDonCT ADD IdPT INT NULL;
+
+IF NOT EXISTS (SELECT 1 FROM sys.tables WHERE name='PhuongThucThanhToan')
+BEGIN
+    CREATE TABLE PhuongThucThanhToan (
+        IdPT INT IDENTITY(1,1) PRIMARY KEY,
+        Ten NVARCHAR(50) NOT NULL
+    );
+    INSERT INTO PhuongThucThanhToan(Ten)
+    VALUES (N'TIỀN MẶT'), (N'CHUYỂN KHOẢN'), (N'MOMO');
+END;
+
+IF NOT EXISTS (SELECT 1 FROM sys.foreign_keys WHERE name='FK_HoaDonCT_PhuongThucThanhToan')
+BEGIN
+    ALTER TABLE HoaDonCT
+      ADD CONSTRAINT FK_HoaDonCT_PhuongThucThanhToan
+      FOREIGN KEY (IdPT) REFERENCES PhuongThucThanhToan(IdPT);
+END;
+
+-- 2) Gán giá trị mặc định cho các dòng đang NULL (KHÔNG dùng alias)
+UPDATE HoaDonCT
+SET IdPT = (SELECT TOP 1 IdPT FROM PhuongThucThanhToan ORDER BY IdPT)
+WHERE IdPT IS NULL;
+

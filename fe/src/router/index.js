@@ -23,6 +23,8 @@ import Attributes from '../views/admin/Attributes.vue';
 import Staff from '../views/admin/Staff.vue';
 import Customers from '../views/admin/Customers.vue';
 import Vouchers from '../views/admin/Vouchers.vue';
+import VoucherSP from '../views/admin/VoucherSP.vue';
+import VoucherSPForm from '../views/forms/VoucherSPForm.vue';
 import Posts from '../views/admin/Posts.vue';
 import Reviews from '../views/admin/Reviews.vue';
 import ProductForm from '../views/forms/ProductForm.vue';
@@ -83,6 +85,8 @@ const routes = [
       { path: 'vouchers', name: 'admin.vouchers.list', component: Vouchers },
       { path: 'vouchers/create', name: 'admin.vouchers.create', component: VoucherForm },
       { path: 'vouchers/:id/edit', name: 'admin.vouchers.edit', component: VoucherForm },
+      { path: 'vouchersp', name: 'admin.vouchersp.list', component: VoucherSP},
+      { path: 'vouchersp/:id/edit', name: 'admin.vouchersp.edit', component: VoucherSPForm},
       { path: 'posts', name: 'admin.posts.list', component: Posts },
       { path: 'posts/create', name: 'admin.posts.create', component: PostForm },
       { path: 'posts/:id/edit', name: 'admin.posts.edit', component: PostForm },

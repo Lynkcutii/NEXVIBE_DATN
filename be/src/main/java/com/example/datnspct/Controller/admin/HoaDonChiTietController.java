@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import javax.validation.Valid;
+import jakarta.validation.Valid;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -63,6 +63,13 @@ public class HoaDonChiTietController {
         return ResponseEntity.ok(hoaDonChiTietDTOs);
     }
 
+    // Lấy tất cả chi tiết theo id hóa đơn
+    @GetMapping("/hoadonct/{idHD}")
+    public ResponseEntity<List<HoaDonChiTietDTO>> getByHoaDonId(@PathVariable Integer idHD) {
+        List<HoaDonChiTietDTO> list = hoaDonChiTietService.getByHoaDonId(idHD);
+        return ResponseEntity.ok(list);
+    }
+
     // Cập nhật
     @PutMapping("/{id}")
     public ResponseEntity<?> capNhatHoaDonChiTiet(@PathVariable Integer id, @Valid @RequestBody HoaDonChiTietDTO hoaDonChiTietDTO, BindingResult result) {
@@ -90,13 +97,6 @@ public class HoaDonChiTietController {
     public ResponseEntity<Void> xoaHoaDonChiTiet(@PathVariable Integer id) {
         hoaDonChiTietService.xoaHoaDonChiTiet(id);
         return ResponseEntity.noContent().build();
-    }
-
-    // Lấy tất cả chi tiết theo id hóa đơn
-    @GetMapping("/hoadonct/{idHD}")
-    public ResponseEntity<List<HoaDonChiTietDTO>> getByHoaDonId(@PathVariable Integer idHD) {
-        List<HoaDonChiTietDTO> list = hoaDonChiTietService.getByHoaDonId(idHD);
-        return ResponseEntity.ok(list);
     }
 
     @PostMapping("/tru-ton-kho/{idHD}")

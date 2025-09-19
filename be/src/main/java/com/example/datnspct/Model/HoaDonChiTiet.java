@@ -51,6 +51,10 @@ public class HoaDonChiTiet {
     @Column(name = "ThanhTien", nullable = false)
     private BigDecimal thanhTien;
 
+    @ManyToOne
+    @JoinColumn(name = "IdPT", referencedColumnName = "IdPT")
+    private PhuongTT phuongThucThanhToan;
+
     @Column(name = "idVoucher") // Thêm cột này
     private Integer idVoucher; // ID của voucher cho sản phẩm chi tiết
 

@@ -342,10 +342,10 @@ const cancelReason = ref('');
 // Status tabs configuration
 const statusTabs = ref([
   { label: 'TẤT CẢ', value: 'all' },
-  { label: 'CHỜ XÁC NHẬN', value: 'CHO_XAC_NHAN' },
+  { label: 'CHỜ XÁC NHẬN', value: 'Chờ xác nhận' },
   { label: 'GIAO HÀNG', value: 'Giao hàng' },
   { label: 'ĐANG VẬN CHUYỂN', value: 'Đang vận chuyển' },
-  { label: 'HOÀN THÀNH', value: 'HOAN_THANH' },
+  { label: 'HOÀN THÀNH', value: 'Hoàn thành' },
   { label: 'HỦY', value: 'Hủy' }
 ]);
 
@@ -574,10 +574,10 @@ const getOrderTypeClass = (type) => {
 
 const getStatusClass = (status) => {
   switch (status) {
-    case 'CHO_XAC_NHAN': return 'badge bg-warning text-dark';
+    case 'Chờ xác nhận': return 'badge bg-warning text-dark';
     case 'Giao hàng': return 'badge bg-info';
     case 'Đang vận chuyển': return 'badge bg-primary';
-    case 'HOAN_THANH': return 'badge bg-success';
+    case 'Hoàn thành': return 'badge bg-success';
     case 'Hủy': return 'badge bg-danger';
     default: return 'badge bg-secondary';
   }
@@ -586,7 +586,7 @@ const getStatusClass = (status) => {
 // Status edit functions
 const canEditStatus = (currentStatus) => {
   // Chỉ cho phép chỉnh sửa những trạng thái có thể thay đổi
-  const editableStatuses = ['CHO_XAC_NHAN', 'Giao hàng', 'Đang vận chuyển'];
+  const editableStatuses = ['Chờ xác nhận', 'Giao hàng', 'Đang vận chuyển'];
   return editableStatuses.includes(currentStatus);
 };
 
@@ -594,7 +594,7 @@ const getAvailableStatuses = (currentStatus) => {
   const statusFlow = {
     'Chờ xác nhận': ['Giao hàng', 'Hủy'],
     'Giao hàng': ['Đang vận chuyển', 'Hủy'],
-    'Đang vận chuyển': ['HOAN_THANH', 'Hủy']
+    'Đang vận chuyển': ['Hoàn thành', 'Hủy']
   };
   return statusFlow[currentStatus] || [];
 };

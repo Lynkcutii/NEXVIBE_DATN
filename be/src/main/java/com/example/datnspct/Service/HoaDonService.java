@@ -19,7 +19,10 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -165,50 +168,153 @@ public class HoaDonService {
      * Hủy một đơn hàng (chỉ khi ở trạng thái chờ xác nhận).
      */
     @Transactional
-    public void cancelOrder(Integer idHD) {
-        HoaDon hoaDon = hoaDonRepository.findById(idHD)
-                .orElseThrow(() -> new EntityNotFoundException("Không tìm thấy hóa đơn với ID: " + idHD));
+    public HoaDonDTO capNhatHoaDon(Integer id, HoaDonDTO dto) {
+        HoaDon hoaDon = hoaDonRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Hóa đơn không tồn tại: " + id));
 
-        if (!"CHO_XAC_NHAN".equalsIgnoreCase(hoaDon.getTrangThai())) {
-            throw new IllegalArgumentException("Không thể hủy đơn hàng ở trạng thái: " + hoaDon.getTrangThai());
+        // Cập nhật thông tin hóa đơn
+        hoaDon.setMaHD(dto.getMaHD());
+        hoaDon.setIdNhanVien(dto.getIdNhanVien());
+        hoaDon.setLoaiHoaDon(dto.getLoaiHoaDon());
+        hoaDon.setNgayTao(dto.getNgayTao());
+        hoaDon.setNgaySua(dto.getNgaySua() != null ? dto.getNgaySua() : LocalDateTime.now());
+        hoaDon.setTongTien(dto.getTongTien());
+        hoaDon.setTrangThai(dto.getTrangThai());
+
+        // Xử lý idKhachHang
+        if (dto.getIdKhachHang() != null) {
+            KhachHang khachHang = khachHangRepository.findById(dto.getIdKhachHang())
+                    .orElseThrow(() -> new RuntimeException("Khách hàng không tồn tại: " + dto.getIdKhachHang()));
+            hoaDon.setKhachHang(khachHang);
+        } else {
+            hoaDon.setKhachHang(null); // Khách lẻ
         }
 
-        hoaDon.setTrangThai("DA_HUY");
-        hoaDon.setNgaySua(LocalDateTime.now());
-        hoaDonRepository.save(hoaDon);
+        // Xử lý idPT
+        if (dto.getIdPT() != null) {
+            PhuongTT ptt = phuongThanhToanRepository.findById(dto.getIdPT())
+                    .orElseThrow(() -> new RuntimeException("Phương thức thanh toán không tồn tại: " + dto.getIdPT()));
+            hoaDon.setPhuongThucThanhToan(ptt);
+        } else {
+            hoaDon.setPhuongThucThanhToan(null);
+        }
 
-        // Hoàn trả lại số lượng sản phẩm vào kho
-        List<HoaDonChiTiet> chiTietList = hoaDonChiTietRepository.findByHoaDon_IdHD(idHD);
-        for (HoaDonChiTiet chiTiet : chiTietList) {
-            SanPhamChiTiet spct = chiTiet.getSanPhamct();
-            if (spct != null) {
-                spct.setSoLuong(spct.getSoLuong() + chiTiet.getSoLuong());
-                sanPhamChiTietRepository.save(spct);
+        // Xử lý idKM
+        if (dto.getIdKM() != null) {
+            KhuyenMai km = khuyenMaiRepository.findById(dto.getIdKM())
+                    .orElseThrow(() -> new RuntimeException("Khuyến mãi không tồn tại: " + dto.getIdKM()));
+            hoaDon.setKhuyenMai(km);
+        } else {
+            hoaDon.setKhuyenMai(null);
+        }
+
+        // Xử lý chi tiết hóa đơn
+        List<HoaDonChiTiet> chiTietSanPham = new ArrayList<>();
+        List<Integer> newIds = new ArrayList<>();
+
+        // Chỉ xử lý chi tiết hóa đơn nếu danh sách không rỗng
+        if (dto.getChiTietSanPham() != null && !dto.getChiTietSanPham().isEmpty()) {
+            if ("HOAN_THANH".equals(dto.getTrangThai())) {
+                for (HoaDonChiTietDTO ctDto : dto.getChiTietSanPham()) {
+                    if (ctDto.getIdCtSanPham() == null) {
+                        throw new RuntimeException("idCtSanPham không được null");
+                    }
+                    if (ctDto.getSoLuong() == null || ctDto.getSoLuong() <= 0) {
+                        throw new RuntimeException("Số lượng sản phẩm phải lớn hơn 0");
+                    }
+                    if (ctDto.getDonGia() == null || ctDto.getDonGia().compareTo(BigDecimal.ZERO) <= 0) {
+                        throw new RuntimeException("Đơn giá không hợp lệ");
+                    }
+                    if (ctDto.getThanhTien() == null || ctDto.getThanhTien().compareTo(BigDecimal.ZERO) <= 0) {
+                        throw new RuntimeException("Thành tiền không hợp lệ");
+                    }
+
+                    HoaDonChiTiet ct;
+                    if (ctDto.getIdHDCT() != null) {
+                        ct = hoaDonChiTietRepository.findById(ctDto.getIdHDCT())
+                                .orElseThrow(() -> new RuntimeException(
+                                        "Chi tiết hóa đơn không tồn tại: " + ctDto.getIdHDCT()));
+                        newIds.add(ctDto.getIdHDCT());
+                    } else {
+                        ct = new HoaDonChiTiet();
+                        ct.setHoaDon(hoaDon);
+                    }
+
+                    SanPhamChiTiet spct = sanPhamChiTietRepository.findById(ctDto.getIdCtSanPham())
+                            .orElseThrow(() -> new RuntimeException(
+                                    "Sản phẩm chi tiết không tồn tại: " + ctDto.getIdCtSanPham()));
+
+                    // Trừ tồn kho
+                    int soLuongCu = ct.getIdHDCT() != null ? ct.getSoLuong() : 0;
+                    int delta = ctDto.getSoLuong() - soLuongCu;
+                    System.out.println("capNhatHoaDon: Số lượng trước khi trừ: " + spct.getSoLuong() + ", delta: "
+                            + delta + ", idSPCT: " + ctDto.getIdCtSanPham());
+                    if (delta > 0 && delta > spct.getSoLuong()) {
+                        throw new RuntimeException(
+                                "Số lượng tồn kho không đủ cho sản phẩm idSPCT: " + ctDto.getIdCtSanPham());
+                    }
+                    spct.setSoLuong(spct.getSoLuong() - delta);
+                    sanPhamChiTietRepository.save(spct);
+                    System.out.println("capNhatHoaDon: Số lượng sau khi trừ: " + spct.getSoLuong() + ", idSPCT: "
+                            + ctDto.getIdCtSanPham());
+
+                    ct.setSanPhamct(spct);
+                    ct.setSoLuong(ctDto.getSoLuong());
+                    ct.setDonGia(ctDto.getDonGia());
+                    ct.setThanhTien(ctDto.getThanhTien());
+                    ct.setNgayTao(ctDto.getNgayTao() != null ? ctDto.getNgayTao() : LocalDateTime.now());
+                    ct.setNgaySua(LocalDateTime.now());
+                    chiTietSanPham.add(ct);
+                }
+            } else {
+                // Cập nhật chi tiết hóa đơn mà không trừ tồn kho
+                for (HoaDonChiTietDTO ctDto : dto.getChiTietSanPham()) {
+                    HoaDonChiTiet ct;
+                    if (ctDto.getIdHDCT() != null) {
+                        ct = hoaDonChiTietRepository.findById(ctDto.getIdHDCT())
+                                .orElseThrow(() -> new RuntimeException(
+                                        "Chi tiết hóa đơn không tồn tại: " + ctDto.getIdHDCT()));
+                        newIds.add(ctDto.getIdHDCT());
+                    } else {
+                        ct = new HoaDonChiTiet();
+                        ct.setHoaDon(hoaDon);
+                    }
+
+                    SanPhamChiTiet spct = sanPhamChiTietRepository.findById(ctDto.getIdCtSanPham())
+                            .orElseThrow(() -> new RuntimeException(
+                                    "Sản phẩm chi tiết không tồn tại: " + ctDto.getIdCtSanPham()));
+
+                    ct.setSanPhamct(spct);
+                    ct.setSoLuong(ctDto.getSoLuong());
+                    ct.setDonGia(ctDto.getDonGia());
+                    ct.setThanhTien(ctDto.getThanhTien());
+                    ct.setNgayTao(ctDto.getNgayTao() != null ? ctDto.getNgayTao() : LocalDateTime.now());
+                    ct.setNgaySua(LocalDateTime.now());
+                    chiTietSanPham.add(ct);
+                }
             }
+
+            // Xóa các bản ghi chi tiết không còn trong danh sách mới
+            hoaDon.getChiTietSanPham().removeIf(ct -> !newIds.contains(ct.getIdHDCT()));
+            hoaDon.getChiTietSanPham().addAll(chiTietSanPham);
+        } else {
+            // Nếu chiTietSanPham rỗng, không cập nhật danh sách chi tiết
+            System.out.println("capNhatHoaDon: Danh sách chi tiết hóa đơn rỗng, không cập nhật chi tiết.");
         }
+
+        HoaDon saved = hoaDonRepository.save(hoaDon);
+        return convertToDTO(saved);
     }
 
-    /**
-     * Thay đổi địa chỉ giao hàng của một đơn hàng.
-     */
-    @Transactional
-    public void changeOrderAddress(Integer idHD, Integer newAddressId) {
-        HoaDon hoaDon = hoaDonRepository.findById(idHD)
-                .orElseThrow(() -> new EntityNotFoundException("Không tìm thấy hóa đơn với ID: " + idHD));
+    public void deleteHoaDon(Integer id) {
+        HoaDon hoaDon = hoaDonRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Hóa đơn không tồn tại"));
+        hoaDonRepository.delete(hoaDon);
+    }
 
-        if (!"CHO_XAC_NHAN".equalsIgnoreCase(hoaDon.getTrangThai())) {
-            throw new IllegalArgumentException(
-                    "Không thể thay đổi địa chỉ cho đơn hàng ở trạng thái: " + hoaDon.getTrangThai());
-        }
-
-        DiaChiKhachHang newAddress = diaChiKhachHangRepository.findById(newAddressId)
-                .orElseThrow(() -> new EntityNotFoundException("Không tìm thấy địa chỉ với ID: " + newAddressId));
-
-        if (!newAddress.getKhachHang().getIdKH().equals(hoaDon.getKhachHang().getIdKH())) {
-            throw new IllegalArgumentException("Địa chỉ mới không thuộc về khách hàng của đơn hàng này.");
-        }
-
-        hoaDon.setDiaChiGiao(newAddress);
+    public HoaDonDTO createHoaDon(HoaDonDTO dto) {
+        HoaDon hoaDon = convertToEntity(dto);
+        hoaDon.setNgayTao(LocalDateTime.now());
         hoaDon.setNgaySua(LocalDateTime.now());
         hoaDonRepository.save(hoaDon);
     }

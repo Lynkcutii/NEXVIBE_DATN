@@ -256,11 +256,18 @@ public class AuthController {
             response.put("taiKhoan", taiKhoan.getTaiKhoan());
             response.put("chucVu", taiKhoan.getChucVu());
 
+            // Thêm thông tin khách hàng hoặc nhân viên
             Optional<KhachHang> khachHang = khachHangRepository.findByTaiKhoanIdTK(taiKhoan.getIdTK());
-            khachHang.ifPresent(kh -> response.put("idKH", kh.getIdKH()));
+            khachHang.ifPresent(kh -> {
+                response.put("idKH", kh.getIdKH());
+                response.put("userFullName", kh.getTenKH()); // Thêm tenKH
+            });
 
             Optional<NhanVien> nhanVien = nhanVienRepository.findByTaiKhoanIdTK(taiKhoan.getIdTK());
-            nhanVien.ifPresent(nv -> response.put("idNV", nv.getIdNV()));
+            nhanVien.ifPresent(nv -> {
+                response.put("idNV", nv.getIdNV());
+                response.put("userFullName", nv.getTenNV()); // Thêm tenNV nếu là nhân viên
+            });
 
             logger.info("Lấy thông tin người dùng thành công: {}", username);
             return ResponseEntity.ok(response);

@@ -48,4 +48,6 @@ public interface SanPhamChiTietRepository extends JpaRepository<SanPhamChiTiet, 
     long countBySoLuong(int soLuong);
 
     long countBySoLuongBetween(int minSoLuong, int maxSoLuong);
+
+    Optional<SanPhamChiTiet> findByMaSPCT(String maSPCT);
 }

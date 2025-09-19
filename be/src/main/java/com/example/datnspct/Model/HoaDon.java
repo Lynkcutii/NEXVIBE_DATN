@@ -40,6 +40,12 @@ public class HoaDon {
     @Column(name = "IdNV")
     private Integer idNhanVien;
 
+    @Column(name = "IdKH")
+    private Integer idKhachHang;
+
+    @Column(name = "IdKM")
+    private Integer idKM;
+
     @Column(name = "LoaiHoaDon")
     private String loaiHoaDon;
 
@@ -61,11 +67,11 @@ public class HoaDon {
     private PhuongTT phuongThucThanhToan;
 
     @ManyToOne
-    @JoinColumn(name = "IdKM", referencedColumnName = "IdKM")
+    @JoinColumn(name = "IdKM", referencedColumnName = "IdKM", insertable = false, updatable = false)
     private KhuyenMai khuyenMai;
 
     @ManyToOne
-    @JoinColumn(name = "IdKH", referencedColumnName = "IdKH")
+    @JoinColumn(name = "IdKH", referencedColumnName = "IdKH", insertable = false, updatable = false)
     private KhachHang khachHang;
 
     @ManyToOne

@@ -1,7 +1,9 @@
 package com.example.datnspct.Service;
 
+import com.example.datnspct.Model.SanPhamChiTiet;
 import com.example.datnspct.Model.Voucher;
 import com.example.datnspct.Model.VoucherSP;
+import com.example.datnspct.Repository.SanPhamChiTietRepository;
 import com.example.datnspct.dto.VoucherDTO;
 import com.example.datnspct.Repository.VoucherRepository;
 import com.example.datnspct.Repository.VoucherSPRepository;
@@ -22,6 +24,9 @@ public class VoucherService {
 
     @Autowired
     private VoucherSPRepository voucherSPRepository;
+
+    @Autowired
+    private SanPhamChiTietRepository sanPhamChiTietRepository;
 
     public List<VoucherDTO> getApplicableVouchersForProducts(List<Integer> idSPCTs) {
         Date now = new Date();
@@ -82,4 +87,96 @@ public class VoucherService {
         dto.setApplicableProductIds(applicableProductIds);
         return dto;
     }
+
+    public VoucherDTO createVoucher(VoucherDTO dto) {
+        if (dto.getMaVoucher() == null || dto.getMaVoucher().trim().isEmpty()) {
+            throw new IllegalArgumentException("Mã voucher không được để trống");
+        }
+        if (dto.getHinhThucGiam() == null || !List.of("percentage", "fixed").contains(dto.getHinhThucGiam())) {
+            throw new IllegalArgumentException("Hình thức giảm không hợp lệ");
+        }
+        if (dto.getMucGiam() == null || dto.getMucGiam().compareTo(BigDecimal.ZERO) <= 0) {
+            throw new IllegalArgumentException("Mức giảm phải lớn hơn 0");
+        }
+        if (dto.getNgayBatDau() == null || dto.getNgayKetThuc() == null || dto.getNgayKetThuc().before(dto.getNgayBatDau())) {
+            throw new IllegalArgumentException("Ngày bắt đầu và kết thúc không hợp lệ");
+        }
+
+        Voucher voucher = new Voucher();
+        voucher.setMaVoucher(dto.getMaVoucher().trim());
+        voucher.setTenVoucher(dto.getTenVoucher() != null ? dto.getTenVoucher() : "");
+        voucher.setHinhThucGiam(dto.getHinhThucGiam());
+        voucher.setMucGiam(dto.getMucGiam());
+        voucher.setGiamToiDa(dto.getGiamToiDa());
+        voucher.setDonGiaKhiGiam(dto.getDonGiaKhiGiam());
+        voucher.setGiaGiam(dto.getGiaGiam());
+        voucher.setSoLuong(dto.getSoLuong() != null ? dto.getSoLuong() : 0);
+        voucher.setNgayBatDau(dto.getNgayBatDau());
+        voucher.setNgayKetThuc(dto.getNgayKetThuc());
+        voucher.setTrangThai((byte) (dto.getTrangThai() != null && dto.getTrangThai() ? 1 : 0));
+
+        Voucher savedVoucher = voucherRepository.save(voucher);
+
+        if (dto.getApplicableProductCodes() != null && !dto.getApplicableProductCodes().isEmpty()) {
+            for (String maSPCT : dto.getApplicableProductCodes()) {
+                SanPhamChiTiet spct = sanPhamChiTietRepository.findByMaSPCT(maSPCT)
+                        .orElseThrow(() -> new IllegalArgumentException("Mã sản phẩm chi tiết " + maSPCT + " không tồn tại"));
+                VoucherSP voucherSP = new VoucherSP();
+                voucherSP.setVoucher(savedVoucher);
+                voucherSP.setSanPhamCT(spct);
+                voucherSP.setTrangThai((byte) 1);
+                voucherSPRepository.save(voucherSP);
+            }
+        }
+
+        return convertToDTO(savedVoucher);
+    }
+
+    public VoucherDTO updateVoucher(Integer id, VoucherDTO dto) {
+        Voucher voucher = voucherRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Voucher không tồn tại"));
+
+        if (dto.getMaVoucher() == null || dto.getMaVoucher().trim().isEmpty()) {
+            throw new IllegalArgumentException("Mã voucher không được để trống");
+        }
+        if (dto.getHinhThucGiam() == null || !List.of("percentage", "fixed").contains(dto.getHinhThucGiam())) {
+            throw new IllegalArgumentException("Hình thức giảm không hợp lệ");
+        }
+        if (dto.getMucGiam() == null || dto.getMucGiam().compareTo(BigDecimal.ZERO) <= 0) {
+            throw new IllegalArgumentException("Mức giảm phải lớn hơn 0");
+        }
+        if (dto.getNgayBatDau() == null || dto.getNgayKetThuc() == null || dto.getNgayKetThuc().before(dto.getNgayBatDau())) {
+            throw new IllegalArgumentException("Ngày bắt đầu và kết thúc không hợp lệ");
+        }
+
+        voucher.setMaVoucher(dto.getMaVoucher().trim());
+        voucher.setTenVoucher(dto.getTenVoucher() != null ? dto.getTenVoucher() : "");
+        voucher.setHinhThucGiam(dto.getHinhThucGiam());
+        voucher.setMucGiam(dto.getMucGiam());
+        voucher.setGiamToiDa(dto.getGiamToiDa());
+        voucher.setDonGiaKhiGiam(dto.getDonGiaKhiGiam());
+        voucher.setGiaGiam(dto.getGiaGiam());
+        voucher.setSoLuong(dto.getSoLuong() != null ? dto.getSoLuong() : 0);
+        voucher.setNgayBatDau(dto.getNgayBatDau());
+        voucher.setNgayKetThuc(dto.getNgayKetThuc());
+        voucher.setTrangThai((byte) (dto.getTrangThai() != null && dto.getTrangThai() ? 1 : 0));
+
+        Voucher updatedVoucher = voucherRepository.save(voucher);
+
+        voucherSPRepository.deleteByVoucherIdVoucher(id);
+        if (dto.getApplicableProductCodes() != null && !dto.getApplicableProductCodes().isEmpty()) {
+            for (String maSPCT : dto.getApplicableProductCodes()) {
+                SanPhamChiTiet spct = sanPhamChiTietRepository.findByMaSPCT(maSPCT)
+                        .orElseThrow(() -> new IllegalArgumentException("Mã sản phẩm chi tiết " + maSPCT + " không tồn tại"));
+                VoucherSP voucherSP = new VoucherSP();
+                voucherSP.setVoucher(updatedVoucher);
+                voucherSP.setSanPhamCT(spct);
+                voucherSP.setTrangThai((byte) 1);
+                voucherSPRepository.save(voucherSP);
+            }
+        }
+
+        return convertToDTO(updatedVoucher);
+    }
+
 }
