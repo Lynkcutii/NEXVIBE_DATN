@@ -21,5 +21,6 @@ public class KhachHangDTO {
     private String sdt;
     private Integer idTK;
     private Boolean trangThai;
+    private String diaChi;
     private List<DiaChiKhachHangDTO> diaChiList;
 }

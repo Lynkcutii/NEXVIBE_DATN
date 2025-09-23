@@ -22,6 +22,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -160,18 +161,36 @@ public class HoaDonService {
                 errors.add("Không tìm thấy khuyến mãi với idKM: " + request.getIdKM());
             } else {
                 KhuyenMai khuyenMai = khuyenMaiOpt.get();
-                if (khachHangOpt.isPresent() && (khuyenMai.getKhachHang() == null ||
-                        khuyenMai.getKhachHang().getIdKH() != khachHangOpt.get().getIdKH())) {
-                    errors.add("Khuyến mãi idKM: " + request.getIdKM() + " không áp dụng cho khách hàng idTK: " + request.getIdTK());
-                } else if (khuyenMai.getSoLuong() <= khuyenMai.getDaSuDung()) {
+                if (khachHangOpt.isPresent()) {
+                    KhachHang kh = khachHangOpt.get();
+
+                    // Nếu khuyến mãi có ràng buộc KH thì kiểm tra trong list
+                    if (khuyenMai.getKhachHangs() != null && !khuyenMai.getKhachHangs().isEmpty()) {
+                        boolean allowed = khuyenMai.getKhachHangs().stream()
+                                .anyMatch(khInList -> khInList.getIdKH().equals(kh.getIdKH()));
+
+                        if (!allowed) {
+                            errors.add("Khuyến mãi idKM: " + request.getIdKM()
+                                    + " không áp dụng cho khách hàng idTK: " + request.getIdTK());
+                        }
+                    }
+                }
+
+// Kiểm tra số lượng
+                if (khuyenMai.getSoLuong() <= khuyenMai.getDaSuDung()) {
                     errors.add("Khuyến mãi idKM: " + request.getIdKM() + " đã hết lượt sử dụng");
-                } else if (calculatedSubTotal.compareTo(khuyenMai.getGiaTriDonHangToiThieu()) < 0) {
+                }
+// Kiểm tra tổng tiền tối thiểu
+                else if (calculatedSubTotal.compareTo(khuyenMai.getGiaTriDonHangToiThieu()) < 0) {
                     errors.add("Tổng tiền đơn hàng (" + calculatedSubTotal +
                             ") không đạt mức tối thiểu để áp dụng khuyến mãi: " +
                             khuyenMai.getGiaTriDonHangToiThieu());
-                } else {
-                    if (khuyenMai.getHinhThucGiam().equalsIgnoreCase("PERCENTAGE")) {
-                        promotionDiscount = calculatedSubTotal.multiply(khuyenMai.getMucGiam().divide(new BigDecimal("100")));
+                }
+// Tính giảm giá
+                else {
+                    if ("PERCENTAGE".equalsIgnoreCase(khuyenMai.getHinhThucGiam())) {
+                        promotionDiscount = calculatedSubTotal
+                                .multiply(khuyenMai.getMucGiam().divide(new BigDecimal("100")));
                         if (khuyenMai.getGiamToiDa() != null && khuyenMai.getGiamToiDa().compareTo(BigDecimal.ZERO) > 0) {
                             promotionDiscount = promotionDiscount.min(khuyenMai.getGiamToiDa());
                         }
@@ -324,14 +343,19 @@ public class HoaDonService {
             );
         }
         DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+
         if (dateFrom != null && !dateFrom.isEmpty()) {
-            LocalDateTime from = LocalDateTime.parse(dateFrom, dtf);
-            stream = stream.filter(hd -> hd.getNgayTao() != null && !hd.getNgayTao().isBefore(from));
+            LocalDate fromDate = LocalDate.parse(dateFrom, dtf);
+            LocalDateTime fromDateTime = fromDate.atStartOfDay(); // 2025-09-22T00:00
+            stream = stream.filter(hd -> hd.getNgayTao() != null && !hd.getNgayTao().isBefore(fromDateTime));
         }
+
         if (dateTo != null && !dateTo.isEmpty()) {
-            LocalDateTime to = LocalDateTime.parse(dateTo, dtf);
-            stream = stream.filter(hd -> hd.getNgayTao() != null && !hd.getNgayTao().isAfter(to));
+            LocalDate toDate = LocalDate.parse(dateTo, dtf);
+            LocalDateTime toDateTime = toDate.atTime(23, 59, 59); // 2025-09-22T23:59:59
+            stream = stream.filter(hd -> hd.getNgayTao() != null && !hd.getNgayTao().isAfter(toDateTime));
         }
+
         List<HoaDonDTO> filtered = stream.map(this::convertToDTO).collect(Collectors.toList());
         int start = (int) pageable.getOffset();
         int end = Math.min((start + pageable.getPageSize()), filtered.size());

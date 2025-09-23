@@ -8,6 +8,8 @@ import lombok.Setter;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "KhuyenMai")
@@ -55,7 +57,11 @@ public class KhuyenMai {
     @Column(name = "TrangThai", nullable = false)
     private Boolean trangThai = true;
 
-    @ManyToOne
-    @JoinColumn(name = "IdKH", referencedColumnName = "IdKH")
-    private KhachHang khachHang;
+    @ManyToMany
+    @JoinTable(
+            name = "KhuyenMai_KhachHang", // bảng trung gian
+            joinColumns = @JoinColumn(name = "IdKM"), // cột join tới KhuyenMai
+            inverseJoinColumns = @JoinColumn(name = "IdKH") // cột join tới KhachHang
+    )
+    private List<KhachHang> khachHangs = new ArrayList<>();
 }

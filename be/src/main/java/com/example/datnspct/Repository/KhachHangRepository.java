@@ -1,6 +1,7 @@
 package com.example.datnspct.Repository;
 
 import com.example.datnspct.Model.KhachHang;
+import com.example.datnspct.Model.KhuyenMai;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -44,4 +45,5 @@ public interface KhachHangRepository extends JpaRepository<KhachHang, Integer> {
            "HAVING COUNT(hd.IdHD) > 0 " +
            "ORDER BY SUM(hd.tongTien) DESC")
     List<Object[]> findKhachHangVIP();
+
 }

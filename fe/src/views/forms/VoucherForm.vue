@@ -74,14 +74,17 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue';
-import { useRoute, useRouter } from 'vue-router';
+import { ref, computed, onMounted } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import axios from 'axios'
+import { ElMessage, ElMessageBox } from 'element-plus'
 
-const route = useRoute();
-const router = useRouter();
-const isEditing = computed(() => !!route.params.id);
+const route = useRoute()
+const router = useRouter()
+const isEditing = computed(() => !!route.params.id)
 
 const voucher = ref({
+  id: null,
   code: '',
   description: '',
   type: 'percentage',
@@ -90,23 +93,70 @@ const voucher = ref({
   max_uses: 100,
   start_date: '',
   end_date: ''
-});
+})
 
 onMounted(() => {
   if (isEditing.value) {
-    console.log(`Lấy dữ liệu cho voucher ID: ${route.params.id}`);
-    // Giả lập việc lấy dữ liệu từ API để điền vào form
-    const sampleVoucher = { id: 1, code: 'SALE50', description: 'Giảm 50% cho đơn hàng đầu tiên', type: 'percentage', value: 50, min_order_value: 0, max_uses: 100, start_date: '2024-07-01', end_date: '2024-07-31' };
-    voucher.value = { ...sampleVoucher };
+    axios.get(`/api/khuyenmai/${route.params.id}`).then(res => {
+      const data = res.data
+      voucher.value = {
+        id: data.idKM,
+        code: data.maKM,
+        description: data.tenKM,
+        type: data.hinhThucGiam,
+        value: data.mucGiam,
+        min_order_value: data.giaTriDonHangToiThieu,
+        max_uses: data.soLuong,
+        start_date: data.ngayBatDau ? data.ngayBatDau.split('T')[0] : '',
+        end_date: data.ngayKetThuc ? data.ngayKetThuc.split('T')[0] : ''
+      }
+    })
   }
-});
+})
 
-const saveVoucher = () => {
-  if (isEditing.value) {
-    console.log('Đang cập nhật voucher:', voucher.value);
-  } else {
-    console.log('Đang tạo mới voucher:', voucher.value);
+const toIsoDateTime = (dateStr, endOfDay = false) => {
+  if (!dateStr) return null
+  return endOfDay ? `${dateStr}T23:59:59` : `${dateStr}T00:00:00`
+}
+
+const saveVoucher = async () => {
+  try {
+    await ElMessageBox.confirm(
+      `Bạn có chắc chắn muốn ${isEditing.value ? 'cập nhật' : 'tạo'} khuyến mãi này?`,
+      'Xác nhận',
+      { confirmButtonText: 'Lưu', cancelButtonText: 'Hủy', type: 'warning' }
+    )
+
+    const dto = {
+      idKM: voucher.value.id,
+      maKM: voucher.value.code,
+      tenKM: voucher.value.description,
+      hinhThucGiam: voucher.value.type,
+      mucGiam: voucher.value.value,
+      giaTriDonHangToiThieu: voucher.value.min_order_value,
+      giamToiDa: null, // thêm nếu backend có
+      soLuong: voucher.value.max_uses,
+      daSuDung: 0,
+      ngayBatDau: toIsoDateTime(voucher.value.start_date, false),
+      ngayKetThuc: toIsoDateTime(voucher.value.end_date, true),
+      trangThai: true
+    }
+
+    if (isEditing.value) {
+      await axios.put(`/api/khuyenmai/${voucher.value.id}`, dto)
+      ElMessage.success('Cập nhật khuyến mãi thành công!')
+    } else {
+      await axios.post('/api/khuyenmai', dto)
+      ElMessage.success('Thêm mới khuyến mãi thành công!')
+    }
+
+    router.push({ name: 'admin.vouchers.list' })
+  } catch (error) {
+    if (error !== 'cancel') {
+      const msg = error.response?.data?.message || error.message || 'Có lỗi khi lưu khuyến mãi'
+      ElMessage.error(msg)
+      console.error('Voucher save error:', error)
+    }
   }
-  router.push({ name: 'admin.vouchers.list' }); 
-};
+}
 </script>

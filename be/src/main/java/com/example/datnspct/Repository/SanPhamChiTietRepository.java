@@ -31,27 +31,31 @@ public interface SanPhamChiTietRepository extends JpaRepository<SanPhamChiTiet, 
             "LEFT JOIN sp.chatLieu cl " +
             "LEFT JOIN spct.mauSac ms " +
             "LEFT JOIN spct.size s " +
-            "WHERE (:keyword IS NULL OR LOWER(sp.tenSP) LIKE LOWER(CONCAT('%', :keyword, '%')) OR LOWER(spct.maSPCT) LIKE LOWER(CONCAT('%', :keyword, '%'))) " +
-            "AND (:danhMucIds IS NULL OR dm.idDM IN :danhMucIds) " +
-            "AND (:thuongHieu IS NULL OR LOWER(th.tenThuongHieu) = LOWER(:thuongHieu)) " +
-            "AND (:chatLieu IS NULL OR LOWER(cl.tenChatLieu) = LOWER(:chatLieu)) " +
-            "AND (:mauSac IS NULL OR LOWER(ms.tenMauSac) = LOWER(:mauSac)) " +
-            "AND (:size IS NULL OR LOWER(s.tenSize) = LOWER(:size)) " +
+            "WHERE (:keyword IS NULL OR LOWER(sp.tenSP) LIKE LOWER(:keyword) OR LOWER(spct.maSPCT) LIKE LOWER(:keyword)) " +
             "AND (:minPrice IS NULL OR spct.gia >= :minPrice) " +
             "AND (:maxPrice IS NULL OR spct.gia <= :maxPrice)")
     Page<SanPhamChiTiet> findByFilters(
             @Param("keyword") String keyword,
             @Param("danhMucIds") List<Integer> danhMucIds,
             @Param("thuongHieu") String thuongHieu,
-            @Param("mauSac") String mauSac,
             @Param("chatLieu") String chatLieu,
+            @Param("mauSac") String mauSac,
             @Param("size") String size,
             @Param("minPrice") BigDecimal minPrice,
             @Param("maxPrice") BigDecimal maxPrice,
             Pageable pageable);
-    
+
     // Đếm sản phẩm theo số lượng tồn kho
     long countBySoLuongGreaterThan(int soLuong);
     long countBySoLuong(int soLuong);
     long countBySoLuongBetween(int minSoLuong, int maxSoLuong);
+
+    @Query("SELECT spct FROM SanPhamChiTiet spct " +
+            "WHERE (:minPrice IS NULL OR spct.gia >= :minPrice) " +
+            "AND (:maxPrice IS NULL OR spct.gia <= :maxPrice)")
+    Page<SanPhamChiTiet> testFilterGia(
+            @Param("minPrice") BigDecimal minPrice,
+            @Param("maxPrice") BigDecimal maxPrice,
+            Pageable pageable);
+
 }

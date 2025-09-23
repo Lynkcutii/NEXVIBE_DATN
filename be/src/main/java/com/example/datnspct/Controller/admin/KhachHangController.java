@@ -67,4 +67,10 @@ public class KhachHangController {
         khachHangService.xoaKhachHang(id);
         return ResponseEntity.noContent().build();
     }
+
+    @GetMapping("/{id}/dia-chi")
+    public ResponseEntity<String> layDiaChiKhachHang(@PathVariable Integer id) {
+        KhachHangDTO khachHang = khachHangService.layKhachHangTheoId(id);
+        return ResponseEntity.ok(khachHang.getDiaChi());
+    }
 }

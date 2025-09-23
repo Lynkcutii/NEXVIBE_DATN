@@ -41,12 +41,7 @@ public class KhachHangService {
         dto.setSdt(khachHang.getSdt());
         dto.setIdTK(khachHang.getTaiKhoan() != null ? khachHang.getTaiKhoan().getIdTK() : null);
         dto.setTrangThai(khachHang.getTrangThai());
-        // Lấy danh sách địa chỉ
-        List<DiaChiKhachHangDTO> diaChiList = diaChiKhachHangRepository.findByKhachHangIdKH(khachHang.getIdKH())
-                .stream()
-                .map(this::chuyenDiaChiSangDTO)
-                .collect(Collectors.toList());
-        dto.setDiaChiList(diaChiList);
+        dto.setDiaChi(khachHang.getDiaChi());
         return dto;
     }
 
@@ -60,6 +55,7 @@ public class KhachHangService {
         khachHang.setNgaySinh(dto.getNgaySinh());
         khachHang.setEmail(dto.getEmail());
         khachHang.setSdt(dto.getSdt());
+        khachHang.setDiaChi(dto.getDiaChi());
         if (dto.getIdTK() != null) {
             TaiKhoan taiKhoan = taiKhoanRepository.findById(dto.getIdTK())
                     .orElseThrow(() -> new RuntimeException("Tài khoản không tồn tại"));

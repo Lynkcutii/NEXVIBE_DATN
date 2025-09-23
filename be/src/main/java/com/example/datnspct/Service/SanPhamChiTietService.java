@@ -297,23 +297,37 @@ public class SanPhamChiTietService {
         }).collect(Collectors.toList());
     }
 
-    public Page<SanPhamChiTietDTO> findWithFilters(String keyword, String mauSac, String size,
-                                                   BigDecimal minPrice, BigDecimal maxPrice,
-                                                   Pageable pageable) {
-        keyword = keyword != null ? keyword.trim() : null;
-        mauSac = mauSac != null ? mauSac.trim().toLowerCase() : null;
-        size = size != null ? size.trim().toLowerCase() : null;
+    public Page<SanPhamChiTietDTO> findWithFilters(
+            String keyword,
+            String mauSac,
+            String size,
+            BigDecimal minPrice,
+            BigDecimal maxPrice,
+            Pageable pageable) {
+
+        // Chuẩn hóa string filter
+        keyword   = (keyword != null && !keyword.isBlank())   ? "%" + keyword.trim().toLowerCase() + "%" : null;
+        mauSac    = (mauSac != null && !mauSac.isBlank())     ? "%" + mauSac.trim().toLowerCase() + "%" : null;
+        size      = (size != null && !size.isBlank())         ? "%" + size.trim().toLowerCase() + "%" : null;
+
+
+        // Nếu maxPrice = 0 coi như bỏ filter
+        if (maxPrice != null && maxPrice.compareTo(BigDecimal.ZERO) == 0) {
+            maxPrice = null;
+        }
 
         Page<SanPhamChiTiet> page = sanPhamChiTietRepository.findByFilters(
                 keyword,
-                (java.util.List<Integer>) null,
-                (String) null,
+                null,       // danhMucIds
+                null,       // thuongHieu
+                null,       // chatLieu
                 mauSac,
-                (String) null,
                 size,
                 minPrice,
                 maxPrice,
-                pageable);
+                pageable
+        );
+
         return page.map(spct -> {
             SanPhamChiTietDTO dto = convertToDTO(spct);
             List<String> imageLinks = imgRepository.findBySanPhamChiTietId(spct.getId())
