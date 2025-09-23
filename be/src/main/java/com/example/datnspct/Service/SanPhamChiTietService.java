@@ -17,6 +17,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
@@ -304,11 +305,19 @@ public class SanPhamChiTietService {
         mauSac = mauSac != null ? mauSac.trim().toLowerCase() : null;
         size = size != null ? size.trim().toLowerCase() : null;
 
+        System.out.println("Filter params: keyword=" + keyword + ", mauSac=" + mauSac +
+                ", size=" + size + ", minPrice=" + minPrice + ", maxPrice=" + maxPrice +
+                ", pageable=" + pageable);
+
         Page<SanPhamChiTiet> page = sanPhamChiTietRepository.findByFilters(
                 keyword, mauSac, size,
                 minPrice != null ? minPrice : BigDecimal.ZERO,
                 maxPrice != null ? maxPrice : new BigDecimal("5000000"),
                 pageable);
+
+        System.out.println("Result size: " + page.getContent().size());
+        System.out.println("Result content: " + page.getContent());
+
         return page.map(spct -> {
             SanPhamChiTietDTO dto = convertToDTO(spct);
             List<String> imageLinks = imgRepository.findBySanPhamChiTietId(spct.getId())
@@ -348,5 +357,32 @@ public class SanPhamChiTietService {
         String[] parts = link.split("/");
         String fileName = parts[parts.length - 1]; // Lấy phần file name (public_id.jpg)
         return fileName.split("\\.")[0]; // Lấy public_id (loại bỏ phần .jpg)
+    }
+
+    @Transactional(readOnly = true)
+    public Page<SanPhamChiTietDTO> searchByKeywordAndTrangThai(String keyword, Boolean trangThai, Pageable pageable) {
+        keyword = keyword != null ? keyword.trim() : null;
+        System.out.println("Search params: keyword=" + keyword + ", trangThai=" + trangThai + ", pageable=" + pageable);
+
+        Page<SanPhamChiTiet> page = sanPhamChiTietRepository.searchByKeywordAndTrangThai(
+                keyword, trangThai, pageable);
+
+        System.out.println("Search result size: " + page.getContent().size());
+        page.getContent().forEach(spct -> {
+            System.out.println("SPCT: id=" + spct.getId() +
+                    ", maSPCT=" + spct.getMaSPCT() +
+                    ", tenSP=" + (spct.getSanPham() != null ? spct.getSanPham().getTenSP() : "null") +
+                    ", trangThai=" + spct.getTrangThai());
+        });
+
+        return page.map(spct -> {
+            SanPhamChiTietDTO dto = convertToDTO(spct);
+            List<String> imageLinks = imgRepository.findBySanPhamChiTietId(spct.getId())
+                    .stream()
+                    .map(Img::getLink)
+                    .collect(Collectors.toList());
+            dto.setImageLinks(imageLinks);
+            return dto;
+        });
     }
 }

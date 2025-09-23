@@ -1,5 +1,7 @@
 package com.example.datnspct.Controller.admin;
 
+import com.example.datnspct.Model.KhachHang;
+import com.example.datnspct.Repository.KhachHangRepository;
 import com.example.datnspct.Service.KhachHangService;
 import com.example.datnspct.dto.KhachHangDTO;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,12 +19,19 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
+
 @RestController
 @RequestMapping("/admin/api/khachhang")
 public class KhachHangController {
 
     @Autowired
     private KhachHangService khachHangService;
+
+    @Autowired
+    private KhachHangRepository khachHangRepository;
 
     // Tạo mới
     @PostMapping
@@ -49,6 +58,22 @@ public class KhachHangController {
         Page<KhachHangDTO> khachHangPage;
         if (search != null && !search.isEmpty() || trangThai != null) {
             khachHangPage = khachHangService.searchKhachHang(search != null ? search : "", trangThai, pageable);
+        } else {
+            khachHangPage = khachHangService.layTatCaKhachHang(pageable);
+        }
+        return ResponseEntity.ok(khachHangPage);
+    }
+
+    @GetMapping("/khuyen-mai")
+    public ResponseEntity<Page<KhachHangDTO>> layTatCaKHInKhuyenMai(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(required = false) String search,
+            @RequestParam(required = false) Boolean trangThai) {
+        Pageable pageable = PageRequest.of(page, size);
+        Page<KhachHangDTO> khachHangPage;
+        if (search != null && !search.isEmpty()) {
+            khachHangPage = khachHangService.searchKhachHang(search, trangThai, pageable);
         } else {
             khachHangPage = khachHangService.layTatCaKhachHang(pageable);
         }

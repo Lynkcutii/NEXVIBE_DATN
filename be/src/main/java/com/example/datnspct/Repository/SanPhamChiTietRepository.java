@@ -15,6 +15,32 @@ import java.util.Optional;
 
 @Repository
 public interface SanPhamChiTietRepository extends JpaRepository<SanPhamChiTiet, Integer> {
+    @Query("SELECT spct FROM SanPhamChiTiet spct " +
+            "LEFT JOIN spct.sanPham sp " +
+            "WHERE (:keyword IS NULL OR LOWER(sp.tenSP) LIKE LOWER(CONCAT('%', :keyword, '%')) OR LOWER(spct.maSPCT) LIKE LOWER(CONCAT('%', :keyword, '%'))) " +
+            "AND (:trangThai IS NULL OR spct.trangThai = :trangThai)")
+    Page<SanPhamChiTiet> searchByKeywordAndTrangThai(
+            @Param("keyword") String keyword,
+            @Param("trangThai") Boolean trangThai,
+            Pageable pageable);
+
+    @Query("SELECT spct FROM SanPhamChiTiet spct " +
+            "LEFT JOIN spct.sanPham sp " +
+            "LEFT JOIN spct.mauSac ms " +
+            "LEFT JOIN spct.size s " +
+            "WHERE (:keyword IS NULL OR LOWER(sp.tenSP) LIKE LOWER(CONCAT('%', :keyword, '%')) OR LOWER(spct.maSPCT) LIKE LOWER(CONCAT('%', :keyword, '%'))) " +
+            "AND (:mauSac IS NULL OR LOWER(ms.tenMauSac) LIKE LOWER(CONCAT('%', :mauSac, '%'))) " +
+            "AND (:size IS NULL OR LOWER(s.tenSize) LIKE LOWER(CONCAT('%', :size, '%'))) " +
+            "AND (:minPrice IS NULL OR spct.gia >= :minPrice) " +
+            "AND (:maxPrice IS NULL OR spct.gia <= :maxPrice) " +
+            "AND spct.trangThai = true")
+    Page<SanPhamChiTiet> findByFilters(
+            @Param("keyword") String keyword,
+            @Param("mauSac") String mauSac,
+            @Param("size") String size,
+            @Param("minPrice") BigDecimal minPrice,
+            @Param("maxPrice") BigDecimal maxPrice,
+            Pageable pageable);
 
     Optional<SanPhamChiTiet> findById(Integer idSPCT);
 
@@ -24,27 +50,9 @@ public interface SanPhamChiTietRepository extends JpaRepository<SanPhamChiTiet, 
 
     List<SanPhamChiTiet> findBySanPhamId(Integer idSP);
 
-    @Query("SELECT spct FROM SanPhamChiTiet spct " +
-            "LEFT JOIN spct.sanPham sp " +
-            "LEFT JOIN spct.mauSac ms " +
-            "LEFT JOIN spct.size s " +
-            "WHERE (:keyword IS NULL OR LOWER(sp.tenSP) LIKE LOWER(CONCAT('%', :keyword, '%')) OR LOWER(spct.maSPCT) LIKE LOWER(CONCAT('%', :keyword, '%'))) " +
-            "AND (:mauSac IS NULL OR LOWER(ms.tenMauSac) = LOWER(:mauSac)) " +
-            "AND (:size IS NULL OR LOWER(s.tenSize) = LOWER(:size)) " +
-            "AND (:minPrice IS NULL OR spct.gia >= :minPrice) " +
-            "AND (:maxPrice IS NULL OR spct.gia <= :maxPrice)")
-    Page<SanPhamChiTiet> findByFilters(
-            @Param("keyword") String keyword,
-            @Param("mauSac") String mauSac,
-            @Param("size") String size,
-            @Param("minPrice") BigDecimal minPrice,
-            @Param("maxPrice") BigDecimal maxPrice,
-            Pageable pageable);
+    Optional<SanPhamChiTiet> findByMaSPCT(String maSPCT);
 
-    // Đếm sản phẩm theo số lượng tồn kho
     long countBySoLuongGreaterThan(int soLuong);
     long countBySoLuong(int soLuong);
     long countBySoLuongBetween(int minSoLuong, int maxSoLuong);
-
-    Optional<SanPhamChiTiet> findByMaSPCT(String maSPCT);
 }

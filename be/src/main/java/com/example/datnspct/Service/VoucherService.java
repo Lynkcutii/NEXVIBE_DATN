@@ -28,17 +28,26 @@ public class VoucherService {
     @Autowired
     private SanPhamChiTietRepository sanPhamChiTietRepository;
 
+    public String generateVoucherCode() {
+        //        LocalDateTime today = LocalDateTime.now();
+//
+//        DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyyMMdd");
+//        String datePart = today.format(dateTimeFormatter);
+        long count = voucherRepository.count();
+        return String.format("VOUCHER%03d", count + 1);
+    }
+
     public List<VoucherDTO> getApplicableVouchersForProducts(List<Integer> idSPCTs) {
         Date now = new Date();
         List<Voucher> vouchers = voucherRepository.findAllByTrangThaiAndSoLuongGreaterThan((byte) 1, 0);
         if (vouchers == null) {
-            return Collections.emptyList(); // Trả về mảng rỗng nếu vouchers là null
+            return Collections.emptyList();
         }
         return vouchers.stream()
                 .filter(v -> now.after(v.getNgayBatDau()) && now.before(v.getNgayKetThuc()))
                 .filter(v -> {
                     List<VoucherSP> voucherSPs = voucherSPRepository.findByVoucherIdVoucherAndTrangThai(v.getIdVoucher(), (byte) 1);
-                    return voucherSPs.stream().anyMatch(vsp -> idSPCTs.contains(vsp.getSanPhamCT().getId()));
+                    return voucherSPs.isEmpty() || voucherSPs.stream().anyMatch(vsp -> idSPCTs.contains(vsp.getSanPhamCT().getId()));
                 })
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
@@ -74,17 +83,24 @@ public class VoucherService {
         dto.setGiamToiDa(voucher.getGiamToiDa());
         dto.setDonGiaKhiGiam(voucher.getDonGiaKhiGiam());
         dto.setGiaGiam(voucher.getGiaGiam());
-        // Giả định giaTriDonHangToiThieu là 0 nếu không có yêu cầu cụ thể
-        dto.setGiaTriDonHangToiThieu(BigDecimal.ZERO);
         dto.setSoLuong(voucher.getSoLuong());
         dto.setNgayBatDau(voucher.getNgayBatDau());
         dto.setNgayKetThuc(voucher.getNgayKetThuc());
         dto.setTrangThai(voucher.getTrangThai() == 1);
-        List<Integer> applicableProductIds = voucherSPRepository.findByVoucherIdVoucherAndTrangThai(voucher.getIdVoucher(), (byte) 1)
-                .stream()
+
+        // Lấy cả mã và id sản phẩm chi tiết
+        List<VoucherSP> voucherSPs = voucherSPRepository.findByVoucherIdVoucherAndTrangThai(voucher.getIdVoucher(), (byte) 1);
+
+        List<String> applicableProductCodes = voucherSPs.stream()
+                .map(vsp -> vsp.getSanPhamCT().getMaSPCT())
+                .collect(Collectors.toList());
+        dto.setApplicableProductCodes(applicableProductCodes.isEmpty() ? Collections.emptyList() : applicableProductCodes);
+
+        List<Integer> applicableProductIds = voucherSPs.stream()
                 .map(vsp -> vsp.getSanPhamCT().getId())
                 .collect(Collectors.toList());
-        dto.setApplicableProductIds(applicableProductIds);
+        dto.setApplicableProductIds(applicableProductIds.isEmpty() ? Collections.emptyList() : applicableProductIds);
+
         return dto;
     }
 
@@ -92,7 +108,7 @@ public class VoucherService {
         if (dto.getMaVoucher() == null || dto.getMaVoucher().trim().isEmpty()) {
             throw new IllegalArgumentException("Mã voucher không được để trống");
         }
-        if (dto.getHinhThucGiam() == null || !List.of("percentage", "fixed").contains(dto.getHinhThucGiam())) {
+        if (dto.getHinhThucGiam() == null || !List.of("PHAN_TRAM", "TIEN_MAT").contains(dto.getHinhThucGiam())) {
             throw new IllegalArgumentException("Hình thức giảm không hợp lệ");
         }
         if (dto.getMucGiam() == null || dto.getMucGiam().compareTo(BigDecimal.ZERO) <= 0) {
@@ -139,7 +155,7 @@ public class VoucherService {
         if (dto.getMaVoucher() == null || dto.getMaVoucher().trim().isEmpty()) {
             throw new IllegalArgumentException("Mã voucher không được để trống");
         }
-        if (dto.getHinhThucGiam() == null || !List.of("percentage", "fixed").contains(dto.getHinhThucGiam())) {
+        if (dto.getHinhThucGiam() == null || !List.of("PHAN_TRAM", "TIEN_MAT").contains(dto.getHinhThucGiam())) {
             throw new IllegalArgumentException("Hình thức giảm không hợp lệ");
         }
         if (dto.getMucGiam() == null || dto.getMucGiam().compareTo(BigDecimal.ZERO) <= 0) {
@@ -178,5 +194,4 @@ public class VoucherService {
 
         return convertToDTO(updatedVoucher);
     }
-
 }

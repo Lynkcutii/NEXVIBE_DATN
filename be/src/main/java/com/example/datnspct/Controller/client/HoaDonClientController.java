@@ -50,7 +50,8 @@ public class HoaDonClientController {
                 else {
                     for (int i = 0; i < request.getItems().size(); i++) {
                         OrderRequestDTO.OrderItemDTO item = request.getItems().get(i);
-                        if (item.getIdGHCT() == null) errors.add("ID giỏ hàng chi tiết (idGHCT) của sản phẩm " + (i + 1) + " là bắt buộc");
+//                        if (item.getIdGHCT() == null) errors.add("ID giỏ hàng chi tiết (idGHCT) của sản phẩm " + (i + 1) + " là bắt buộc");
+
                         if (item.getIdSPCT() == null) errors.add("ID sản phẩm chi tiết (idSPCT) của sản phẩm " + (i + 1) + " là bắt buộc");
                         if (item.getSoLuong() == null || item.getSoLuong() <= 0)
                             errors.add("Số lượng (soLuong) của sản phẩm " + (i + 1) + " phải lớn hơn 0");

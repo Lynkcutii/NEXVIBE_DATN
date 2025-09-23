@@ -63,7 +63,7 @@
         <div class="col-lg-7">
           <div class="checkout-card position-sticky" style="top: 20px;">
             <div class="d-flex justify-content-between align-items-center mb-3">
-              <h5 class="fw-bold">Giỏ hàng ({{ selectedItems.length }} sản phẩm)</h5>
+              <h5 class="fw-bold">Số lượng ({{ selectedItems.length }} sản phẩm)</h5>
               <button v-if="selectedItems.length > 0" @click="clearSelectedItems" class="btn btn-sm btn-link text-danger">Xóa tất cả</button>
             </div>
             <div class="cart-summary-list">
@@ -84,9 +84,7 @@
                     </div>
                     <!-- Điều chỉnh số lượng -->
                     <div class="quantity-control mt-2 d-flex align-items-center">
-                      <button class="btn btn-sm btn-outline-secondary" @click="updateItemQuantity(item, -1)" :disabled="item.soLuong <= 1">-</button>
                       <input type="number" class="form-control form-control-sm mx-2" v-model.number="item.soLuong" style="width: 60px;" min="1" @change="validateQuantity(item)">
-                      <button class="btn btn-sm btn-outline-secondary" @click="updateItemQuantity(item, 1)">+</button>
                     </div>
                   </div>
                   <div class="cart-summary-price text-end">
@@ -113,12 +111,20 @@
                   </option>
                 </select>
                 <div v-if="selectedPromotionId" class="text-success small mt-2">
-                  Giảm: {{ calculateOrderPromotionDiscount().toLocaleString('vi-VN') }}đ
+                  Giảm: {{ calculateOrderPromotionDiscount().toLocaleString('vi-VN') }}đ  
                 </div>
               </div>
               <div class="payment-summary mt-3">
                 <div class="summary-row"><span>Tạm tính</span><span>{{ subTotal.toLocaleString('vi-VN') }}đ</span></div>
-                <div class="summary-row"><span>Phí giao hàng</span><span>+ {{ shippingFee.toLocaleString('vi-VN') }}đ</span></div>
+                <div class="summary-row"><span>Phí giao hàng</span><span class="text-success">Miễn phí cho tất cả sản phẩm</span></div>
+                <div class="summary-row">
+                  <span>Giảm giá voucher</span>
+                  <span class="text-success">-{{ totalVoucherDiscount.toLocaleString('vi-VN') }}đ</span>
+                </div>
+                <div class="summary-row">
+                  <span>Giảm giá khuyến mãi</span>
+                  <span class="text-success">-{{ totalPromotionDiscount.toLocaleString('vi-VN') }}đ</span>
+                </div>
                 <div class="summary-row">
                   <span>Tổng giảm giá</span>
                   <span class="text-success">-{{ totalDiscount.toLocaleString('vi-VN') }}đ</span>
@@ -206,7 +212,6 @@ const errors = reactive({
 });
 
 const selectedPaymentMethod = ref(null);
-const shippingFee = ref(25000);
 const selectedItems = ref([]);
 const paymentMethods = ref([]);
 const applicablePromotions = ref([]);
@@ -329,6 +334,7 @@ const loadApplicablePromotions = async () => {
     const response = await axios.get(`${API_BASE_URL}/api/khuyenmai/applicable/${auth.user.idKH}`, {
       withCredentials: true
     });
+    console.log('[Promotion API] response.data:', response.data);
     applicablePromotions.value = response.data
       .filter(promotion => promotion.giaTriDonHangToiThieu <= subTotal.value)
       .map(promotion => ({
@@ -365,41 +371,55 @@ const loadApplicableVouchers = async () => {
   }
 
   const idSPCTs = selectedItems.value.map(item => item.idSPCT);
+  // Log chi tiết dữ liệu gửi lên
+  console.log('[loadApplicableVouchers] idSPCTs gửi lên:', idSPCTs, '| Array:', Array.isArray(idSPCTs), '| Kiểu phần tử:', idSPCTs.map(x => typeof x));
   try {
     console.log('loadApplicableVouchers: Fetching vouchers for idSPCTs', idSPCTs);
     const response = await axios.post(`${API_BASE_URL}/api/voucher/applicable`, idSPCTs, {
       withCredentials: true,
       headers: { 'Content-Type': 'application/json' }
     });
+    console.log('[loadApplicableVouchers] response:', response);
     const vouchers = Array.isArray(response.data) ? response.data : [];
     console.log('loadApplicableVouchers: Vouchers loaded', vouchers);
+    vouchers.forEach((v, idx) => {
+      console.log(`[Voucher ${idx}] id=${v.id}, applicableProductIds=`, v.applicableProductIds, 'applicableProductCodes=', v.applicableProductCodes);
+    });
 
     for (const item of selectedItems.value) {
+      // Không filter theo giaTriDonHangToiThieu nữa, chỉ filter theo idSPCT
       const itemTotal = item.donGia * item.soLuong;
+      console.log('[Voucher Filter] item.idSPCT:', item.idSPCT, 'itemTotal:', itemTotal);
       item.applicableVouchers = vouchers
-        .filter(voucher => voucher.applicableProductIds.includes(item.idSPCT) && voucher.giaTriDonHangToiThieu <= itemTotal)
+        .filter(voucher => {
+          const applicableIds = Array.isArray(voucher.applicableProductIds) ? voucher.applicableProductIds : [];
+          const match = applicableIds.includes(item.idSPCT);
+          if (match) {
+            console.log(`[Voucher Filter] Voucher id=${voucher.id} match idSPCT`);
+          }
+          return match;
+        })
         .map(voucher => ({
           id: voucher.id,
           code: voucher.maVoucher,
           name: voucher.tenVoucher,
-          description: `${voucher.hinhThucGiam === 'PERCENTAGE' ? `${voucher.mucGiam}%` : `${voucher.mucGiam.toLocaleString('vi-VN')}đ`} (Tối thiểu ${voucher.giaTriDonHangToiThieu.toLocaleString('vi-VN')}đ, Tối đa ${voucher.giamToiDa ? voucher.giamToiDa.toLocaleString('vi-VN') : 'Không giới hạn'}đ)`,
-          type: voucher.hinhThucGiam.toLowerCase(),
+          description: `${voucher.hinhThucGiam === 'PERCENTAGE' ? `${voucher.mucGiam}%` : `${voucher.mucGiam?.toLocaleString('vi-VN') || ''}đ`} (Tối đa ${voucher.giamToiDa ? voucher.giamToiDa.toLocaleString('vi-VN') : 'Không giới hạn'}đ)`,
+          type: voucher.hinhThucGiam?.toLowerCase(),
           value: Number(voucher.mucGiam),
-          minOrder: Number(voucher.giaTriDonHangToiThieu),
+          minOrder: 0, // Không check minOrder nữa
           maxDiscount: voucher.giamToiDa ? Number(voucher.giamToiDa) : null,
           endDate: voucher.ngayKetThuc
         }));
+      console.log('[Voucher Filter] item.applicableVouchers:', item.applicableVouchers);
       item.selectedVoucherId = null;
     }
     console.log('loadApplicableVouchers: Vouchers assigned to items', selectedItems.value);
   } catch (err) {
-    console.error('loadApplicableVouchers: Error', {
-      message: err.message,
-      response: err.response ? {
-        status: err.response.status,
-        data: err.response.data
-      } : null
-    });
+    // Log toàn bộ error object và response nếu có
+    console.error('[loadApplicableVouchers] Error object:', err);
+    if (err.response) {
+      console.error('[loadApplicableVouchers] Lỗi response:', err.response.status, err.response.data);
+    }
     toast.error('Lỗi khi tải danh sách voucher: ' + (err.response?.data?.message || err.message));
   }
 };
@@ -487,11 +507,20 @@ const calculateOrderPromotionDiscount = () => {
   return discountAmount; // Không làm tròn
 };
 
-// Tính tổng giảm giá (voucher + khuyến mãi) - Không làm tròn
+
+// Tổng giảm giá voucher cho tất cả sản phẩm
+const totalVoucherDiscount = computed(() => {
+  return selectedItems.value.reduce((total, item) => total + calculateItemDiscount(item), 0);
+});
+
+// Tổng giảm giá khuyến mãi cho đơn hàng
+const totalPromotionDiscount = computed(() => {
+  return calculateOrderPromotionDiscount();
+});
+
+// Tổng giảm giá (voucher + khuyến mãi)
 const totalDiscount = computed(() => {
-  const voucherDiscount = selectedItems.value.reduce((total, item) => total + calculateItemDiscount(item), 0);
-  const promotionDiscount = calculateOrderPromotionDiscount();
-  return voucherDiscount + promotionDiscount; // Không làm tròn
+  return totalVoucherDiscount.value + totalPromotionDiscount.value;
 });
 
 // Tính tổng tiền gửi đi (không bao gồm phí giao hàng) - Không làm tròn
@@ -502,7 +531,7 @@ const total = computed(() => {
 
 // Tính tổng tiền hiển thị (bao gồm phí giao hàng, chỉ dùng để hiển thị)
 const totalDisplay = computed(() => {
-  const finalTotal = subTotal.value + shippingFee.value - totalDiscount.value;
+  const finalTotal = subTotal.value - totalDiscount.value;
   return finalTotal > 0 ? finalTotal : 0; // Không làm tròn
 });
 
@@ -676,13 +705,14 @@ const placeOrder = async () => {
       },
       paymentMethod: paymentMethods.value.find(method => method.id === selectedPaymentMethod.value)?.value,
       total: total.value,
-      idKM: selectedPromotionId.value,
+      idKM: selectedPromotionId.value === null || selectedPromotionId.value === undefined || selectedPromotionId.value === 'null' ? null : selectedPromotionId.value,
       items: selectedItems.value.map(item => ({
-        idGHCT: item.idGHCT,
+        // Nếu idGHCT là chuỗi và không phải số, set về null để tránh lỗi backend
+        idGHCT: (typeof item.idGHCT === 'number' || item.idGHCT === null) ? item.idGHCT : null,
         idSPCT: item.idSPCT,
         soLuong: item.soLuong,
         donGia: Number(item.donGia),
-        idVoucher: item.selectedVoucherId || null
+        idVoucher: item.selectedVoucherId === null || item.selectedVoucherId === undefined || item.selectedVoucherId === 'null' ? null : item.selectedVoucherId
       }))
     };
 
@@ -774,6 +804,10 @@ const placeOrder = async () => {
 
     if (err.response) {
       errorMessage.value = err.response.data?.message || err.response.statusText;
+      // Log chi tiết lỗi backend trả về
+      if (err.response.data) {
+        console.error('placeOrder: Backend error data', err.response.data);
+      }
       if (err.response.status === 400) {
         errorMessage.value = 'Dữ liệu không hợp lệ!';
         errorDetails.value = err.response.data?.details || [err.response.data?.message || 'Vui lòng kiểm tra thông tin đơn hàng.'];

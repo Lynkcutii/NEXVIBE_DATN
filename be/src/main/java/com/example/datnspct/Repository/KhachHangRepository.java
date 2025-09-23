@@ -43,11 +43,11 @@ public interface KhachHangRepository extends JpaRepository<KhachHang, Integer> {
                                     @Param("toDate") LocalDateTime toDate);
 
     // Khách hàng VIP (chi tiêu nhiều)
-    @Query("SELECT kh.idKH, kh.tenKH, COUNT(hd.IdHD), COALESCE(SUM(hd.tongTien), 0) " +
+    @Query("SELECT kh.idKH, kh.tenKH, COUNT(hd.idHD), COALESCE(SUM(hd.tongTien), 0) " +
             "FROM KhachHang kh " +
             "LEFT JOIN HoaDon hd ON hd.khachHang.idKH = kh.idKH AND hd.trangThai = 'Hoàn thành' " +
             "GROUP BY kh.idKH, kh.tenKH " +
-            "HAVING COUNT(hd.IdHD) > 0 " +
+            "HAVING COUNT(hd.idHD) > 0 " +
             "ORDER BY SUM(hd.tongTien) DESC")
     List<Object[]> findKhachHangVIP();
 

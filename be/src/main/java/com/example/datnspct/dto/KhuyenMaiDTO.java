@@ -6,6 +6,7 @@ import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Data
 @NoArgsConstructor
@@ -14,7 +15,7 @@ public class KhuyenMaiDTO {
     private Integer idKM;
     private String maKM;
     private String tenKM;
-    private String hinhThucGiam; // 'PERCENTAGE' hoặc 'FIXED'
+    private String hinhThucGiam; // 'percentage' hoặc 'fixed'
     private BigDecimal mucGiam;
     private BigDecimal giaTriDonHangToiThieu;
     private BigDecimal giamToiDa;
@@ -23,5 +24,6 @@ public class KhuyenMaiDTO {
     private LocalDateTime ngayBatDau;
     private LocalDateTime ngayKetThuc;
     private Boolean trangThai;
-    private Integer idKH;
+    private List<Integer> customerIds;
+    private List<String> customerNames;
 }

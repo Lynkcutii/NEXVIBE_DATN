@@ -1,4 +1,3 @@
-```vue
 <template>
   <div class="container-fluid">
     <h1 class="h3 mb-4 text-gray-800">{{ isEditing ? 'Chỉnh sửa Voucher Sản phẩm' : 'Tạo Voucher Sản phẩm mới' }}</h1>
@@ -22,6 +21,7 @@
                 id="voucherCode"
                 v-model="voucher.maVoucher"
                 required
+                :disabled="isEditing"
                 :class="{ 'is-invalid': errors.maVoucher }"
               />
               <div class="invalid-feedback">{{ errors.maVoucher }}</div>
@@ -57,8 +57,8 @@
                 required
                 :class="{ 'is-invalid': errors.hinhThucGiam }"
               >
-                <option value="percentage">Theo phần trăm (%)</option>
-                <option value="fixed">Số tiền cố định (VND)</option>
+                <option value="PHAN_TRAM">Theo phần trăm (%)</option>
+                <option value="TIEN_MAT">Số tiền cố định (VND)</option>
               </select>
               <div class="invalid-feedback">{{ errors.hinhThucGiam }}</div>
             </div>
@@ -71,6 +71,7 @@
                 v-model.number="voucher.mucGiam"
                 required
                 min="0"
+                step="0.01"
                 :class="{ 'is-invalid': errors.mucGiam }"
               />
               <div class="invalid-feedback">{{ errors.mucGiam }}</div>
@@ -84,8 +85,9 @@
                 class="form-control"
                 id="maxDiscount"
                 v-model.number="voucher.giamToiDa"
-                :disabled="voucher.hinhThucGiam !== 'percentage'"
+                :disabled="voucher.hinhThucGiam !== 'PHAN_TRAM'"
                 min="0"
+                step="0.01"
                 :class="{ 'is-invalid': errors.giamToiDa }"
               />
               <div class="invalid-feedback">{{ errors.giamToiDa }}</div>
@@ -98,6 +100,7 @@
                 id="donGiaKhiGiam"
                 v-model.number="voucher.donGiaKhiGiam"
                 min="0"
+                step="0.01"
                 :class="{ 'is-invalid': errors.donGiaKhiGiam }"
               />
               <div class="invalid-feedback">{{ errors.donGiaKhiGiam }}</div>
@@ -112,6 +115,7 @@
                 id="giaGiam"
                 v-model.number="voucher.giaGiam"
                 min="0"
+                step="0.01"
                 :class="{ 'is-invalid': errors.giaGiam }"
               />
               <div class="invalid-feedback">{{ errors.giaGiam }}</div>
@@ -132,15 +136,25 @@
           <div class="row">
             <div class="col-md-12 mb-3">
               <label for="applicableProductCodes" class="form-label">Mã sản phẩm áp dụng (Mã SPCT)</label>
-              <input
-                type="text"
-                class="form-control"
-                id="applicableProductCodes"
-                v-model="applicableProductCodesInput"
-                placeholder="Ví dụ: SPCT001,SPCT002,SPCT003"
-                :class="{ 'is-invalid': errors.applicableProductCodes }"
-              />
-              <div class="invalid-feedback">{{ errors.applicableProductCodes }}</div>
+              <div class="input-group">
+                <input
+                  type="text"
+                  class="form-control"
+                  readonly
+                  :value="voucher.applicableProductCodes.join(', ')"
+                  placeholder="Chọn mã SPCT"
+                  :class="{ 'is-invalid': errors.applicableProductCodes }"
+                />
+                <button
+                  class="btn btn-outline-primary"
+                  type="button"
+                  data-bs-toggle="modal"
+                  data-bs-target="#productModal"
+                >
+                  Chọn sản phẩm
+                </button>
+                <div class="invalid-feedback">{{ errors.applicableProductCodes }}</div>
+              </div>
             </div>
           </div>
         </div>
@@ -196,6 +210,86 @@
         </div>
       </div>
 
+      <!-- Modal chọn mã sản phẩm chi tiết -->
+      <div class="modal fade" id="productModal" tabindex="-1" aria-labelledby="productModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title" id="productModalLabel">Chọn mã sản phẩm chi tiết</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+              <div class="row mb-3">
+                <div class="col-md-6">
+                  <input
+                    type="text"
+                    class="form-control"
+                    v-model="productSearchQuery"
+                    placeholder="Tìm kiếm theo mã hoặc tên sản phẩm"
+                    @input="debounceFetchProducts"
+                  />
+                </div>
+                <div class="col-md-6">
+                  <label for="productStatusFilter" class="form-label">Lọc theo trạng thái</label>
+                  <select id="productStatusFilter" class="form-select" v-model="productStatusFilter" @change="debounceFetchProducts">
+                    <option :value="null">Tất cả</option>
+                    <option :value="true">Hoạt động</option>
+                    <option :value="false">Không hoạt động</option>
+                  </select>
+                </div>
+              </div>
+              <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+                <table class="table table-bordered table-hover">
+                  <thead>
+                    <tr>
+                      <th><input type="checkbox" v-model="selectAll" @change="toggleSelectAll" /></th>
+                      <th>Mã SPCT</th>
+                      <th>Tên sản phẩm</th>
+                      <th>Trạng thái</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr v-for="product in products" :key="product.id">
+                      <td>
+                        <input
+                          type="checkbox"
+                          :value="product.maSPCT"
+                          v-model="voucher.applicableProductCodes"
+                        />
+                      </td>
+                      <td>{{ product.maSPCT }}</td>
+                      <td>{{ product.tenSP }}</td>
+                      <td>{{ product.trangThai ? 'Hoạt động' : 'Không hoạt động' }}</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              <div class="d-flex justify-content-between mt-3">
+                <button
+                  class="btn btn-secondary"
+                  :disabled="productPage === 0"
+                  @click="productPage--; fetchProducts()"
+                >
+                  Trang trước
+                </button>
+                <span>Trang {{ productPage + 1 }} / {{ productTotalPages }}</span>
+                <button
+                  class="btn btn-secondary"
+                  :disabled="productPage >= productTotalPages - 1"
+                  @click="productPage++; fetchProducts()"
+                >
+                  Trang sau
+                </button>
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+              <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Xác nhận</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <div class="d-flex justify-content-end gap-2">
         <router-link :to="{ name: 'admin.vouchersp.list' }" class="btn btn-secondary">Hủy</router-link>
         <button type="submit" class="btn btn-primary" :disabled="isSubmitting">Lưu voucher</button>
@@ -205,23 +299,35 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue';
+import { ref, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import axios from 'axios';
+import { debounce } from 'lodash';
 
 const route = useRoute();
 const router = useRouter();
-const isEditing = computed(() => !!route.params.id);
+const isEditing = !!route.params.id;
 const isSubmitting = ref(false);
 const message = ref('');
 const messageType = ref('');
-const applicableProductCodesInput = ref('');
+const products = ref([]); // Danh sách sản phẩm chi tiết từ API
+const productSearchQuery = ref(''); // Tìm kiếm trong modal
+const productStatusFilter = ref(null);
+const productPage = ref(0);
+const productTotalPages = ref(1);
+const pageSize = 5;
+const selectAll = ref(false); // Checkbox chọn tất cả
+
+const debounceFetchProducts = debounce(() => {
+  productPage.value = 0;
+  fetchProducts();
+}, 300);
 
 const voucher = ref({
   id: null,
   maVoucher: '',
   tenVoucher: '',
-  hinhThucGiam: 'percentage',
+  hinhThucGiam: 'PHAN_TRAM',
   mucGiam: 0,
   giamToiDa: null,
   donGiaKhiGiam: null,
@@ -230,7 +336,7 @@ const voucher = ref({
   ngayBatDau: '',
   ngayKetThuc: '',
   trangThai: true,
-  applicableProductCodes: [], // Thay applicableProductIds bằng applicableProductCodes
+  applicableProductCodes: [],
 });
 
 const errors = ref({
@@ -247,6 +353,14 @@ const errors = ref({
   trangThai: '',
   applicableProductCodes: '',
 });
+
+const toggleSelectAll = () => {
+  if (selectAll.value) {
+    voucher.value.applicableProductCodes = products.value.map((p) => p.maSPCT);
+  } else {
+    voucher.value.applicableProductCodes = [];
+  }
+};
 
 const validateForm = () => {
   errors.value = {
@@ -265,6 +379,10 @@ const validateForm = () => {
   };
   let isValid = true;
 
+  const MAX_CURRENCY = 9999999999999.99; // DECIMAL(15,2)
+  const MAX_QUANTITY = 2147483647; // INT
+  const MAX_MUC_GIAM_PERCENT = 100; // Phần trăm tối đa
+
   if (!voucher.value.maVoucher.trim()) {
     errors.value.maVoucher = 'Mã voucher không được để trống';
     isValid = false;
@@ -273,7 +391,7 @@ const validateForm = () => {
     isValid = false;
   }
 
-  if (!['percentage', 'fixed'].includes(voucher.value.hinhThucGiam)) {
+  if (!['PHAN_TRAM', 'TIEN_MAT'].includes(voucher.value.hinhThucGiam)) {
     errors.value.hinhThucGiam = 'Loại giảm giá không hợp lệ';
     isValid = false;
   }
@@ -281,28 +399,43 @@ const validateForm = () => {
   if (!voucher.value.mucGiam || voucher.value.mucGiam <= 0) {
     errors.value.mucGiam = 'Giá trị giảm phải lớn hơn 0';
     isValid = false;
-  } else if (voucher.value.hinhThucGiam === 'percentage' && voucher.value.mucGiam > 100) {
+  } else if (voucher.value.hinhThucGiam === 'PHAN_TRAM' && voucher.value.mucGiam > MAX_MUC_GIAM_PERCENT) {
     errors.value.mucGiam = 'Giá trị giảm phần trăm không được vượt quá 100';
+    isValid = false;
+  } else if (voucher.value.hinhThucGiam === 'TIEN_MAT' && voucher.value.mucGiam > MAX_CURRENCY) {
+    errors.value.mucGiam = `Giá trị giảm cố định không được vượt quá ${MAX_CURRENCY.toLocaleString('vi-VN')} ₫`;
     isValid = false;
   }
 
-  if (voucher.value.hinhThucGiam === 'percentage' && voucher.value.giamToiDa !== null && voucher.value.giamToiDa <= 0) {
+  if (voucher.value.hinhThucGiam === 'PHAN_TRAM' && voucher.value.giamToiDa !== null && voucher.value.giamToiDa <= 0) {
     errors.value.giamToiDa = 'Giảm tối đa phải lớn hơn 0';
+    isValid = false;
+  } else if (voucher.value.giamToiDa !== null && voucher.value.giamToiDa > MAX_CURRENCY) {
+    errors.value.giamToiDa = `Giảm tối đa không được vượt quá ${MAX_CURRENCY.toLocaleString('vi-VN')} ₫`;
     isValid = false;
   }
 
   if (voucher.value.donGiaKhiGiam !== null && voucher.value.donGiaKhiGiam < 0) {
     errors.value.donGiaKhiGiam = 'Đơn giá khi giảm không được âm';
     isValid = false;
+  } else if (voucher.value.donGiaKhiGiam !== null && voucher.value.donGiaKhiGiam > MAX_CURRENCY) {
+    errors.value.donGiaKhiGiam = `Đơn giá khi giảm không được vượt quá ${MAX_CURRENCY.toLocaleString('vi-VN')} ₫`;
+    isValid = false;
   }
 
   if (voucher.value.giaGiam !== null && voucher.value.giaGiam < 0) {
     errors.value.giaGiam = 'Giá giảm không được âm';
     isValid = false;
+  } else if (voucher.value.giaGiam !== null && voucher.value.giaGiam > MAX_CURRENCY) {
+    errors.value.giaGiam = `Giá giảm không được vượt quá ${MAX_CURRENCY.toLocaleString('vi-VN')} ₫`;
+    isValid = false;
   }
 
   if (voucher.value.soLuong !== null && voucher.value.soLuong < 0) {
     errors.value.soLuong = 'Số lượng không được âm';
+    isValid = false;
+  } else if (voucher.value.soLuong !== null && voucher.value.soLuong > MAX_QUANTITY) {
+    errors.value.soLuong = `Số lượng không được vượt quá ${MAX_QUANTITY}`;
     isValid = false;
   }
 
@@ -323,22 +456,21 @@ const validateForm = () => {
     }
   }
 
-  if (applicableProductCodesInput.value) {
-    const codes = applicableProductCodesInput.value.split(',').map(code => code.trim()).filter(code => code);
-    if (codes.length === 0) {
-      errors.value.applicableProductCodes = 'Danh sách mã sản phẩm áp dụng không hợp lệ';
+  if (voucher.value.applicableProductCodes.length > 0) {
+    const invalidCodes = voucher.value.applicableProductCodes.filter(
+      (code) => !products.value.some((p) => p.maSPCT === code)
+    );
+    if (invalidCodes.length > 0) {
+      errors.value.applicableProductCodes = `Mã SPCT không hợp lệ: ${invalidCodes.join(', ')}`;
       isValid = false;
     }
-    voucher.value.applicableProductCodes = codes;
-  } else {
-    voucher.value.applicableProductCodes = [];
   }
 
   return isValid;
 };
 
 const fetchVoucher = async () => {
-  if (!isEditing.value) return;
+  if (!isEditing) return;
   try {
     const response = await axios.get(`http://localhost:8080/api/voucher/${route.params.id}`);
     const data = response.data;
@@ -355,12 +487,46 @@ const fetchVoucher = async () => {
       ngayBatDau: data.ngayBatDau ? new Date(data.ngayBatDau).toISOString().slice(0, 10) : '',
       ngayKetThuc: data.ngayKetThuc ? new Date(data.ngayKetThuc).toISOString().slice(0, 10) : '',
       trangThai: data.trangThai ?? true,
-      applicableProductCodes: data.applicableProductCodes || [], // Nhận danh sách MaSPCT
+      applicableProductCodes: data.applicableProductCodes || [],
     };
-    applicableProductCodesInput.value = voucher.value.applicableProductCodes.join(', ');
   } catch (error) {
     console.error('Lỗi khi lấy dữ liệu voucher:', error);
     message.value = 'Không thể lấy dữ liệu voucher';
+    messageType.value = 'error';
+  }
+};
+
+const fetchProducts = async () => {
+  try {
+    const params = {
+      page: productPage.value,
+      size: pageSize,
+      keyword: productSearchQuery.value || '',
+      trangThai: productStatusFilter.value,
+    };
+    console.log('Fetching products with params:', params);
+    const response = await axios.get('http://localhost:8080/admin/api/sanphamchitiet/search', { params });
+    console.log('API response.data:', response.data); // Debug
+
+    let data = response.data;
+    if (!Array.isArray(data)) {
+      if (response.data.content && Array.isArray(response.data.content)) {
+        data = response.data.content;
+      } else {
+        throw new Error('Dữ liệu API không phải là mảng');
+      }
+    }
+
+    products.value = data.map((item) => ({
+      id: item.id,
+      maSPCT: item.maSPCT,
+      tenSP: item.tenSP || '',
+      trangThai: item.trangThai,
+    }));
+    productTotalPages.value = response.data.totalPages || 1;
+  } catch (error) {
+    console.error('Lỗi khi lấy danh sách sản phẩm chi tiết:', error);
+    message.value = 'Không thể lấy danh sách sản phẩm chi tiết: ' + error.message;
     messageType.value = 'error';
   }
 };
@@ -378,20 +544,20 @@ const saveVoucher = async () => {
     maVoucher: voucher.value.maVoucher.trim(),
     tenVoucher: voucher.value.tenVoucher || null,
     hinhThucGiam: voucher.value.hinhThucGiam,
-    mucGiam: voucher.value.mucGiam,
-    giamToiDa: voucher.value.hinhThucGiam === 'percentage' ? voucher.value.giamToiDa : null,
-    donGiaKhiGiam: voucher.value.donGiaKhiGiam,
-    giaGiam: voucher.value.giaGiam,
-    giaTriDonHangToiThieu: 0,
+    mucGiam: Number(voucher.value.mucGiam.toFixed(2)),
+    giamToiDa: voucher.value.hinhThucGiam === 'PHAN_TRAM' ? Number(voucher.value.giamToiDa?.toFixed(2) || null) : null,
+    donGiaKhiGiam: voucher.value.donGiaKhiGiam ? Number(voucher.value.donGiaKhiGiam.toFixed(2)) : null,
+    giaGiam: voucher.value.giaGiam ? Number(voucher.value.giaGiam.toFixed(2)) : null,
     soLuong: voucher.value.soLuong,
-    ngayBatDau: new Date(voucher.value.ngayBatDau).toISOString(),
-    ngayKetThuc: new Date(voucher.value.ngayKetThuc).toISOString(),
+    ngayBatDau: new Date(voucher.value.ngayBatDau).toISOString().split('T')[0],
+    ngayKetThuc: new Date(voucher.value.ngayKetThuc).toISOString().split('T')[0],
     trangThai: voucher.value.trangThai,
-    applicableProductCodes: voucher.value.applicableProductCodes, // Gửi danh sách MaSPCT
+    applicableProductCodes: voucher.value.applicableProductCodes.length ? voucher.value.applicableProductCodes : [],
   };
 
   try {
-    if (isEditing.value) {
+    console.log('Payload:', payload); // Debug payload
+    if (isEditing) {
       await axios.put(`http://localhost:8080/api/voucher/${voucher.value.id}`, payload);
       message.value = 'Cập nhật voucher thành công';
       messageType.value = 'success';
@@ -405,7 +571,7 @@ const saveVoucher = async () => {
     }, 2000);
   } catch (error) {
     console.error('Lỗi khi lưu voucher:', error);
-    message.value = 'Lỗi khi lưu voucher: ' + (error.response?.data?.error || error.message);
+    message.value = 'Lỗi khi lưu voucher: ' + (error.response?.data?.message || error.response?.data?.error || error.message);
     messageType.value = 'error';
   } finally {
     isSubmitting.value = false;
@@ -414,6 +580,7 @@ const saveVoucher = async () => {
 
 onMounted(() => {
   fetchVoucher();
+  fetchProducts();
 });
 </script>
 
@@ -425,5 +592,8 @@ onMounted(() => {
   z-index: 1000;
   min-width: 300px;
 }
+.table-responsive {
+  max-height: 400px;
+  overflow-y: auto;
+}
 </style>
-```

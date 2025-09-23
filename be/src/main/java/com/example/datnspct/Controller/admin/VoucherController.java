@@ -124,4 +124,15 @@ public class VoucherController {
                     .body(Collections.singletonMap("error", "Không thể cập nhật voucher: " + e.getMessage()));
         }
     }
+
+    @GetMapping("/generate-code")
+    public ResponseEntity<?> generateVoucherCode() {
+        try {
+            String code = voucherService.generateVoucherCode();
+            return ResponseEntity.ok(Collections.singletonMap("maVoucher", code));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Collections.singletonMap("error", "Không thể sinh mã voucher: " + e.getMessage()));
+        }
+    }
 }

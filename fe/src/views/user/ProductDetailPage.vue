@@ -1,4 +1,3 @@
-```vue
 <template>
   <div v-if="loading" class="text-center py-5">
     <div class="spinner-border" style="width: 3rem; height: 3rem;"></div>
@@ -29,21 +28,17 @@
         <div class="variant-selector">
           <div class="mb-4">
             <div class="variant-label">Màu sắc: <span class="text-dark fw-normal">{{ selectedVariant.color.name || 'Chưa chọn' }}</span></div>
-            <div class="btn-group">
-              <button v-for="color in product.colors" :key="color.name" 
+            <div class="d-flex flex-wrap gap-2"> <button v-for="color in product.colors" :key="color.name" 
                       @click="selectColor(color)" 
-                      class="color-option btn me-2" 
-                      :class="selectedVariant.color.name === color.name ? 'btn-dark' : 'btn-outline-dark'"
+                      class="btn custom-btn" :class="selectedVariant.color.name === color.name ? 'btn-dark' : 'btn-outline-dark'"
                       :disabled="!isColorAvailable(color.name)">{{ color.name }}</button>
             </div>
           </div>
           <div class="mb-4">
             <div class="variant-label">Size: <span class="text-dark fw-normal">{{ selectedVariant.size || 'Chưa chọn' }}</span></div>
-            <div class="btn-group">
-              <button v-for="size in product.sizes" :key="size" 
+            <div class="d-flex flex-wrap gap-2"> <button v-for="size in product.sizes" :key="size" 
                       @click="selectSize(size)" 
-                      class="btn me-2" 
-                      :class="selectedVariant.size === size ? 'btn-dark' : 'btn-outline-dark'"
+                      class="btn custom-btn" :class="selectedVariant.size === size ? 'btn-dark' : 'btn-outline-dark'"
                       :disabled="!isSizeAvailable(size)">{{ size }}</button>
             </div>
           </div>
@@ -51,15 +46,19 @@
         
         <div class="d-flex align-items-center mt-4">
           <input type="number" class="form-control me-3" style="width: 80px;" v-model.number="quantity" min="1">
-          <button @click="handleAddToCart" class="btn btn-primary btn-lg flex-grow-1">
+          <button @click="handleAddToCart" class="btn btn-primary btn-lg flex-grow-1 me-2" 
+                  :disabled="!selectedVariant.color.name || !selectedVariant.size">
             <i class="fas fa-cart-plus me-2"></i>Thêm vào giỏ
+          </button>
+          <button @click="handleBuyNow" class="btn btn-danger btn-lg flex-grow-1" 
+                  :disabled="!selectedVariant.color.name || !selectedVariant.size">
+            <i class="fas fa-money-check-alt me-2"></i>Mua ngay
           </button>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- Modal hiển thị khi thêm vào giỏ hàng thành công -->
   <div class="modal fade" id="addToCartModal" tabindex="-1" aria-labelledby="addToCartModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content">
@@ -200,15 +199,15 @@ const goToCart = () => {
 
 const handleAddToCart = async () => {
   console.log('handleAddToCart: Starting, isAuthenticated=' + auth.isAuthenticated);
+  if (!selectedVariant.color.name || !selectedVariant.size) {
+    console.log('handleAddToCart: Missing color or size');
+    toast.error('Vui lòng chọn đầy đủ màu sắc và size!');
+    return;
+  }
   if (!auth.isAuthenticated) {
     console.log('handleAddToCart: User not authenticated, redirecting to login');
     toast.error('Vui lòng đăng nhập để thêm sản phẩm vào giỏ hàng!');
     router.push({ name: 'login', query: { redirect: route.fullPath } });
-    return;
-  }
-  if (!selectedVariant.color.name || !selectedVariant.size) {
-    console.log('handleAddToCart: Missing color or size');
-    toast.error('Vui lòng chọn đầy đủ màu sắc và size!');
     return;
   }
   try {
@@ -276,6 +275,90 @@ const handleAddToCart = async () => {
     } else {
       console.error('handleAddToCart: Error setting up request - ' + error.message);
       toast.error('Lỗi khi thêm vào giỏ hàng: ' + error.message);
+    }
+  }
+};
+
+const handleBuyNow = async () => {
+  console.log('handleBuyNow: Starting, isAuthenticated=' + auth.isAuthenticated);
+  if (!selectedVariant.color.name || !selectedVariant.size) {
+    console.log('handleBuyNow: Missing color or size');
+    toast.error('Vui lòng chọn đầy đủ màu sắc và size!');
+    return;
+  }
+  if (!auth.isAuthenticated) {
+    console.log('handleBuyNow: User not authenticated, redirecting to login');
+    toast.error('Vui lòng đăng nhập để mua hàng!');
+    router.push({ name: 'login', query: { redirect: route.fullPath } });
+    return;
+  }
+  try {
+    if (typeof auth.checkAuth !== 'function') {
+      console.error('handleBuyNow: auth.checkAuth is not a function, auth=', auth);
+      toast.error('Lỗi hệ thống: Không thể kiểm tra trạng thái đăng nhập!');
+      return;
+    }
+    console.log('handleBuyNow: Checking auth status');
+    await auth.checkAuth();
+
+    if (!auth.isAuthenticated) {
+      console.log('handleBuyNow: Session expired, redirecting to login');
+      toast.error('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại!');
+      router.push({ name: 'login', query: { redirect: route.fullPath } });
+      return;
+    }
+
+    const selectedSPCTVal = selectedSPCT.value;
+    if (!selectedSPCTVal) {
+      console.log('handleBuyNow: Variant not found for color=' + selectedVariant.color.name + ', size=' + selectedVariant.size);
+      toast.error('Biến thể không tồn tại!');
+      return;
+    }
+
+    // Tạo đối tượng sản phẩm cho trang thanh toán
+    const checkoutItem = {
+      idGHCT: `buy_now_${selectedSPCTVal.id}_${Date.now()}`, // ID tạm thời cho sản phẩm mua ngay
+      idSPCT: selectedSPCTVal.id,
+      idGioHang: null, // Không liên kết với giỏ hàng
+      name: product.value.tenSP,
+      donGia: selectedSPCTVal.gia,
+      soLuong: quantity.value,
+      mauSac: selectedVariant.color.name,
+      kichThuoc: selectedVariant.size,
+      imageUrl: activeImageUrl.value || 'https://placehold.co/150',
+      applicableVouchers: [] // Sẽ được tải lại ở trang thanh toán
+    };
+
+    // Lưu vào sessionStorage
+    sessionStorage.setItem('selectedCheckoutItems', JSON.stringify([checkoutItem]));
+    console.log('handleBuyNow: Saved checkout item to sessionStorage', checkoutItem);
+
+    // Chuyển hướng đến trang thanh toán
+    router.push('/checkout').then(() => {
+      console.log('handleBuyNow: Navigation to /checkout successful');
+      toast.success(`Đã chọn "${product.value.tenSP}" để thanh toán!`);
+    }).catch(err => {
+      console.error('handleBuyNow: Navigation error', err);
+      toast.error('Lỗi khi chuyển hướng đến trang thanh toán!');
+    });
+  } catch (error) {
+    console.error('handleBuyNow: Error -', error);
+    if (error.response) {
+      console.error('handleBuyNow: Response error - status=' + error.response.status + ', data=' + JSON.stringify(error.response.data));
+      if (error.response.status === 401) {
+        toast.error('Chưa đăng nhập hoặc phiên đăng nhập hết hạn!');
+        router.push({ name: 'login', query: { redirect: route.fullPath } });
+      } else if (error.response.status === 403) {
+        toast.error('Bạn không có quyền thực hiện hành động này!');
+      } else {
+        toast.error(error.response.data || 'Lỗi khi xử lý mua ngay!');
+      }
+    } else if (error.request) {
+      console.error('handleBuyNow: No response received, possible CORS or network issue');
+      toast.error('Lỗi mạng hoặc CORS, vui lòng kiểm tra kết nối!');
+    } else {
+      console.error('handleBuyNow: Error setting up request - ' + error.message);
+      toast.error('Lỗi khi xử lý mua ngay: ' + error.message);
     }
   }
 };
@@ -386,7 +469,6 @@ onMounted(() => {
   loadProduct();
 });
 </script>
-
 <style scoped>
 .product-gallery {
   max-width: 100%;

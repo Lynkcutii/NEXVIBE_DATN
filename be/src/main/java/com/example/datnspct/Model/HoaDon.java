@@ -29,19 +29,40 @@ import java.util.List;
 public class HoaDon {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer IdHD;
+    private Integer idHD;
 
     @Column(name = "MaHD", length = 50)
     private String maHD;
 
-    @Column(name = "IdNV")
+    // Mapping NhanVien (nhân viên lập hóa đơn)
+    @ManyToOne
+    @JoinColumn(name = "IdNV", referencedColumnName = "IdNV")
+    private NhanVien nhanVien;
+
+    @Column(name = "IdNV",insertable = false, updatable = false)
     private Integer idNhanVien;
 
-    @Column(name = "IdKH")
+    // Mapping KhachHang (khách hàng)
+    @ManyToOne
+    @JoinColumn(name = "IdKH", referencedColumnName = "IdKH")
+    private KhachHang khachHang;
+
+    // Nếu muốn lấy idKhachHang nhanh, dùng thêm field này (chỉ đọc)
+    @Column(name = "IdKH", insertable = false, updatable = false)
     private Integer idKhachHang;
 
-    @Column(name = "IdKM")
+    // Mapping KhuyenMai (khuyến mãi)
+    @ManyToOne
+    @JoinColumn(name = "IdKM", referencedColumnName = "IdKM")
+    private KhuyenMai khuyenMai;
+
+    @Column(name = "IdKM", insertable = false, updatable = false)
     private Integer idKM;
+
+    // Mapping phương thức thanh toán
+    @ManyToOne
+    @JoinColumn(name = "IdPT", referencedColumnName = "IdPT")
+    private PhuongTT phuongThucThanhToan;
 
     @Column(name = "LoaiHoaDon")
     private String loaiHoaDon;
@@ -51,30 +72,13 @@ public class HoaDon {
 
     @Column(name = "NgaySua")
     private LocalDateTime ngaySua;
-//    tổng số lượng của các sản phẩm chi tiết
+
     @Column(name = "TongTien", precision = 18, scale = 2)
     private BigDecimal tongTien;
 
     @Column(name = "TrangThai")
     private String trangThai;
 
-    @ManyToOne
-    @JoinColumn(name = "IdPT", referencedColumnName = "IdPT")
-    private PhuongTT phuongThucThanhToan;
-
-    @ManyToOne
-    @JoinColumn(name = "IdKM", referencedColumnName = "IdKM", insertable = false, updatable = false)
-    private KhuyenMai khuyenMai;
-
-    @ManyToOne
-    @JoinColumn(name = "IdKH", referencedColumnName = "IdKH", insertable = false, updatable = false)
-    private KhachHang khachHang;
-
-    @ManyToOne
-    @JoinColumn(name = "IdNV", referencedColumnName = "IdNV", insertable = false, updatable = false)
-    private NhanVien nhanVien;
-
     @OneToMany(mappedBy = "hoaDon", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<HoaDonChiTiet> chiTietSanPham = new ArrayList<>();
-
 }

@@ -1,12 +1,15 @@
 package com.example.datnspct.Service;
 
+import com.example.datnspct.Model.KhachHang;
 import com.example.datnspct.Model.KhuyenMai;
+import com.example.datnspct.Repository.KhachHangRepository;
 import com.example.datnspct.Repository.KhuyenMaiRepository;
 import com.example.datnspct.dto.KhuyenMaiDTO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -14,6 +17,9 @@ import java.util.stream.Collectors;
 public class KhuyenMaiService {
     @Autowired
     private KhuyenMaiRepository khuyenMaiRepository;
+
+    @Autowired
+    private KhachHangRepository khachHangRepository;
 
     // Entity -> DTO
     private KhuyenMaiDTO toDTO(KhuyenMai entity) {
@@ -30,7 +36,8 @@ public class KhuyenMaiService {
         dto.setNgayBatDau(entity.getNgayBatDau());
         dto.setNgayKetThuc(entity.getNgayKetThuc());
         dto.setTrangThai(entity.getTrangThai());
-        dto.setIdKH(entity.getKhachHang() != null ? entity.getKhachHang().getIdKH() : null);
+        dto.setCustomerIds(entity.getCustomers().stream().map(KhachHang::getIdKH).collect(Collectors.toList()));
+        dto.setCustomerNames(entity.getCustomers().stream().map(KhachHang::getTenKH).collect(Collectors.toList()));
         return dto;
     }
 
@@ -49,7 +56,12 @@ public class KhuyenMaiService {
         entity.setNgayBatDau(dto.getNgayBatDau());
         entity.setNgayKetThuc(dto.getNgayKetThuc());
         entity.setTrangThai(dto.getTrangThai());
-        // IdKH sẽ được set trong logic khác nếu cần
+        if (dto.getCustomerIds() != null && !dto.getCustomerIds().isEmpty()) {
+            List<KhachHang> customers = khachHangRepository.findAllById(dto.getCustomerIds());
+            entity.setCustomers(customers);
+        } else {
+            entity.setCustomers(new ArrayList<>());
+        }
         return entity;
     }
 
@@ -89,6 +101,12 @@ public class KhuyenMaiService {
         entity.setNgayBatDau(dto.getNgayBatDau());
         entity.setNgayKetThuc(dto.getNgayKetThuc());
         entity.setTrangThai(dto.getTrangThai());
+        if (dto.getCustomerIds() != null && !dto.getCustomerIds().isEmpty()) {
+            List<KhachHang> customers = khachHangRepository.findAllById(dto.getCustomerIds());
+            entity.setCustomers(customers);
+        } else {
+            entity.setCustomers(new ArrayList<>());
+        }
         KhuyenMai updated = khuyenMaiRepository.save(entity);
         return toDTO(updated);
     }
@@ -100,22 +118,28 @@ public class KhuyenMaiService {
         khuyenMaiRepository.delete(entity);
     }
 
-    // Lấy danh sách khuyến mãi áp dụng theo IdKH
+    // Lấy danh sách khuyến mãi áp dụng cho khách hàng (gán riêng hoặc toàn hệ thống)
     public List<KhuyenMaiDTO> getApplicableVouchers(Integer idKH) {
         LocalDateTime now = LocalDateTime.now();
-        return khuyenMaiRepository.findByKhachHangIdKHAndTrangThaiTrueAndNgayBatDauBeforeAndNgayKetThucAfter(idKH, now, now)
-                .stream()
+        List<KhuyenMai> byCustomer = khuyenMaiRepository.findByCustomer(idKH, now);
+        List<KhuyenMai> global = khuyenMaiRepository.findGlobal(now);
+        List<KhuyenMai> all = new ArrayList<>();
+        all.addAll(byCustomer);
+        all.addAll(global);
+        return all.stream()
                 .filter(km -> km.getSoLuong() > km.getDaSuDung())
+                .filter(km -> Boolean.TRUE.equals(km.getTrangThai()))
                 .map(this::toDTO)
                 .collect(Collectors.toList());
     }
 
-    // Lấy danh sách khuyến mãi theo IdKH
+    // Lấy danh sách khuyến mãi chỉ gán cho khách hàng
     public List<KhuyenMaiDTO> getVouchersByCustomerId(Integer idKH) {
         LocalDateTime now = LocalDateTime.now();
-        return khuyenMaiRepository.findByKhachHangIdKHAndTrangThaiTrueAndNgayBatDauBeforeAndNgayKetThucAfter(idKH, now, now)
+        return khuyenMaiRepository.findByCustomer(idKH, now)
                 .stream()
                 .filter(km -> km.getSoLuong() > km.getDaSuDung())
+                .filter(km -> Boolean.TRUE.equals(km.getTrangThai()))
                 .map(this::toDTO)
                 .collect(Collectors.toList());
     }

@@ -14,6 +14,7 @@ public class KhuyenMaiController {
     @Autowired
     private KhuyenMaiService khuyenMaiService;
 
+
     // Tạo mới
     @PostMapping
     public ResponseEntity<KhuyenMaiDTO> create(@RequestBody KhuyenMaiDTO dto) {

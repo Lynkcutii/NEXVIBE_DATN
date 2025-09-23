@@ -19,7 +19,9 @@
       <li class="nav-item">
         <router-link to="/admin/products" class="nav-link"><i class="fas fa-fw fa-shirt"></i> Quản lý Sản phẩm</router-link>
       </li>
-
+      <li class="nav-item">
+        <router-link to="/admin/orders" class="nav-link"><i class="fas fa-fw fa-box-open"></i> Quản lý Đơn hàng</router-link>
+      </li>
       <li class="nav-item-header">Giảm giá</li>
       <li class="nav-item">
         <a class="nav-link collapsed" data-bs-toggle="collapse" data-bs-target="#vouchersSubmenu" role="button">
