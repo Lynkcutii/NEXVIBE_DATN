@@ -2,19 +2,18 @@ package com.example.datnspct.Controller.client;
 
 import com.example.datnspct.Service.HoaDonService;
 import com.example.datnspct.dto.HoaDonDTO;
-import com.example.datnspct.dto.OrderDetailResponseDTO;
 import com.example.datnspct.dto.OrderRequestDTO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-import jakarta.persistence.EntityNotFoundException;
-import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 
 @RestController
 @RequestMapping("/client/api/hoadon")
@@ -22,27 +21,7 @@ public class HoaDonClientController {
 
     @Autowired
     private HoaDonService hoaDonService;
-    @GetMapping("/customer/{idKH}")
-    public ResponseEntity<List<HoaDonDTO>> getHoaDonByKhachHangId(@PathVariable Integer idKH) {
-        try {
-            // Giả sử bạn có một phương thức trong service để tìm hóa đơn theo id khách hàng
-            List<HoaDonDTO> hoaDons = hoaDonService.findByKhachHangId(idKH);
-            return ResponseEntity.ok(hoaDons);
-        } catch (Exception e) {
-            // Nếu có lỗi, trả về một danh sách rỗng hoặc một lỗi server
-            // Ở đây trả về danh sách rỗng để frontend không bị lỗi
-            return ResponseEntity.status(500).body(new ArrayList<>());
-        }
-    }
-    @GetMapping("/{idHD}")
-    public ResponseEntity<?> getHoaDonDetail(@PathVariable("idHD") Integer idHD) {
-        try {
-            OrderDetailResponseDTO responseData = hoaDonService.getHoaDonDetail(idHD);
-            return ResponseEntity.ok(responseData);
-        } catch (RuntimeException e) {
-            return ResponseEntity.status(404).body(Map.of("message", e.getMessage()));
-        }
-    }
+
     @PostMapping
     public ResponseEntity<?> createHoaDon(@RequestBody OrderRequestDTO request) {
         try {
@@ -127,47 +106,6 @@ public class HoaDonClientController {
 
         public void setDetails(List<String> details) {
             this.details = details;
-        }
-    }
-    @PutMapping("/{idHD}/cancel")
-    public ResponseEntity<?> cancelHoaDon(@PathVariable Integer idHD) {
-        try {
-            hoaDonService.cancelOrder(idHD);
-            return ResponseEntity.ok(Map.of("message", "Đã hủy đơn hàng thành công."));
-        } catch (EntityNotFoundException e) {
-            // Nếu không tìm thấy, trả về lỗi 404
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", e.getMessage()));
-        } catch (IllegalArgumentException e) {
-            // Nếu trạng thái không hợp lệ, trả về lỗi 400
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("message", e.getMessage()));
-        } catch (Exception e) {
-            // Các lỗi khác, trả về lỗi 500
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("message", "Đã xảy ra lỗi không mong muốn."));
-        }
-    }
-    @PutMapping("/{idHD}/address")
-    public ResponseEntity<?> changeOrderAddress(
-            @PathVariable Integer idHD,
-            @RequestBody Map<String, Integer> payload) {
-
-        try {
-            Integer newAddressId = payload.get("addressId");
-            if (newAddressId == null) {
-                return ResponseEntity.badRequest().body(Map.of("message", "Vui lòng cung cấp 'addressId'."));
-            }
-
-            hoaDonService.changeOrderAddress(idHD, newAddressId);
-            return ResponseEntity.ok(Map.of("message", "Đã cập nhật địa chỉ giao hàng thành công."));
-
-        } catch (EntityNotFoundException e) {
-            // Lỗi không tìm thấy (hóa đơn hoặc địa chỉ) -> trả về 404
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", e.getMessage()));
-        } catch (IllegalArgumentException e) {
-            // Lỗi trạng thái không hợp lệ hoặc địa chỉ không đúng khách hàng -> trả về 400
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("message", e.getMessage()));
-        } catch (Exception e) {
-            // Các lỗi không lường trước
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("message", "Đã xảy ra lỗi không mong muốn."));
         }
     }
 }

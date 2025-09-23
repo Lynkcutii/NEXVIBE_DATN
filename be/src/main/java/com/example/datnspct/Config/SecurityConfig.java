@@ -53,12 +53,28 @@ public class SecurityConfig {
                 .formLogin(form -> form
                         .loginProcessingUrl("/api/auth/login")
                         .successHandler((req, res, auth) -> {
-                            System.out.println("Login success: taiKhoan=" + auth.getName() + ", role=" + auth.getAuthorities());
+                            String rawPassword = req.getParameter("password"); // password FE gửi lên
+                            String encodedPassword = passwordEncoder().encode(rawPassword); // BCrypt hash
+
+                            System.out.println("Login success:");
+                            System.out.println(" - Username = " + auth.getName());
+                            System.out.println(" - Raw password = " + rawPassword);
+                            System.out.println(" - Encoded password = " + encodedPassword);
+                            System.out.println(" - Role = " + auth.getAuthorities());
+
                             res.setStatus(HttpServletResponse.SC_OK);
                             res.setContentType("application/json");
-                            res.getWriter().write("{\"taiKhoan\": \"" + auth.getName() + "\", \"chucVu\": \"" + auth.getAuthorities().iterator().next().getAuthority().replace("ROLE_", "") + "\"}");
+                            res.getWriter().write("{\"taiKhoan\": \"" + auth.getName() + "\", " +
+                                    "\"chucVu\": \"" + auth.getAuthorities().iterator().next().getAuthority().replace("ROLE_", "") + "\"}");
                         })
                         .failureHandler((req, res, ex) -> {
+                            String rawPassword = req.getParameter("password"); // password FE gửi lên
+                            String encodedPassword = passwordEncoder().encode(rawPassword); // BCrypt hash
+
+                            System.out.println("Login success:");
+                            System.out.println(" - Raw password = " + rawPassword);
+                            System.out.println(" - Encoded password = " + encodedPassword);
+
                             System.out.println("Login failed: " + ex.getMessage());
                             res.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
                             res.setContentType("application/json");

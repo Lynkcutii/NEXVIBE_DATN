@@ -11,51 +11,47 @@ import java.util.List;
 
 @Repository
 public interface HoaDonChiTietRepository extends JpaRepository<HoaDonChiTiet, Integer> {
-       @org.springframework.data.jpa.repository.Query("SELECT hdct FROM HoaDonChiTiet hdct WHERE hdct.hoaDon.IdHD = :idHD")
-       java.util.List<HoaDonChiTiet> findByHoaDonId(
-                     @org.springframework.data.repository.query.Param("idHD") Integer idHD);
-
-       @org.springframework.data.jpa.repository.Query("SELECT COALESCE(SUM(hdct.soLuong), 0) FROM HoaDonChiTiet hdct WHERE hdct.hoaDon.IdHD = :idHD")
-       int getTotalProductsByHoaDonId(@org.springframework.data.repository.query.Param("idHD") Integer idHD);
-
-       @Modifying
-       @Query("DELETE FROM HoaDonChiTiet ct WHERE ct.hoaDon.IdHD = :idHD")
-       void deleteByHoaDonId(Integer idHD);
-
-       // Top sản phẩm bán chạy (tổng)
-       @Query("SELECT sp.tenSP, SUM(hdct.soLuong), SUM(hdct.thanhTien) " +
-                     "FROM HoaDonChiTiet hdct " +
-                     "JOIN hdct.sanPhamct spct " +
-                     "JOIN spct.sanPham sp " +
-                     "JOIN hdct.hoaDon hd " +
-                     "WHERE hd.trangThai = 'HOAN_THANH' " +
-                     "GROUP BY sp.tenSP, sp.id " +
-                     "ORDER BY SUM(hdct.soLuong) DESC")
-       List<Object[]> findTopSanPhamBanChay(@Param("limit") int limit);
-
-       // Sản phẩm bán chạy trong khoảng thời gian
-       @Query("SELECT sp.tenSP, SUM(hdct.soLuong), SUM(hdct.thanhTien) " +
-                     "FROM HoaDonChiTiet hdct " +
-                     "JOIN hdct.sanPhamct spct " +
-                     "JOIN spct.sanPham sp " +
-                     "JOIN hdct.hoaDon hd " +
-                     "WHERE hd.trangThai = 'HOAN_THANH' " +
-                     "AND hd.ngayTao BETWEEN :fromDate AND :toDate " +
-                     "GROUP BY sp.tenSP, sp.id " +
-                     "ORDER BY SUM(hdct.soLuong) DESC")
-       List<Object[]> findSanPhamBanChayTrongKhoang(@Param("fromDate") LocalDateTime fromDate,
-                     @Param("toDate") LocalDateTime toDate);
-
-       // Thống kê theo danh mục
-       // @Query("SELECT dm.tenDM, SUM(hdct.soLuong), SUM(hdct.thanhTien) " +
-       // "FROM HoaDonChiTiet hdct " +
-       // "JOIN hdct.sanPhamct spct " +
-       // "JOIN hdct.hoaDon hd " +
-       // "WHERE hd.trangThai = 'Hoàn thành' " +
-       // "AND hd.ngayTao BETWEEN :fromDate AND :toDate " +
-       // "GROUP BY dm.tenDM, dm.idDM " +
-       // "ORDER BY SUM(hdct.soLuong) DESC")
-       // List<Object[]> findThongKeTheoDanhMuc(@Param("fromDate") LocalDateTime
-       // fromDate,
-       // @Param("toDate") LocalDateTime toDate);
+    @Query("SELECT hdct FROM HoaDonChiTiet hdct WHERE hdct.hoaDon.IdHD = :idHD")
+    List<HoaDonChiTiet> findByHoaDonId(@Param("idHD") Integer idHD);
+    
+    @Query("SELECT COALESCE(SUM(hdct.soLuong), 0) FROM HoaDonChiTiet hdct WHERE hdct.hoaDon.IdHD = :idHD")
+    int getTotalProductsByHoaDonId(@Param("idHD") Integer idHD);
+    
+    // Top sản phẩm bán chạy (tổng)
+    @Query("SELECT sp.tenSP, SUM(hdct.soLuong), SUM(hdct.thanhTien) " +
+           "FROM HoaDonChiTiet hdct " +
+           "JOIN hdct.sanPhamct spct " +
+           "JOIN spct.sanPham sp " +
+           "JOIN hdct.hoaDon hd " +
+           "WHERE hd.trangThai = 'Hoàn thành' " +
+           "GROUP BY sp.tenSP, sp.id " +
+           "ORDER BY SUM(hdct.soLuong) DESC")
+    List<Object[]> findTopSanPhamBanChay(@Param("limit") int limit);
+    
+    // Sản phẩm bán chạy trong khoảng thời gian
+    @Query("SELECT sp.tenSP, SUM(hdct.soLuong), SUM(hdct.thanhTien) " +
+           "FROM HoaDonChiTiet hdct " +
+           "JOIN hdct.sanPhamct spct " +
+           "JOIN spct.sanPham sp " +
+           "JOIN hdct.hoaDon hd " +
+           "WHERE hd.trangThai = 'Hoàn thành' " +
+           "AND hd.ngayTao BETWEEN :fromDate AND :toDate " +
+           "GROUP BY sp.tenSP, sp.id " +
+           "ORDER BY SUM(hdct.soLuong) DESC")
+    List<Object[]> findSanPhamBanChayTrongKhoang(@Param("fromDate") LocalDateTime fromDate, 
+                                                 @Param("toDate") LocalDateTime toDate);
+    
+    // Thống kê theo danh mục (join qua SanPham vì SanPhamChiTiet không trực tiếp có danhMuc)
+    @Query("SELECT dm.tenDM, SUM(hdct.soLuong), SUM(hdct.thanhTien) " +
+           "FROM HoaDonChiTiet hdct " +
+           "JOIN hdct.sanPhamct spct " +
+           "JOIN spct.sanPham sp " +
+           "JOIN sp.danhMuc dm " +
+           "JOIN hdct.hoaDon hd " +
+           "WHERE hd.trangThai = 'Hoàn thành' " +
+           "AND hd.ngayTao BETWEEN :fromDate AND :toDate " +
+           "GROUP BY dm.tenDM, dm.idDM " +
+           "ORDER BY SUM(hdct.soLuong) DESC")
+    List<Object[]> findThongKeTheoDanhMuc(@Param("fromDate") LocalDateTime fromDate, 
+                                          @Param("toDate") LocalDateTime toDate);
 }

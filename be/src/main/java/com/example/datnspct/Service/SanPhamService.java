@@ -17,7 +17,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
-import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -29,14 +28,6 @@ public class SanPhamService {
 
     @Autowired
     private SanPhamChiTietRepository sanPhamChiTietRepository;
-
-    public List<SanPhamDTO> searchProductsByKeyword(String keyword) {
-        List<SanPham> products = sanPhamRepository.findTop3ByTenSPContainingIgnoreCase(keyword);
-
-        return products.stream()
-                .map(this::chuyenSangDTO)
-                .collect(Collectors.toList());
-    }
 
     @Autowired
     private DanhMucRepository danhMucRepository;
@@ -85,32 +76,7 @@ public class SanPhamService {
                 .mapToInt(SanPhamChiTiet::getSoLuong)
                 .sum();
         dto.setTongSoLuongSanPham(tongSoLuong);
-<
-        List<SanPhamChiTiet> chiTiets = sanPhamChiTietRepository.findBySanPhamId(sanPham.getId());
-
-        // --- LOGIC MỚI ĐỂ TÍNH KHOẢNG GIÁ ---
-        if (chiTiets != null && !chiTiets.isEmpty()) {
-            // Tìm giá thấp nhất
-            BigDecimal minPrice = chiTiets.stream()
-                    .map(SanPhamChiTiet::getGia)
-                    .min(Comparator.naturalOrder())
-                    .orElse(BigDecimal.ZERO);
-
-            // Tìm giá cao nhất
-            BigDecimal maxPrice = chiTiets.stream()
-                    .map(SanPhamChiTiet::getGia)
-                    .max(Comparator.naturalOrder())
-                    .orElse(BigDecimal.ZERO);
-
-            dto.setMinPrice(minPrice);
-            dto.setMaxPrice(maxPrice);
-        } else {
-            dto.setMinPrice(BigDecimal.ZERO);
-            dto.setMaxPrice(BigDecimal.ZERO);
-        }
-
         dto.setImageLink(sanPham.getImg());
-
         return dto;
     }
 
@@ -179,10 +145,8 @@ public class SanPhamService {
                 .collect(Collectors.toList());
     }
 
-    public Page<SanPhamDTO> findByFilters(Pageable pageable, String keyword, Boolean status, Integer[] danhMuc,
-            Integer[] thuongHieu, Integer[] chatLieu, BigDecimal minPrice, BigDecimal maxPrice) {
-        Page<SanPham> sanPhamPage = sanPhamRepository.findByFilters(keyword, status, danhMuc, thuongHieu, chatLieu,
-                minPrice, maxPrice, pageable);
+    public Page<SanPhamDTO> findByFilters(Pageable pageable, String keyword, Boolean status, Integer[] danhMuc, Integer[] thuongHieu, Integer[] chatLieu, BigDecimal minPrice, BigDecimal maxPrice) {
+        Page<SanPham> sanPhamPage = sanPhamRepository.findByFilters(keyword, status, danhMuc, thuongHieu, chatLieu, minPrice, maxPrice, pageable);
         return sanPhamPage.map(this::chuyenSangDTO);
     }
 
@@ -238,5 +202,12 @@ public class SanPhamService {
             return sanPhamRepository.findByTenSPContainingAndTrangThai(tenSP != null ? tenSP : "", status, pageable)
                     .map(this::chuyenSangDTO);
         }
+    }
+
+    public List<SanPhamDTO> searchProductsByKeyword(String keyword) {
+        return sanPhamRepository.findByTenSPContainingIgnoreCase(keyword)
+                .stream()
+                .map(this::chuyenSangDTO)
+                .collect(Collectors.toList());
     }
 }

@@ -85,7 +85,7 @@ public class SanPhamChiTietService {
                         throw new IllegalArgumentException("Kích thước ảnh phải nhỏ hơn 5MB: " + imageFile.getOriginalFilename());
                     }
                     try {
-                        Map uploadResult = cloudinary.uploader().upload(imageFile.getBytes(), ObjectUtils.asMap(
+                        Map<String, Object> uploadResult = cloudinary.uploader().upload(imageFile.getBytes(), ObjectUtils.asMap(
                                 "resource_type", "image",
                                 "folder", "san_pham_chi_tiet",
                                 "public_id", imageFile.getOriginalFilename().replaceAll("[^a-zA-Z0-9.-]", "_")
@@ -152,7 +152,7 @@ public class SanPhamChiTietService {
             for (Img img : imagesToDelete) {
                 String publicId = extractPublicId(img.getLink());
                 try {
-                    Map result = cloudinary.uploader().destroy(publicId, ObjectUtils.emptyMap());
+                    Map<String, Object> result = cloudinary.uploader().destroy(publicId, ObjectUtils.emptyMap());
                     System.out.println("Cloudinary delete result: " + result);
                     imgRepository.delete(img);
                 } catch (IOException e) {
@@ -172,7 +172,7 @@ public class SanPhamChiTietService {
                     if (imageFile.getSize() > 5 * 1024 * 1024) {
                         throw new IllegalArgumentException("Kích thước ảnh phải nhỏ hơn 5MB: " + imageFile.getOriginalFilename());
                     }
-                    Map uploadResult = cloudinary.uploader().upload(imageFile.getBytes(), ObjectUtils.asMap(
+                    Map<String, Object> uploadResult = cloudinary.uploader().upload(imageFile.getBytes(), ObjectUtils.asMap(
                             "resource_type", "image",
                             "folder", "san_pham_chi_tiet",
                             "public_id", imageFile.getOriginalFilename().replaceAll("[^a-zA-Z0-9.-]", "_")
@@ -240,7 +240,7 @@ public class SanPhamChiTietService {
                     .map(SanPhamChiTiet::getGia)
                     .filter(gia -> gia != null)
                     .reduce(BigDecimal.ZERO, BigDecimal::add)
-                    .divide(BigDecimal.valueOf(chiTiets.size()), 2, BigDecimal.ROUND_HALF_UP);
+                    .divide(BigDecimal.valueOf(chiTiets.size()), java.math.RoundingMode.HALF_UP);
             sanPham.setGia(giaTrungBinh);
 
             // Cập nhật ảnh chính nếu chưa có
@@ -305,9 +305,14 @@ public class SanPhamChiTietService {
         size = size != null ? size.trim().toLowerCase() : null;
 
         Page<SanPhamChiTiet> page = sanPhamChiTietRepository.findByFilters(
-                keyword, mauSac, size,
-                minPrice != null ? minPrice : BigDecimal.ZERO,
-                maxPrice != null ? maxPrice : new BigDecimal("5000000"),
+                keyword,
+                (java.util.List<Integer>) null,
+                (String) null,
+                mauSac,
+                (String) null,
+                size,
+                minPrice,
+                maxPrice,
                 pageable);
         return page.map(spct -> {
             SanPhamChiTietDTO dto = convertToDTO(spct);

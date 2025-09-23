@@ -22,6 +22,4 @@ public class KhachHangDTO {
     private Integer idTK;
     private Boolean trangThai;
     private List<DiaChiKhachHangDTO> diaChiList;
-    private String taiKhoan;
-    private String chucVu;
 }

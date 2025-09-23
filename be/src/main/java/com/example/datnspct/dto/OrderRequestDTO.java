@@ -26,7 +26,6 @@ public class OrderRequestDTO {
     }
     @Data
     public static class ShippingInfo {
-        private Integer addressId;
         private String firstName;
         private String lastName;
         private String phone;

@@ -15,35 +15,25 @@
         <router-link to="/admin/pos" class="nav-link"><i class="fas fa-fw fa-cash-register"></i> Bán hàng tại quầy</router-link>
       </li>
       
+      <!-- Nhóm các chức năng chính -->
       <li class="nav-item-header">CỬA HÀNG</li>
       <li class="nav-item">
         <router-link to="/admin/products" class="nav-link"><i class="fas fa-fw fa-shirt"></i> Quản lý Sản phẩm</router-link>
       </li>
-
-      <li class="nav-item-header">Giảm giá</li>
       <li class="nav-item">
-        <a class="nav-link collapsed" data-bs-toggle="collapse" data-bs-target="#vouchersSubmenu" role="button">
-          <i class="fa-solid fa-ticket"></i> Quản lý giảm giá
-        </a>
-        <div class="collapse sidebar-submenu" id="vouchersSubmenu">
-          <ul class="nav flex-column">
-            <li class="nav-item">
-              <router-link to="/admin/vouchers" class="nav-link">Đợt giảm giá</router-link>
-            </li>
-            <li class="nav-item">
-              <router-link to="/admin/vouchersp" class="nav-link">Phiếu giảm giá</router-link>
-            </li>
-          </ul>
-        </div>
+        <router-link to="/admin/orders" class="nav-link"><i class="fas fa-fw fa-box-open"></i> Quản lý Đơn hàng</router-link>
       </li>
-
+      <li class="nav-item">
+        <router-link to="/admin/vouchers" class="nav-link"><i class="fas fa-fw fa-percent"></i> Quản lý Khuyến mại</router-link>
+      </li>
       <li class="nav-item">
         <router-link to="/admin/attributes" class="nav-link"><i class="fas fa-fw fa-tags"></i> Quản lý Thuộc tính</router-link>
       </li>
 
-      <li class="nav-item-header">Account</li>
+      <!-- Nhóm các chức năng hệ thống -->
+      <li class="nav-item-header">HỆ THỐNG</li>
       <li class="nav-item">
-        <a class="nav-link collapsed" data-bs-toggle="collapse" data-bs-target="#accountsSubmenu" role="button">
+        <a class="nav-link collapsed" data-bs-toggle="collapse" href="#accountsSubmenu" role="button">
           <i class="fas fa-fw fa-users-cog"></i> Quản lý Tài khoản
         </a>
         <div class="collapse sidebar-submenu" id="accountsSubmenu">
@@ -56,6 +46,12 @@
             </li>
           </ul>
         </div>
+      </li>
+      <li class="nav-item">
+        <router-link to="/admin/posts" class="nav-link"><i class="fas fa-fw fa-newspaper"></i> Quản lý Bài viết</router-link>
+      </li>
+      <li class="nav-item">
+        <router-link to="/admin/reviews" class="nav-link"><i class="fas fa-fw fa-star"></i> Quản lý Đánh giá</router-link>
       </li>
       <li class="nav-item">
         <a class="nav-link" @click="logout"><i class="fas fa-fw fa-sign-out-alt"></i> Đăng xuất</a>
@@ -84,7 +80,7 @@ export default {
 </script>
 
 <style scoped>
-/* Không cần thay đổi CSS */
+/* Style hiện tại giữ nguyên, thêm style cho thông tin người dùng */
 .user-info {
   text-align: center;
   padding: 10px;

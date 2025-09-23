@@ -38,17 +38,16 @@ public class KhachHangController {
         return ResponseEntity.ok(khachHangDTO);
     }
 
-    // Lấy tất cả hoặc tìm kiếm với trạng thái
+    // Lấy tất cả
     @GetMapping
     public ResponseEntity<Page<KhachHangDTO>> layTatCaKhachHang(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
-            @RequestParam(required = false) String search,
-            @RequestParam(required = false) Boolean trangThai) {
+            @RequestParam(required = false) String search) {
         Pageable pageable = PageRequest.of(page, size);
         Page<KhachHangDTO> khachHangPage;
-        if (search != null && !search.isEmpty() || trangThai != null) {
-            khachHangPage = khachHangService.searchKhachHang(search != null ? search : "", trangThai, pageable);
+        if (search != null && !search.isEmpty()) {
+            khachHangPage = khachHangService.searchKhachHang(search, pageable);
         } else {
             khachHangPage = khachHangService.layTatCaKhachHang(pageable);
         }

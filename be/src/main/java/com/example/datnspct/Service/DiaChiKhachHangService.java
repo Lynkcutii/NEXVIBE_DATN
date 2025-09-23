@@ -32,8 +32,8 @@ public class DiaChiKhachHangService {
     private void resetDefaultAddresses(Integer idKH) {
         List<DiaChiKhachHang> allAddresses = diaChiKhachHangRepository.findByKhachHangIdKH(idKH);
         for (DiaChiKhachHang addr : allAddresses) {
-            if (addr.getTrangThai() != null && addr.getTrangThai() == 1) {
-                addr.setTrangThai(0); // 0 = không mặc định
+            if (Boolean.TRUE.equals(addr.getTrangThai())) {
+                addr.setTrangThai(Boolean.FALSE);
                 diaChiKhachHangRepository.save(addr);
             }
         }
@@ -48,7 +48,7 @@ public class DiaChiKhachHangService {
                 .orElseThrow(() -> new EntityNotFoundException("Không tìm thấy khách hàng với ID: " + dto.getIdKH()));
 
         // Nếu địa chỉ mới được đặt làm mặc định, hãy bỏ mặc định của các địa chỉ cũ
-        if (dto.getTrangThai() != null && dto.getTrangThai() == 1) {
+        if (Boolean.TRUE.equals(dto.getTrangThai())) {
             resetDefaultAddresses(dto.getIdKH());
         }
 
@@ -74,7 +74,7 @@ public class DiaChiKhachHangService {
                 .orElseThrow(() -> new EntityNotFoundException("Không tìm thấy địa chỉ với ID: " + idDiaChi));
 
         // Nếu địa chỉ này được đặt làm mặc định
-        if (dto.getTrangThai() != null && dto.getTrangThai() == 1) {
+        if (Boolean.TRUE.equals(dto.getTrangThai())) {
             // Lấy idKH từ địa chỉ đã tồn tại để đảm bảo an toàn
             resetDefaultAddresses(existingAddress.getKhachHang().getIdKH());
         }

@@ -2,9 +2,7 @@ package com.example.datnspct.Controller.client;
 
 import com.example.datnspct.Service.KhachHangService;
 import com.example.datnspct.dto.KhachHangDTO;
-import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -24,40 +22,17 @@ public class KhachHangClientController {
     @Autowired
     private KhachHangService khachHangService;
 
-    // API LẤY KHÁCH HÀNG THEO idTK (Dùng sau khi đăng nhập)
+    // Lấy thông tin khách hàng theo idTK
     @GetMapping("/byTaiKhoanId/{idTK}")
-    public ResponseEntity<?> getKhachHangByTaiKhoanId(@PathVariable Integer idTK) {
+    public ResponseEntity<KhachHangDTO> getKhachHangByTaiKhoanId(@PathVariable Integer idTK) {
         try {
             KhachHangDTO khachHangDTO = khachHangService.layKhachHangTheoTaiKhoanId(idTK);
             return ResponseEntity.ok(khachHangDTO);
-        } catch (EntityNotFoundException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", e.getMessage()));
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(404).body(null);
         }
     }
 
-    // API LẤY KHÁCH HÀNG THEO idKH (Dùng cho trang profile)
-    @GetMapping("/{idKH}")
-    public ResponseEntity<?> getKhachHangById(@PathVariable Integer idKH) {
-        try {
-            KhachHangDTO khachHangDTO = khachHangService.layKhachHangTheoId(idKH);
-            return ResponseEntity.ok(khachHangDTO);
-        } catch (EntityNotFoundException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", e.getMessage()));
-        }
-    }
-
-    // API CẬP NHẬT THÔNG TIN KHÁCH HÀNG
-    @PutMapping("/{idKH}")
-    public ResponseEntity<?> updateKhachHang(@PathVariable Integer idKH, @RequestBody KhachHangDTO dto) {
-        try {
-            KhachHangDTO updatedKhachHang = khachHangService.capNhatKhachHang(idKH, dto);
-            return ResponseEntity.ok(updatedKhachHang);
-        } catch (EntityNotFoundException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", e.getMessage()));
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("message", "Lỗi khi cập nhật thông tin."));
-        }
-    }
     @PostMapping
     public ResponseEntity<?> createKhachHang(@RequestBody KhachHangDTO khachHangDTO) {
         try {
@@ -95,7 +70,7 @@ public class KhachHangClientController {
             updatedKhachHangDTO.setSdt(existingKhachHang.getSdt());
             updatedKhachHangDTO.setIdTK(idTK); // Cập nhật idTK
             updatedKhachHangDTO.setTrangThai(existingKhachHang.getTrangThai());
-            updatedKhachHangDTO.setDiaChiList(existingKhachHang.getDiaChiList());
+            updatedKhachHangDTO.setDiaChiList(existingKhachHang.getDiaChiList()); // Giữ nguyên danh sách địa chỉ
 
             // Cập nhật khách hàng
             KhachHangDTO updatedKhachHang = khachHangService.capNhatKhachHang(idKH, updatedKhachHangDTO);
@@ -106,5 +81,4 @@ public class KhachHangClientController {
             return ResponseEntity.badRequest().body(Map.of("message", "Lỗi khi liên kết tài khoản: " + e.getMessage()));
         }
     }
-
 }

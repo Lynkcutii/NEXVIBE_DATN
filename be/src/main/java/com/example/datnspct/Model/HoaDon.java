@@ -1,7 +1,5 @@
 package com.example.datnspct.Model;
 
-import jakarta.persistence.*;
-
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -31,8 +29,7 @@ import java.util.List;
 public class HoaDon {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "IdHD")
-    private Integer idHD;
+    private Integer IdHD;
 
     @Column(name = "MaHD", length = 50)
     private String maHD;
@@ -54,12 +51,11 @@ public class HoaDon {
 
     @Column(name = "NgaySua")
     private LocalDateTime ngaySua;
-    // tổng số lượng của các sản phẩm chi tiết
+//    tổng số lượng của các sản phẩm chi tiết
     @Column(name = "TongTien", precision = 18, scale = 2)
     private BigDecimal tongTien;
 
     @Column(name = "TrangThai")
-
     private String trangThai;
 
     @ManyToOne
@@ -77,9 +73,6 @@ public class HoaDon {
     @ManyToOne
     @JoinColumn(name = "IdNV", referencedColumnName = "IdNV", insertable = false, updatable = false)
     private NhanVien nhanVien;
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "IdDiaChiGiao")
-    private DiaChiKhachHang diaChiGiao;
 
     @OneToMany(mappedBy = "hoaDon", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<HoaDonChiTiet> chiTietSanPham = new ArrayList<>();

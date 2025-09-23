@@ -20,12 +20,9 @@
 
     <!-- 5. Footer (component riêng) -->
     <Footer />
-
-    <Chatbot />
   </div>
 </template>
 <script setup>
 import Header from '../user/Header.vue';
 import Footer from '../user/Footer.vue';
-import Chatbot from '../user/Chatbot.vue';
 </script>

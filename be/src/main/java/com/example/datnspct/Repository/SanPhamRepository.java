@@ -8,14 +8,13 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import java.util.List;
 import java.math.BigDecimal;
+import java.util.List;
 
 @Repository
 public interface SanPhamRepository extends JpaRepository<SanPham, Integer> {
     @Query("SELECT sp FROM SanPham sp " +
-            "WHERE (:keyword IS NULL OR LOWER(sp.tenSP) LIKE LOWER(CONCAT('%', :keyword, '%')) OR LOWER(sp.maSP) LIKE LOWER(CONCAT('%', :keyword, '%'))) "
-            +
+            "WHERE (:keyword IS NULL OR LOWER(sp.tenSP) LIKE LOWER(CONCAT('%', :keyword, '%')) OR LOWER(sp.maSP) LIKE LOWER(CONCAT('%', :keyword, '%'))) " +
             "AND (:status IS NULL OR sp.trangThai = :status) " +
             "AND (:danhMuc IS NULL OR sp.danhMuc.idDM IN :danhMuc) " +
             "AND (:thuongHieu IS NULL OR sp.thuongHieu.idThuongHieu IN :thuongHieu) " +
@@ -33,8 +32,7 @@ public interface SanPhamRepository extends JpaRepository<SanPham, Integer> {
             Pageable pageable);
 
     @Query("SELECT s FROM SanPham s WHERE (:tenSP IS NULL OR LOWER(s.tenSP) LIKE LOWER(CONCAT('%', :tenSP, '%'))) AND (:status IS NULL OR s.trangThai = :status)")
-    Page<SanPham> findByTenSPContainingAndTrangThai(@Param("tenSP") String tenSP, @Param("status") Boolean status,
-            Pageable pageable);
+    Page<SanPham> findByTenSPContainingAndTrangThai(@Param("tenSP") String tenSP, @Param("status") Boolean status, Pageable pageable);
+    List<SanPham> findByTenSPContainingIgnoreCase(String keyword);
 
-    List<SanPham> findTop3ByTenSPContainingIgnoreCase(String keyword);
 }
