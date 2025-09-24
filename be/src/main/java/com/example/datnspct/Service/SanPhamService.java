@@ -203,4 +203,11 @@ public class SanPhamService {
                     .map(this::chuyenSangDTO);
         }
     }
+
+    public List<SanPhamDTO> searchProductsByKeyword(String keyword) {
+        return sanPhamRepository.findByTenSPContainingIgnoreCase(keyword)
+                .stream()
+                .map(this::chuyenSangDTO)
+                .collect(Collectors.toList());
+    }
 }

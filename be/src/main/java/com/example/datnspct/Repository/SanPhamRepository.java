@@ -9,6 +9,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 @Repository
 public interface SanPhamRepository extends JpaRepository<SanPham, Integer> {
@@ -32,4 +33,6 @@ public interface SanPhamRepository extends JpaRepository<SanPham, Integer> {
 
     @Query("SELECT s FROM SanPham s WHERE (:tenSP IS NULL OR LOWER(s.tenSP) LIKE LOWER(CONCAT('%', :tenSP, '%'))) AND (:status IS NULL OR s.trangThai = :status)")
     Page<SanPham> findByTenSPContainingAndTrangThai(@Param("tenSP") String tenSP, @Param("status") Boolean status, Pageable pageable);
+    List<SanPham> findByTenSPContainingIgnoreCase(String keyword);
+
 }
