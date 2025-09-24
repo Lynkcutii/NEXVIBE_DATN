@@ -20,6 +20,7 @@ public class VoucherDTO {
     private BigDecimal giamToiDa;
     private BigDecimal donGiaKhiGiam;
     private BigDecimal giaGiam;
+    private BigDecimal giaTriDonHangToiThieu;
     private Integer soLuong;
     private Date ngayBatDau;
     private Date ngayKetThuc;
