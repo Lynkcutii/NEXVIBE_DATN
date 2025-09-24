@@ -133,20 +133,7 @@
       </div>
     </div>
 
-    <div class="col-xl-3 col-md-6 mb-4">
-      <div class="card border-start-light shadow h-100 py-2" style="border-left-color: #6c757d !important;">
-        <div class="card-body">
-          <div class="row g-0 align-items-center">
-            <div class="col">
-              <div class="text-xs fw-bold text-muted text-uppercase mb-1">Khách Hàng Mới</div>
-              <div class="h5 mb-0 fw-bold text-gray-800">{{ dashboardStats.khachHangMoi?.length || 0 }}</div>
-              <div class="text-xs text-muted">Đăng ký gần đây</div>
-            </div>
-            <div class="col-auto"><i class="fas fa-user-plus fa-2x text-gray-300"></i></div>
-          </div>
-        </div>
-      </div>
-    </div>
+    
   </div>
 
   <!-- Hàng chứa Biểu đồ và danh sách -->
