@@ -10,13 +10,13 @@ import java.util.HashMap;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/admin/api/momo")
+@RequestMapping("/admin/api/momo/status")
 @RequiredArgsConstructor
 public class MoMoStatusController {
 
     private final MoMoTransactionRepository moMoTransactionRepository;
 
-    @GetMapping("/check-status/{orderId}")
+    @GetMapping("/{orderId}")
     public ResponseEntity<Map<String, Object>> checkTransactionStatus(@PathVariable String orderId) {
         try {
             MoMoTransaction transaction = moMoTransactionRepository.findByOrderId(orderId)
