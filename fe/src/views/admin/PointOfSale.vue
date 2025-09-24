@@ -315,7 +315,7 @@
             </div>
 
             <!-- Filters -->
-            <div class="row g-3 mb-3">
+            <div class="row g-3 mb-3" v-show="false">
               <div class="col-md-3">
                 <select v-model="selectedCategory" class="form-select" @change="debouncedSearchProducts">
                   <option value="" disabled>Chọn danh mục</option>
@@ -377,6 +377,7 @@
                     <th>Chất liệu</th>
                     <th>Size</th>
                     <th>Giá</th>
+                    <th>Số lượng</th>
                     <th>Thao tác</th>
                   </tr>
                 </thead>
@@ -391,6 +392,7 @@
                     <td>{{ row.tenChatLieu }}</td>
                     <td>{{ row.tenKichThuoc }}</td>
                     <td>{{ row.giaBan != null ? row.giaBan.toLocaleString() : '0' }} VND</td>
+                    <td>{{ row.soLuong != null ? row.soLuong.toLocaleString() : '0' }}</td>
                     <td>
                       <button type="button" class="btn btn-primary btn-sm" @click.stop="chonSanPham(row)">Chọn</button>
                     </td>
@@ -1250,6 +1252,7 @@ export default {
               tenMauSac: item.tenMauSac,
               tenChatLieu: item.tenChatLieu,
               tenKichThuoc: item.tenKichThuoc,
+              soLuong: item.soLuong,
               anhGiay: item.anhGiay
             })),
             number: 0,
@@ -1291,6 +1294,7 @@ export default {
               tenMauSac: item.tenMauSac,
               tenChatLieu: item.tenChatLieu,
               tenKichThuoc: item.tenKichThuoc,
+              soLuong: item.soLuong,
               anhGiay: item.anhGiay
             })),
             number: response.data.number,

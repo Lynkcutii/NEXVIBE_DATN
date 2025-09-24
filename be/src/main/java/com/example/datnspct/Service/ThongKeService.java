@@ -37,7 +37,7 @@ public class ThongKeService {
             result.put("homNay", hoaDonNgayDau);
             
             // Tính hóa đơn trong tháng của ngày bắt đầu
-            LocalDateTime startOfMonth = startDate.toLocalDate().withDayOfMonth(1).atStartOfDay();
+            LocalDateTime startOfMonth = LocalDate.now().withDayOfMonth(1).atStartOfDay();
             LocalDateTime endOfMonth = startOfMonth.plusMonths(1);
             long hoaDonTrongThang = hoaDonRepository.countByNgayTaoBetween(startOfMonth, endOfMonth);
             result.put("trongThang", hoaDonTrongThang);
@@ -80,7 +80,7 @@ public class ThongKeService {
             result.put("homNay", doanhThuNgayDau.doubleValue());
             
             // Tính doanh thu trong tháng của ngày bắt đầu
-            LocalDateTime startOfMonth = startDate.toLocalDate().withDayOfMonth(1).atStartOfDay();
+            LocalDateTime startOfMonth = LocalDate.now().withDayOfMonth(1).atStartOfDay();
             LocalDateTime endOfMonth = startOfMonth.plusMonths(1);
             BigDecimal doanhThuTrongThang = hoaDonRepository.sumTongTienByNgayTaoBetween(startOfMonth, endOfMonth);
             if (doanhThuTrongThang == null) doanhThuTrongThang = BigDecimal.ZERO;
