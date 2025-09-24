@@ -11,10 +11,10 @@ import java.util.List;
 
 @Repository
 public interface HoaDonChiTietRepository extends JpaRepository<HoaDonChiTiet, Integer> {
-    @Query("SELECT hdct FROM HoaDonChiTiet hdct WHERE hdct.hoaDon.IdHD = :idHD")
+    @Query("SELECT hdct FROM HoaDonChiTiet hdct WHERE hdct.hoaDon.idHD = :idHD")
     List<HoaDonChiTiet> findByHoaDonId(@Param("idHD") Integer idHD);
     
-    @Query("SELECT COALESCE(SUM(hdct.soLuong), 0) FROM HoaDonChiTiet hdct WHERE hdct.hoaDon.IdHD = :idHD")
+    @Query("SELECT COALESCE(SUM(hdct.soLuong), 0) FROM HoaDonChiTiet hdct WHERE hdct.hoaDon.idHD = :idHD")
     int getTotalProductsByHoaDonId(@Param("idHD") Integer idHD);
     
     // Top sản phẩm bán chạy (tổng)

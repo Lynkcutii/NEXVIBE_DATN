@@ -133,7 +133,7 @@
       </div>
     </div>
 
-    <!-- <div class="col-xl-3 col-md-6 mb-4">
+    <div class="col-xl-3 col-md-6 mb-4">
       <div class="card border-start-light shadow h-100 py-2" style="border-left-color: #6c757d !important;">
         <div class="card-body">
           <div class="row g-0 align-items-center">
@@ -146,7 +146,7 @@
           </div>
         </div>
       </div>
-    </div> -->
+    </div>
   </div>
 
   <!-- Hàng chứa Biểu đồ và danh sách -->
@@ -189,6 +189,186 @@
   </div>
 
   <!-- Thống kê chi tiết với tabs -->
+  <div class="row">
+    <div class="col-12">
+      <div class="card shadow">
+        <div class="card-header">
+          <ul class="nav nav-tabs card-header-tabs" id="statsTab" role="tablist">
+            <li class="nav-item" role="presentation">
+              <button class="nav-link active" id="san-pham-tab" data-bs-toggle="tab" data-bs-target="#san-pham" type="button" role="tab">
+                <i class="fas fa-box me-2"></i>Thống kê Sản phẩm
+              </button>
+            </li>
+            <li class="nav-item" role="presentation">
+              <button class="nav-link" id="khach-hang-tab" data-bs-toggle="tab" data-bs-target="#khach-hang" type="button" role="tab">
+                <i class="fas fa-users me-2"></i>Thống kê Khách hàng
+              </button>
+            </li>
+            <li class="nav-item" role="presentation">
+              <button class="nav-link" id="ton-kho-tab" data-bs-toggle="tab" data-bs-target="#ton-kho" type="button" role="tab">
+                <i class="fas fa-warehouse me-2"></i>Tồn kho
+              </button>
+            </li>
+          </ul>
+        </div>
+        <div class="card-body">
+          <div class="tab-content" id="statsTabContent">
+            <!-- Tab Sản phẩm -->
+            <div class="tab-pane fade show active" id="san-pham" role="tabpanel">
+              <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5>Thống kê Sản phẩm</h5>
+                <button @click="fetchThongKeSanPham" class="btn btn-primary btn-sm" :disabled="loadingProductStats">
+                  <i class="fas fa-sync-alt me-1"></i>Làm mới
+                </button>
+              </div>
+              <div v-loading="loadingProductStats">
+                <div class="row">
+                  <div class="col-md-8">
+                    <h6>Top 10 sản phẩm bán chạy (30 ngày qua)</h6>
+                    <div class="table-responsive">
+                      <table class="table table-striped">
+                        <thead>
+                          <tr>
+                            <th>#</th>
+                            <th>Tên sản phẩm</th>
+                            <th>Số lượng bán</th>
+                            <th>Doanh thu</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <tr v-for="(item, index) in productStats.sanPhamBanChay" :key="index">
+                            <td>{{ index + 1 }}</td>
+                            <td>{{ item.tenSanPham }}</td>
+                            <td>{{ Math.round(item.soLuongBan) }}</td>
+                            <td>{{ formatCurrency(item.doanhThu) }}</td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                  <div class="col-md-4">
+                    <h6>Thống kê theo danh mục</h6>
+                    <div v-if="!productStats.theoDanhMuc || productStats.theoDanhMuc.length === 0" class="text-muted text-center py-4">
+                      Chưa có dữ liệu
+                    </div>
+                    <div v-else>
+                      <div v-for="category in productStats.theoDanhMuc" :key="category.tenDanhMuc" class="mb-2">
+                        <div class="d-flex justify-content-between">
+                          <span>{{ category.tenDanhMuc }}</span>
+                          <span class="fw-bold">{{ category.soLuong }}</span>
+                        </div>
+                        <div class="progress" style="height: 8px;">
+                          <div class="progress-bar" :style="{width: (category.soLuong / Math.max(...productStats.theoDanhMuc.map(c => c.soLuong)) * 100) + '%'}"></div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Tab Khách hàng -->
+            <div class="tab-pane fade" id="khach-hang" role="tabpanel">
+              <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5>Thống kê Khách hàng</h5>
+                <button @click="fetchThongKeKhachHang" class="btn btn-primary btn-sm" :disabled="loadingCustomerStats">
+                  <i class="fas fa-sync-alt me-1"></i>Làm mới
+                </button>
+              </div>
+              <div v-loading="loadingCustomerStats">
+                <div class="row">
+                  <div class="col-md-6">
+                    <h6>Khách hàng mới (30 ngày qua)</h6>
+                    <div class="table-responsive">
+                      <table class="table table-striped">
+                        <thead>
+                          <tr>
+                            <th>Tên khách hàng</th>
+                            <th>Email</th>
+                            <th>Ngày đăng ký</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <tr v-for="customer in customerStats.khachHangMoi" :key="customer.id">
+                            <td>{{ customer.hoTen }}</td>
+                            <td>{{ customer.email }}</td>
+                            <td>{{ formatDate(customer.ngayTao) }}</td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                  <div class="col-md-6">
+                    <h6>Khách hàng VIP</h6>
+                    <div class="table-responsive">
+                      <table class="table table-striped">
+                        <thead>
+                          <tr>
+                            <th>Tên khách hàng</th>
+                            <th>Số đơn hàng</th>
+                            <th>Tổng chi tiêu</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <tr v-for="customer in customerStats.khachHangVIP" :key="customer.id">
+                            <td>{{ customer.hoTen }}</td>
+                            <td>{{ customer.soDonHang }}</td>
+                            <td>{{ formatCurrency(customer.tongChiTieu) }}</td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Tab Tồn kho -->
+            <div class="tab-pane fade" id="ton-kho" role="tabpanel">
+              <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5>Báo cáo Tồn kho</h5>
+                <button @click="fetchThongKeTonKho" class="btn btn-primary btn-sm" :disabled="loadingInventoryStats">
+                  <i class="fas fa-sync-alt me-1"></i>Làm mới
+                </button>
+              </div>
+              <div v-loading="loadingInventoryStats">
+                <div class="table-responsive">
+                  <table class="table table-striped">
+                    <thead>
+                      <tr>
+                        <th>Tên sản phẩm</th>
+                        <th>Mã sản phẩm</th>
+                        <th>Số lượng tồn</th>
+                        <th>Giá trị tồn kho</th>
+                        <th>Trạng thái</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr v-for="item in inventoryStats" :key="item.maSanPham">
+                        <td>{{ item.tenSanPham }}</td>
+                        <td>{{ item.maSanPham }}</td>
+                        <td>{{ item.soLuongTon }}</td>
+                        <td>{{ formatCurrency(item.giaTriTonKho) }}</td>
+                        <td>
+                          <span class="badge" :class="{
+                            'bg-danger': item.trangThai === 'Hết hàng',
+                            'bg-warning': item.trangThai === 'Sắp hết',
+                            'bg-success': item.trangThai === 'Còn hàng'
+                          }">
+                            {{ item.trangThai }}
+                          </span>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 </template>
 
 <script setup>

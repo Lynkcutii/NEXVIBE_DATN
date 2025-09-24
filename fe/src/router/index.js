@@ -14,7 +14,6 @@ import OrderSuccessPage from '../views/user/OrderSuccessPage.vue';
 import AboutPage from '../views/user/AboutPage.vue';
 import BlogPage from '../views/user/BlogPage.vue';
 import ContactPage from '../views/user/ContactPage.vue';
-import MoMoReturn from '../views/user/MoMoReturn.vue';
 import Dashboard from '../views/admin/Dashboard.vue';
 import PointOfSale from '../views/admin/PointOfSale.vue';
 import Products from '../views/admin/Products.vue';
@@ -24,6 +23,8 @@ import Attributes from '../views/admin/Attributes.vue';
 import Staff from '../views/admin/Staff.vue';
 import Customers from '../views/admin/Customers.vue';
 import Vouchers from '../views/admin/Vouchers.vue';
+import VoucherSP from '../views/admin/VoucherSP.vue';
+import VoucherSPForm from '../views/forms/VoucherSPForm.vue';
 import Posts from '../views/admin/Posts.vue';
 import Reviews from '../views/admin/Reviews.vue';
 import ProductForm from '../views/forms/ProductForm.vue';
@@ -33,7 +34,6 @@ import VoucherForm from '../views/forms/VoucherForm.vue';
 import OrderDetailPage from '../views/user/account/OrderDetailPage.vue';
 import { useAuthStore } from '@/stores/auth';
 import { useToast } from 'vue-toastification';
-
 
 const routes = [
   // --- NHÁNH ROUTE CHO TRANG NGƯỜI DÙNG (USER) ---
@@ -80,21 +80,27 @@ const routes = [
       { path: 'vouchers', name: 'admin.vouchers.list', component: Vouchers },
       { path: 'vouchers/create', name: 'admin.vouchers.create', component: VoucherForm },
       { path: 'vouchers/:id/edit', name: 'admin.vouchers.edit', component: VoucherForm },
+      { path: 'vouchersp', name: 'admin.vouchersp.list', component: VoucherSP},
+      { path: 'vouchersp/:id/edit', name: 'admin.vouchersp.edit', component: VoucherSPForm},
       { path: 'posts', name: 'admin.posts.list', component: Posts },
       { path: 'posts/create', name: 'admin.posts.create', component: PostForm },
       { path: 'posts/:id/edit', name: 'admin.posts.edit', component: PostForm },
       { path: 'reviews', name: 'admin.reviews.list', component: Reviews },
     ],
   },
-  // Route xử lý trả về từ MoMo (giữ cả trang hiển thị và handler đóng tab)
-  { path: '/momo-return', name: 'momo-return', component: MoMoReturn },
-  { path: '/momo-return-close', name: 'momo.return', beforeEnter: (to, from, next) => {
+  // Route xử lý trả về từ MoMo
+  {
+    path: '/momo-return',
+    name: 'momo.return',
+    beforeEnter: (to, from, next) => {
+      // Lưu orderId vào localStorage để trang chính xử lý
       const orderId = to.query.orderId;
       if (orderId) {
         localStorage.setItem('momo_last_order_id', orderId);
       }
+      // Đóng tab MoMo
       window.close();
-    }
+    },
   },
   // Catch-all route
   {

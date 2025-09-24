@@ -59,9 +59,9 @@ public class KhuyenMai {
 
     @ManyToMany
     @JoinTable(
-            name = "KhuyenMai_KhachHang", // bảng trung gian
-            joinColumns = @JoinColumn(name = "IdKM"), // cột join tới KhuyenMai
-            inverseJoinColumns = @JoinColumn(name = "IdKH") // cột join tới KhachHang
+            name = "KhuyenMai_KhachHang",
+            joinColumns = @JoinColumn(name = "IdKM"),
+            inverseJoinColumns = @JoinColumn(name = "IdKH")
     )
-    private List<KhachHang> khachHangs = new ArrayList<>();
+    private List<KhachHang> customers = new ArrayList<>();
 }

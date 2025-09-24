@@ -96,4 +96,43 @@ public class VoucherController {
                     .body(Collections.singletonMap("error", "Không thể cập nhật số lượng voucher: " + e.getMessage()));
         }
     }
+
+    @PostMapping
+    public ResponseEntity<?> createVoucher(@RequestBody VoucherDTO dto) {
+        try {
+            VoucherDTO createdVoucher = voucherService.createVoucher(dto);
+            return ResponseEntity.status(HttpStatus.CREATED).body(createdVoucher);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(Collections.singletonMap("error", e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Collections.singletonMap("error", "Không thể tạo voucher: " + e.getMessage()));
+        }
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<?> updateVoucher(@PathVariable Integer id, @RequestBody VoucherDTO dto) {
+        try {
+            VoucherDTO updatedVoucher = voucherService.updateVoucher(id, dto);
+            return ResponseEntity.ok(updatedVoucher);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(Collections.singletonMap("error", e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Collections.singletonMap("error", "Không thể cập nhật voucher: " + e.getMessage()));
+        }
+    }
+
+    @GetMapping("/generate-code")
+    public ResponseEntity<?> generateVoucherCode() {
+        try {
+            String code = voucherService.generateVoucherCode();
+            return ResponseEntity.ok(Collections.singletonMap("maVoucher", code));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Collections.singletonMap("error", "Không thể sinh mã voucher: " + e.getMessage()));
+        }
+    }
 }

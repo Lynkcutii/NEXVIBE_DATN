@@ -123,11 +123,19 @@ public class SanPhamChiTietController {
             @RequestParam(required = false) BigDecimal maxPrice,
             Pageable pageable) {
         try {
+            System.out.println("Received filter request: keyword=" + keyword + ", mauSac=" + mauSac +
+                    ", size=" + size + ", minPrice=" + minPrice + ", maxPrice=" + maxPrice +
+                    ", pageable=" + pageable);
             Page<SanPhamChiTietDTO> result = sanPhamChiTietService.findWithFilters(
                     keyword, mauSac, size, minPrice, maxPrice, pageable);
+            System.out.println("Returning " + result.getContent().size() + " items");
             return ResponseEntity.ok(result);
         } catch (NumberFormatException e) {
+            System.err.println("NumberFormatException: " + e.getMessage());
             return ResponseEntity.badRequest().body(null);
+        } catch (Exception e) {
+            System.err.println("Unexpected error: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
         }
     }
 
@@ -146,6 +154,24 @@ public class SanPhamChiTietController {
         }
         if (dto.getSoLuong() == null || dto.getSoLuong() < 0) {
             throw new IllegalArgumentException("Số lượng phải lớn hơn hoặc bằng 0");
+        }
+    }
+
+    @GetMapping("/search")
+    public ResponseEntity<Page<SanPhamChiTietDTO>> searchByKeywordAndTrangThai(
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) Boolean trangThai,
+            Pageable pageable) {
+        try {
+            System.out.println("Received search request: keyword=" + keyword + ", trangThai=" + trangThai +
+                    ", pageable=" + pageable);
+            Page<SanPhamChiTietDTO> result = sanPhamChiTietService.searchByKeywordAndTrangThai(
+                    keyword, trangThai, pageable);
+            System.out.println("Returning " + result.getContent().size() + " items");
+            return ResponseEntity.ok(result);
+        } catch (Exception e) {
+            System.err.println("Unexpected error: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
         }
     }
 }

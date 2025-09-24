@@ -17,6 +17,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
@@ -85,7 +86,7 @@ public class SanPhamChiTietService {
                         throw new IllegalArgumentException("Kích thước ảnh phải nhỏ hơn 5MB: " + imageFile.getOriginalFilename());
                     }
                     try {
-                        Map<String, Object> uploadResult = cloudinary.uploader().upload(imageFile.getBytes(), ObjectUtils.asMap(
+                        Map uploadResult = cloudinary.uploader().upload(imageFile.getBytes(), ObjectUtils.asMap(
                                 "resource_type", "image",
                                 "folder", "san_pham_chi_tiet",
                                 "public_id", imageFile.getOriginalFilename().replaceAll("[^a-zA-Z0-9.-]", "_")
@@ -152,7 +153,7 @@ public class SanPhamChiTietService {
             for (Img img : imagesToDelete) {
                 String publicId = extractPublicId(img.getLink());
                 try {
-                    Map<String, Object> result = cloudinary.uploader().destroy(publicId, ObjectUtils.emptyMap());
+                    Map result = cloudinary.uploader().destroy(publicId, ObjectUtils.emptyMap());
                     System.out.println("Cloudinary delete result: " + result);
                     imgRepository.delete(img);
                 } catch (IOException e) {
@@ -172,7 +173,7 @@ public class SanPhamChiTietService {
                     if (imageFile.getSize() > 5 * 1024 * 1024) {
                         throw new IllegalArgumentException("Kích thước ảnh phải nhỏ hơn 5MB: " + imageFile.getOriginalFilename());
                     }
-                    Map<String, Object> uploadResult = cloudinary.uploader().upload(imageFile.getBytes(), ObjectUtils.asMap(
+                    Map uploadResult = cloudinary.uploader().upload(imageFile.getBytes(), ObjectUtils.asMap(
                             "resource_type", "image",
                             "folder", "san_pham_chi_tiet",
                             "public_id", imageFile.getOriginalFilename().replaceAll("[^a-zA-Z0-9.-]", "_")
@@ -240,7 +241,7 @@ public class SanPhamChiTietService {
                     .map(SanPhamChiTiet::getGia)
                     .filter(gia -> gia != null)
                     .reduce(BigDecimal.ZERO, BigDecimal::add)
-                    .divide(BigDecimal.valueOf(chiTiets.size()), java.math.RoundingMode.HALF_UP);
+                    .divide(BigDecimal.valueOf(chiTiets.size()), 2, BigDecimal.ROUND_HALF_UP);
             sanPham.setGia(giaTrungBinh);
 
             // Cập nhật ảnh chính nếu chưa có
@@ -297,36 +298,25 @@ public class SanPhamChiTietService {
         }).collect(Collectors.toList());
     }
 
-    public Page<SanPhamChiTietDTO> findWithFilters(
-            String keyword,
-            String mauSac,
-            String size,
-            BigDecimal minPrice,
-            BigDecimal maxPrice,
-            Pageable pageable) {
+    public Page<SanPhamChiTietDTO> findWithFilters(String keyword, String mauSac, String size,
+                                                   BigDecimal minPrice, BigDecimal maxPrice,
+                                                   Pageable pageable) {
+        keyword = keyword != null ? keyword.trim() : null;
+        mauSac = mauSac != null ? mauSac.trim().toLowerCase() : null;
+        size = size != null ? size.trim().toLowerCase() : null;
 
-        // Chuẩn hóa string filter
-        keyword   = (keyword != null && !keyword.isBlank())   ? "%" + keyword.trim().toLowerCase() + "%" : null;
-        mauSac    = (mauSac != null && !mauSac.isBlank())     ? "%" + mauSac.trim().toLowerCase() + "%" : null;
-        size      = (size != null && !size.isBlank())         ? "%" + size.trim().toLowerCase() + "%" : null;
-
-
-        // Nếu maxPrice = 0 coi như bỏ filter
-        if (maxPrice != null && maxPrice.compareTo(BigDecimal.ZERO) == 0) {
-            maxPrice = null;
-        }
+        System.out.println("Filter params: keyword=" + keyword + ", mauSac=" + mauSac +
+                ", size=" + size + ", minPrice=" + minPrice + ", maxPrice=" + maxPrice +
+                ", pageable=" + pageable);
 
         Page<SanPhamChiTiet> page = sanPhamChiTietRepository.findByFilters(
-                keyword,
-                null,       // danhMucIds
-                null,       // thuongHieu
-                null,       // chatLieu
-                mauSac,
-                size,
-                minPrice,
-                maxPrice,
-                pageable
-        );
+                keyword, mauSac, size,
+                minPrice != null ? minPrice : BigDecimal.ZERO,
+                maxPrice != null ? maxPrice : new BigDecimal("5000000"),
+                pageable);
+
+        System.out.println("Result size: " + page.getContent().size());
+        System.out.println("Result content: " + page.getContent());
 
         return page.map(spct -> {
             SanPhamChiTietDTO dto = convertToDTO(spct);
@@ -367,5 +357,32 @@ public class SanPhamChiTietService {
         String[] parts = link.split("/");
         String fileName = parts[parts.length - 1]; // Lấy phần file name (public_id.jpg)
         return fileName.split("\\.")[0]; // Lấy public_id (loại bỏ phần .jpg)
+    }
+
+    @Transactional(readOnly = true)
+    public Page<SanPhamChiTietDTO> searchByKeywordAndTrangThai(String keyword, Boolean trangThai, Pageable pageable) {
+        keyword = keyword != null ? keyword.trim() : null;
+        System.out.println("Search params: keyword=" + keyword + ", trangThai=" + trangThai + ", pageable=" + pageable);
+
+        Page<SanPhamChiTiet> page = sanPhamChiTietRepository.searchByKeywordAndTrangThai(
+                keyword, trangThai, pageable);
+
+        System.out.println("Search result size: " + page.getContent().size());
+        page.getContent().forEach(spct -> {
+            System.out.println("SPCT: id=" + spct.getId() +
+                    ", maSPCT=" + spct.getMaSPCT() +
+                    ", tenSP=" + (spct.getSanPham() != null ? spct.getSanPham().getTenSP() : "null") +
+                    ", trangThai=" + spct.getTrangThai());
+        });
+
+        return page.map(spct -> {
+            SanPhamChiTietDTO dto = convertToDTO(spct);
+            List<String> imageLinks = imgRepository.findBySanPhamChiTietId(spct.getId())
+                    .stream()
+                    .map(Img::getLink)
+                    .collect(Collectors.toList());
+            dto.setImageLinks(imageLinks);
+            return dto;
+        });
     }
 }

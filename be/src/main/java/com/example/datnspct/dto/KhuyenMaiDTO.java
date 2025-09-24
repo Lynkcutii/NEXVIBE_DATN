@@ -15,7 +15,7 @@ public class KhuyenMaiDTO {
     private Integer idKM;
     private String maKM;
     private String tenKM;
-    private String hinhThucGiam;
+    private String hinhThucGiam; // 'percentage' hoặc 'fixed'
     private BigDecimal mucGiam;
     private BigDecimal giaTriDonHangToiThieu;
     private BigDecimal giamToiDa;
@@ -24,6 +24,6 @@ public class KhuyenMaiDTO {
     private LocalDateTime ngayBatDau;
     private LocalDateTime ngayKetThuc;
     private Boolean trangThai;
-
-    private List<Integer> idKHs; // nhiều khách hàng
+    private List<Integer> customerIds;
+    private List<String> customerNames;
 }

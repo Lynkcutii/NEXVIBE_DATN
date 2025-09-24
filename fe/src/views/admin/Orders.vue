@@ -28,6 +28,9 @@
           <!-- Action Buttons -->
           <div class="col-md-4">
             <div class="d-flex gap-2">
+              <button class="btn btn-outline-primary" @click="scanCode">
+                <i class="fas fa-barcode me-2"></i>Quét mã
+              </button>
               <button class="btn btn-primary" @click="createInvoice">
                 <i class="fas fa-plus me-2"></i>Tạo hoá đơn
               </button>

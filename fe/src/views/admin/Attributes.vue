@@ -1,3 +1,4 @@
+```vue
 <template>
   <h1 class="h3 mb-4 text-gray-800">Quản lý Thuộc tính</h1>
   <div class="row">
@@ -72,7 +73,7 @@
             :key="color.idMauSac"
             class="list-group-item d-flex justify-content-between align-items-center"
           >
-            {{ color.tenMauSac }} <span class="badge bg-secondary">{{ color.maMauSac }}</span>
+            {{ color.tenMauSac }}
             <div>
               <button
                 @click="openAttributeModal('color', 'Sửa màu sắc', color)"
@@ -247,16 +248,6 @@
         </div>
         <div class="modal-body">
           <form @submit.prevent="saveAttribute">
-            <div v-if="['color','size','brand','material'].includes(currentAttributeType)" class="mb-3">
-              <label for="attributeCode" class="form-label">Mã {{ currentAttributeType }}</label>
-              <input
-                type="text"
-                class="form-control"
-                id="attributeCode"
-                v-model="currentAttribute.code"
-                required
-              >
-            </div>
             <div class="mb-3">
               <label for="attributeName" class="form-label">Tên thuộc tính</label>
               <input
@@ -265,7 +256,7 @@
                 id="attributeName"
                 v-model="currentAttribute.name"
                 required
-              />
+              >
             </div>
           </form>
         </div>
@@ -317,19 +308,17 @@ import { Modal } from 'bootstrap';
 import axios from 'axios';
 import { ElMessage } from 'element-plus';
 
-// Dữ liệu
+// Dữ liệu cho các thuộc tính
 const categories = ref([]);
 const colors = ref([]);
 const sizes = ref([]);
 const brands = ref([]);
 const materials = ref([]);
-
 const loadingCategories = ref(false);
 const loadingColors = ref(false);
 const loadingSizes = ref(false);
 const loadingBrands = ref(false);
 const loadingMaterials = ref(false);
-
 const savingAttribute = ref(false);
 const deletingAttribute = ref(false);
 
@@ -341,174 +330,228 @@ const currentAttributeType = ref('');
 const currentAttribute = ref({
   id: null,
   name: '',
-  code: '', // chỉ dùng cho màu sắc
 });
 const itemToDelete = reactive({
   type: '',
   id: null,
 });
 
-// Fetch functions
+// Lấy danh sách danh mục
 const fetchCategories = async () => {
   loadingCategories.value = true;
   try {
-    const res = await axios.get('http://localhost:8080/api/danhmuc');
-    categories.value = res.data || [];
-  } catch {
+    const response = await axios.get('http://localhost:8080/api/danhmuc');
+    categories.value = Array.isArray(response.data) ? response.data : [];
+    if (categories.value.length === 0) {
+      ElMessage.warning('Danh sách danh mục trống.');
+    }
+  } catch (error) {
+    console.error('Lỗi khi lấy danh mục:', error);
+    ElMessage.error('Không thể tải danh sách danh mục.');
     categories.value = [];
-    ElMessage.error('Không thể tải danh mục');
   } finally {
     loadingCategories.value = false;
   }
 };
+
+// Lấy danh sách màu sắc
 const fetchColors = async () => {
   loadingColors.value = true;
   try {
-    const res = await axios.get('http://localhost:8080/api/mausac');
-    colors.value = res.data || [];
-  } catch {
+    const response = await axios.get('http://localhost:8080/api/mausac');
+    colors.value = Array.isArray(response.data) ? response.data : [];
+    if (colors.value.length === 0) {
+      ElMessage.warning('Danh sách màu sắc trống.');
+    }
+  } catch (error) {
+    console.error('Lỗi khi lấy màu sắc:', error);
+    ElMessage.error('Không thể tải danh sách màu sắc.');
     colors.value = [];
-    ElMessage.error('Không thể tải màu sắc');
   } finally {
     loadingColors.value = false;
   }
 };
+
+// Lấy danh sách kích thước
 const fetchSizes = async () => {
   loadingSizes.value = true;
   try {
-    const res = await axios.get('http://localhost:8080/api/size');
-    sizes.value = res.data || [];
-  } catch {
+    const response = await axios.get('http://localhost:8080/api/size');
+    sizes.value = Array.isArray(response.data) ? response.data : [];
+    if (sizes.value.length === 0) {
+      ElMessage.warning('Danh sách kích thước trống.');
+    }
+  } catch (error) {
+    console.error('Lỗi khi lấy kích thước:', error);
+    ElMessage.error('Không thể tải danh sách kích thước.');
     sizes.value = [];
-    ElMessage.error('Không thể tải size');
   } finally {
     loadingSizes.value = false;
   }
 };
+
+// Lấy danh sách thương hiệu
 const fetchBrands = async () => {
   loadingBrands.value = true;
   try {
-    const res = await axios.get('http://localhost:8080/api/thuonghieu');
-    brands.value = res.data || [];
-  } catch {
+    const response = await axios.get('http://localhost:8080/api/thuonghieu');
+    brands.value = Array.isArray(response.data) ? response.data : [];
+    if (brands.value.length === 0) {
+      ElMessage.warning('Danh sách thương hiệu trống.');
+    }
+  } catch (error) {
+    console.error('Lỗi khi lấy thương hiệu:', error);
+    ElMessage.error('Không thể tải danh sách thương hiệu.');
     brands.value = [];
-    ElMessage.error('Không thể tải thương hiệu');
   } finally {
     loadingBrands.value = false;
   }
 };
+
+// Lấy danh sách chất liệu
 const fetchMaterials = async () => {
   loadingMaterials.value = true;
   try {
-    const res = await axios.get('http://localhost:8080/api/chatlieu');
-    materials.value = res.data || [];
-  } catch {
+    const response = await axios.get('http://localhost:8080/api/chatlieu');
+    materials.value = Array.isArray(response.data) ? response.data : [];
+    if (materials.value.length === 0) {
+      ElMessage.warning('Danh sách chất liệu trống.');
+    }
+  } catch (error) {
+    console.error('Lỗi khi lấy chất liệu:', error);
+    ElMessage.error('Không thể tải danh sách chất liệu.');
     materials.value = [];
-    ElMessage.error('Không thể tải chất liệu');
   } finally {
     loadingMaterials.value = false;
   }
 };
 
-const fetchAllAttributes = () =>
-  Promise.all([fetchCategories(), fetchColors(), fetchSizes(), fetchBrands(), fetchMaterials()]);
+// Tải tất cả dữ liệu thuộc tính
+const fetchAllAttributes = async () => {
+  try {
+    await Promise.all([
+      fetchCategories(),
+      fetchColors(),
+      fetchSizes(),
+      fetchBrands(),
+      fetchMaterials(),
+    ]);
+  } catch (error) {
+    console.error('Lỗi khi tải dữ liệu thuộc tính:', error);
+    ElMessage.error('Không thể tải dữ liệu thuộc tính.');
+  }
+};
 
-// Modal open
+// Mở modal thêm/sửa thuộc tính
 const openAttributeModal = (type, title, attribute = null) => {
   modalTitle.value = title;
   currentAttributeType.value = type;
   if (attribute) {
+    // Chế độ sửa
     currentAttribute.value = {
-      id: attribute?.idDM || attribute?.idMauSac || attribute?.idSize || attribute?.idThuongHieu || attribute?.idChatLieu || null,
-      name: attribute?.tenDM || attribute?.tenMauSac || attribute?.tenSize || attribute?.tenThuongHieu || attribute?.tenChatLieu || '',
-      code: attribute?.maMauSac || attribute?.maSize || attribute?.maThuongHieu || attribute?.maChatLieu || '',
+      id: attribute.idDM || attribute.idMauSac || attribute.idSize || attribute.idThuongHieu || attribute.idChatLieu,
+      name: attribute.tenDM || attribute.tenMauSac || attribute.tenSize || attribute.tenThuongHieu || attribute.tenChatLieu,
     };
   } else {
-    currentAttribute.value = { id: null, name: '', code: '' };
+    // Chế độ thêm mới
+    currentAttribute.value = { id: null, name: '' };
   }
   attributeModalInstance?.show();
 };
 
-// Save attribute
+// Lưu thuộc tính
 const saveAttribute = async () => {
   if (!currentAttribute.value.name) {
-    ElMessage.error('Vui lòng nhập tên');
+    ElMessage.error('Vui lòng nhập tên thuộc tính.');
     return;
   }
 
   savingAttribute.value = true;
   try {
-    let payload = {
+    const payload = {
       ...(currentAttribute.value.id && { id: currentAttribute.value.id }),
-      trangThai: true,
+      ...(currentAttributeType.value === 'category' && { tenDM: currentAttribute.value.name }),
+      ...(currentAttributeType.value === 'color' && { tenMauSac: currentAttribute.value.name }),
+      ...(currentAttributeType.value === 'size' && { tenSize: currentAttribute.value.name }),
+      ...(currentAttributeType.value === 'brand' && { tenThuongHieu: currentAttribute.value.name }),
+      ...(currentAttributeType.value === 'material' && { tenChatLieu: currentAttribute.value.name }),
+      trangThai: true, // Mặc định trạng thái là true
     };
 
-    switch (currentAttributeType.value) {
-      case 'category':
-        payload.tenDM = currentAttribute.value.name;
-        break;
-      case 'color':
-        payload.maMauSac = currentAttribute.value.code;
-        payload.tenMauSac = currentAttribute.value.name;
-        break;
-      case 'size':
-        payload.maSize = currentAttribute.value.code;
-        payload.tenSize = currentAttribute.value.name;
-        break;
-      case 'brand':
-        payload.maThuongHieu = currentAttribute.value.code;
-        payload.tenThuongHieu = currentAttribute.value.name;
-        break;
-      case 'material':
-        payload.maChatLieu = currentAttribute.value.code;
-        payload.tenChatLieu = currentAttribute.value.name;
-        break;
-    }
-
-    let url = '';
-    let method = currentAttribute.value.id ? 'put' : 'post';
-
-    switch (currentAttributeType.value) {
-      case 'category':
-        url = `http://localhost:8080/api/danhmuc${currentAttribute.value.id ? '/' + currentAttribute.value.id : ''}`;
-        break;
-      case 'color':
-        url = `http://localhost:8080/api/mausac${currentAttribute.value.id ? '/' + currentAttribute.value.id : ''}`;
-        break;
-      case 'size':
-        url = `http://localhost:8080/api/size${currentAttribute.value.id ? '/' + currentAttribute.value.id : ''}`;
-        break;
-      case 'brand':
-        url = `http://localhost:8080/api/thuonghieu${currentAttribute.value.id ? '/' + currentAttribute.value.id : ''}`;
-        break;
-      case 'material':
-        url = `http://localhost:8080/api/chatlieu${currentAttribute.value.id ? '/' + currentAttribute.value.id : ''}`;
-        break;
+    let url;
+    let method;
+    if (currentAttribute.value.id) {
+      // Cập nhật
+      method = 'put';
+      switch (currentAttributeType.value) {
+        case 'category':
+          url = `http://localhost:8080/api/danhmuc/${currentAttribute.value.id}`;
+          break;
+        case 'color':
+          url = `http://localhost:8080/api/mausac/${currentAttribute.value.id}`;
+          break;
+        case 'size':
+          url = `http://localhost:8080/api/size/${currentAttribute.value.id}`;
+          break;
+        case 'brand':
+          url = `http://localhost:8080/api/thuonghieu/${currentAttribute.value.id}`;
+          break;
+        case 'material':
+          url = `http://localhost:8080/api/chatlieu/${currentAttribute.value.id}`;
+          break;
+      }
+    } else {
+      // Thêm mới
+      method = 'post';
+      switch (currentAttributeType.value) {
+        case 'category':
+          url = 'http://localhost:8080/api/danhmuc';
+          break;
+        case 'color':
+          url = 'http://localhost:8080/api/mausac';
+          break;
+        case 'size':
+          url = 'http://localhost:8080/api/size';
+          break;
+        case 'brand':
+          url = 'http://localhost:8080/api/thuonghieu';
+          break;
+        case 'material':
+          url = 'http://localhost:8080/api/chatlieu';
+          break;
+      }
     }
 
     await axios[method](url, payload);
-    ElMessage.success(currentAttribute.value.id ? 'Cập nhật thành công!' : 'Thêm mới thành công!');
+    ElMessage.success(
+      currentAttribute.value.id
+        ? `Cập nhật ${currentAttributeType.value} thành công!`
+        : `Thêm ${currentAttributeType.value} thành công!`
+    );
     await fetchAllAttributes();
     attributeModalInstance?.hide();
-  } catch (err) {
-    ElMessage.error(err.response?.data?.message || 'Lỗi khi lưu');
-    console.error(err);
+  } catch (error) {
+    console.error(`Lỗi khi lưu ${currentAttributeType.value}:`, error);
+    ElMessage.error(
+      error.response?.data?.message || `Lỗi khi lưu ${currentAttributeType.value}.`
+    );
   } finally {
     savingAttribute.value = false;
   }
 };
 
-
-// Delete
+// Mở modal xóa
 const openDeleteModal = (type, id) => {
   itemToDelete.type = type;
   itemToDelete.id = id;
   deleteModalInstance?.show();
 };
+
+// Xác nhận xóa thuộc tính
 const confirmDelete = async () => {
   deletingAttribute.value = true;
   try {
-    let url = '';
+    let url;
     switch (itemToDelete.type) {
       case 'danh mục':
         url = `http://localhost:8080/api/danhmuc/${itemToDelete.id}`;
@@ -527,22 +570,26 @@ const confirmDelete = async () => {
         break;
     }
     await axios.delete(url);
-    ElMessage.success('Xóa thành công!');
+    ElMessage.success(`Xóa ${itemToDelete.type} thành công!`);
     await fetchAllAttributes();
     deleteModalInstance?.hide();
-  } catch (err) {
-    ElMessage.error('Lỗi khi xóa');
-    console.error(err);
+  } catch (error) {
+    console.error(`Lỗi khi xóa ${itemToDelete.type}:`, error);
+    ElMessage.error(
+      error.response?.data?.message || `Lỗi khi xóa ${itemToDelete.type}.`
+    );
   } finally {
     deletingAttribute.value = false;
   }
 };
 
+// Quản lý vòng đời Modal
 onMounted(() => {
   attributeModalInstance = new Modal(document.getElementById('attributeModal'));
   deleteModalInstance = new Modal(document.getElementById('deleteAttributeModal'));
   fetchAllAttributes();
 });
+
 onUnmounted(() => {
   attributeModalInstance?.dispose();
   deleteModalInstance?.dispose();
@@ -556,3 +603,4 @@ onUnmounted(() => {
   align-items: center;
 }
 </style>
+```
